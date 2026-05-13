@@ -50,9 +50,10 @@ func Load(path string) (Config, error) {
 }
 
 func LoadConfig(env string) (*Config, error) {
+	env = normalizeEnv(env)
 	path := os.Getenv("APP_CONFIG_PATH")
 	if strings.TrimSpace(path) == "" {
-		path = filepath.Join("configs", fmt.Sprintf("config.%s.yaml", normalizeEnv(env)))
+		path = filepath.Join("configs", fmt.Sprintf("config.%s.yaml", env))
 	}
 
 	cfg, err := loadFromPath(path)
@@ -93,6 +94,9 @@ func loadFromPath(path string) (Config, error) {
 
 func normalizeEnv(env string) string {
 	env = strings.TrimSpace(env)
+	if env == "" {
+		env = strings.TrimSpace(os.Getenv("APP_ENV"))
+	}
 	if env == "" {
 		return "local"
 	}

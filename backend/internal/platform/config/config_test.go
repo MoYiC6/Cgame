@@ -91,3 +91,33 @@ func TestLoadConfigAppliesEnvironmentOverrides(t *testing.T) {
 		t.Fatalf("expected log level warn, got %q", cfg.Log.Level)
 	}
 }
+
+func TestLoadConfigUsesAPPENVWhenArgumentEmpty(t *testing.T) {
+	t.Setenv("APP_CONFIG_PATH", "")
+	t.Setenv("APP_ENV", "test")
+
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd returned error: %v", err)
+	}
+	backendRoot := filepath.Join(wd, "..", "..", "..")
+	if err := os.Chdir(backendRoot); err != nil {
+		t.Fatalf("Chdir returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(wd); err != nil {
+			t.Fatalf("restore working directory: %v", err)
+		}
+	})
+
+	cfg, err := LoadConfig("")
+	if err != nil {
+		t.Fatalf("LoadConfig returned error: %v", err)
+	}
+	if cfg.App.Env != "test" {
+		t.Fatalf("expected app env test from APP_ENV, got %q", cfg.App.Env)
+	}
+	if cfg.Server.Addr != ":18080" {
+		t.Fatalf("expected server addr from config.test.yaml, got %q", cfg.Server.Addr)
+	}
+}
