@@ -1,6 +1,9 @@
 package notification
 
 import (
+	"net/http"
+
+	apperrors "backend/internal/platform/errors"
 	"backend/internal/platform/observability"
 	"backend/internal/platform/response"
 	"github.com/gin-gonic/gin"
@@ -15,13 +18,13 @@ func NewHandler(service Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
-	group.GET("/notifications/ping", h.Ping)
+	group.GET("/notification/ping", h.Ping)
 }
 
 func (h *Handler) Ping(c *gin.Context) {
 	payload, err := h.service.Ping(c.Request.Context())
 	if err != nil {
-		response.Fail(c, err)
+		response.Fail(c, apperrors.New("NOTIFICATION_PING_FAILED", "notification ping failed", http.StatusInternalServerError, err))
 		return
 	}
 	if traceID, ok := observability.TraceIDFromContext(c.Request.Context()); ok {
