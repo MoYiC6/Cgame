@@ -17,6 +17,10 @@ type Logger interface {
 	Error(msg string, fields ...Field)
 }
 
+type structuredLogger struct {
+	inner *slog.Logger
+}
+
 func String(key, value string) Field {
 	return slog.String(key, value)
 }
@@ -25,7 +29,7 @@ func Any(key string, value any) Field {
 	return slog.Any(key, value)
 }
 
-func New(level string, writer io.Writer) *slog.Logger {
+func New(level string, writer io.Writer) Logger {
 	if writer == nil {
 		writer = os.Stdout
 	}
@@ -42,11 +46,23 @@ func New(level string, writer io.Writer) *slog.Logger {
 		slogLevel = slog.LevelInfo
 	}
 
-	handler := slog.NewJSONHandler(writer, &slog.HandlerOptions{Level: slogLevel})
-	return slog.New(handler)
+	handler := slog.NewTextHandler(writer, &slog.HandlerOptions{Level: slogLevel})
+	return &structuredLogger{inner: slog.New(handler)}
 }
 
-func WithContext(ctx context.Context, base *slog.Logger) *slog.Logger {
+func (l *structuredLogger) Info(msg string, fields ...Field) {
+	l.inner.Info(msg, fields...)
+}
+
+func (l *structuredLogger) Error(msg string, fields ...Field) {
+	l.inner.Error(msg, fields...)
+}
+
+func (l *structuredLogger) with(fields ...any) Logger {
+	return &structuredLogger{inner: l.inner.With(fields...)}
+}
+
+func WithContext(ctx context.Context, base Logger) Logger {
 	if base == nil {
 		base = New("info", nil)
 	}
@@ -61,5 +77,9 @@ func WithContext(ctx context.Context, base *slog.Logger) *slog.Logger {
 	if len(fields) == 0 {
 		return base
 	}
-	return base.With(fields...)
+	contextual, ok := base.(interface{ with(fields ...any) Logger })
+	if !ok {
+		return base
+	}
+	return contextual.with(fields...)
 }
