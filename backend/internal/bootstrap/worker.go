@@ -3,8 +3,9 @@ package bootstrap
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"sync"
+
+	"backend/internal/platform/logger"
 )
 
 type Worker interface {
@@ -21,18 +22,22 @@ type TaskProbe interface {
 }
 
 type InMemoryWorker struct {
-	log    *slog.Logger
+	log    logger.Logger
 	mu     sync.Mutex
 	tasks  map[string]func(ctx context.Context) error
 	probes map[string]TaskProbe
 }
 
-func NewWorker(log *slog.Logger) *InMemoryWorker {
+func NewWorker(log logger.Logger) *InMemoryWorker {
 	return &InMemoryWorker{
 		log:    log,
 		tasks:  make(map[string]func(ctx context.Context) error),
 		probes: make(map[string]TaskProbe),
 	}
+}
+
+func (w *InMemoryWorker) Shutdown(ctx context.Context) error {
+	return nil
 }
 
 func (w *InMemoryWorker) RegisterTask(name string, handler func(ctx context.Context) error) {

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"backend/internal/bootstrap"
 	"backend/internal/platform/config"
@@ -24,12 +25,7 @@ func (placeholderTask) Probe(ctx context.Context) error {
 }
 
 func main() {
-	configPath := os.Getenv("APP_CONFIG_PATH")
-	if configPath == "" {
-		configPath = "configs/config.local.yaml"
-	}
-
-	cfg, err := config.Load(configPath)
+	cfg, err := config.LoadConfig(os.Getenv("APP_ENV"))
 	if err != nil {
 		log.Fatalf("load config: %v", err)
 	}
@@ -39,11 +35,18 @@ func main() {
 	defer stop()
 
 	worker := bootstrap.NewWorker(appLogger)
+	app := bootstrap.NewApp(worker)
 	worker.RegisterRunnable("placeholder", placeholderTask{})
 
-	appLogger.Info("worker starting", "config", cfg.MaskedSummary())
+	appLogger.Info("worker starting", logger.Any("config", cfg.MaskedSummary()))
 	if err := worker.Run(ctx); err != nil {
 		appLogger.Error("worker stopped", "error", err)
+		os.Exit(1)
+	}
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := app.Shutdown(shutdownCtx); err != nil {
+		appLogger.Error("worker shutdown failed", "error", err)
 		os.Exit(1)
 	}
 	appLogger.Info("worker stopped cleanly")
