@@ -2,11 +2,11 @@ package bootstrap
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
 	apperrors "backend/internal/platform/errors"
+	"backend/internal/platform/logger"
 	"backend/internal/platform/observability"
 	"backend/internal/platform/response"
 	"github.com/gin-gonic/gin"
@@ -42,7 +42,7 @@ func TraceContextMiddleware(propagator observability.Propagator) gin.HandlerFunc
 	}
 }
 
-func RecoveryMiddleware(log *slog.Logger) gin.HandlerFunc {
+func RecoveryMiddleware(log logger.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if recovered := recover(); recovered != nil {
