@@ -1,0 +1,23 @@
+app:
+  name: backend-test
+  env: test
+
+server:
+  addr: ":18080"
+
+log:
+  level: debug
+
+db:
+  # 预留，初始化阶段不使用
+  driver: postgres
+  dsn: "postgres://user:secret@localhost:5432/backend_test"
+
+redis:
+  # 预留，初始化阶段不使用
+  addr: "127.0.0.1:6379"
+
+mq:
+  # 预留，初始化阶段不使用
+  driver: in-memory
+  topic_prefix: backend.test
