@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -45,6 +46,27 @@ type MQConfig struct {
 }
 
 func Load(path string) (Config, error) {
+	return loadFromPath(path)
+}
+
+func LoadConfig(env string) (*Config, error) {
+	path := os.Getenv("APP_CONFIG_PATH")
+	if strings.TrimSpace(path) == "" {
+		path = filepath.Join("configs", fmt.Sprintf("config.%s.yaml", normalizeEnv(env)))
+	}
+
+	cfg, err := loadFromPath(path)
+	if err != nil {
+		return nil, err
+	}
+	applyEnvOverrides(&cfg)
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
+}
+
+func loadFromPath(path string) (Config, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return Config{}, fmt.Errorf("read config: %w", err)
@@ -67,6 +89,47 @@ func Load(path string) (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func normalizeEnv(env string) string {
+	env = strings.TrimSpace(env)
+	if env == "" {
+		return "local"
+	}
+	return env
+}
+
+func applyEnvOverrides(cfg *Config) {
+	if cfg == nil {
+		return
+	}
+	if value := os.Getenv("APP_NAME"); strings.TrimSpace(value) != "" {
+		cfg.App.Name = value
+	}
+	if value := os.Getenv("APP_ENV"); strings.TrimSpace(value) != "" {
+		cfg.App.Env = value
+	}
+	if value := os.Getenv("SERVER_ADDR"); strings.TrimSpace(value) != "" {
+		cfg.Server.Addr = value
+	}
+	if value := os.Getenv("LOG_LEVEL"); strings.TrimSpace(value) != "" {
+		cfg.Log.Level = value
+	}
+	if value := os.Getenv("DB_DRIVER"); strings.TrimSpace(value) != "" {
+		cfg.DB.Driver = value
+	}
+	if value := os.Getenv("DB_DSN"); strings.TrimSpace(value) != "" {
+		cfg.DB.DSN = value
+	}
+	if value := os.Getenv("REDIS_ADDR"); strings.TrimSpace(value) != "" {
+		cfg.Redis.Addr = value
+	}
+	if value := os.Getenv("MQ_DRIVER"); strings.TrimSpace(value) != "" {
+		cfg.MQ.Driver = value
+	}
+	if value := os.Getenv("MQ_TOPIC_PREFIX"); strings.TrimSpace(value) != "" {
+		cfg.MQ.TopicPrefix = value
+	}
 }
 
 func (c Config) Validate() error {

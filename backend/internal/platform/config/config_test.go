@@ -65,3 +65,29 @@ func TestMaskedSummaryHidesSecrets(t *testing.T) {
 		t.Fatalf("expected app_name backend, got %q", summary["app_name"])
 	}
 }
+
+func TestLoadConfigAppliesEnvironmentOverrides(t *testing.T) {
+	t.Setenv("APP_CONFIG_PATH", filepath.Join("..", "..", "..", "configs", "config.test.yaml"))
+	t.Setenv("APP_NAME", "override-app")
+	t.Setenv("APP_ENV", "dev")
+	t.Setenv("SERVER_ADDR", ":19090")
+	t.Setenv("LOG_LEVEL", "warn")
+
+	cfg, err := LoadConfig("test")
+	if err != nil {
+		t.Fatalf("LoadConfig returned error: %v", err)
+	}
+
+	if cfg.App.Name != "override-app" {
+		t.Fatalf("expected app name override-app, got %q", cfg.App.Name)
+	}
+	if cfg.App.Env != "dev" {
+		t.Fatalf("expected env dev, got %q", cfg.App.Env)
+	}
+	if cfg.Server.Addr != ":19090" {
+		t.Fatalf("expected server addr :19090, got %q", cfg.Server.Addr)
+	}
+	if cfg.Log.Level != "warn" {
+		t.Fatalf("expected log level warn, got %q", cfg.Log.Level)
+	}
+}
