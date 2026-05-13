@@ -20,7 +20,7 @@ func Success(c *gin.Context, data any) {
 	c.JSON(http.StatusOK, APIResponse{Code: "OK", Message: "success", Data: data, RequestID: requestID})
 }
 
-func Fail(c *gin.Context, err error) {
+func Fail(c *gin.Context, err *apperrors.AppError) {
 	requestID, _ := observability.RequestIDFromContext(c.Request.Context())
 	c.JSON(apperrors.Status(err), APIResponse{Code: apperrors.Code(err), Message: apperrors.SafeMessage(err), RequestID: requestID})
 }

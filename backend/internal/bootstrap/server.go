@@ -1,6 +1,9 @@
 package bootstrap
 
 import (
+	"net/http"
+
+	apperrors "backend/internal/platform/errors"
 	"backend/internal/platform/response"
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +22,7 @@ func NewAPIEngine(deps Dependencies, registrars ...HTTPRouteRegistrar) *gin.Engi
 	engine.GET("/readyz", func(c *gin.Context) {
 		if deps.DB != nil {
 			if err := deps.DB.Ping(c.Request.Context()); err != nil {
-				response.Fail(c, err)
+				response.Fail(c, apperrors.New("DEPENDENCY_UNAVAILABLE", "dependency unavailable", http.StatusServiceUnavailable, err))
 				return
 			}
 		}
