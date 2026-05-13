@@ -1,0 +1,23 @@
+app:
+  name: backend
+  env: local
+
+server:
+  addr: ":8080"
+
+log:
+  level: info
+
+db:
+  # 预留，初始化阶段不使用
+  driver: postgres
+  dsn: ""
+
+redis:
+  # 预留，初始化阶段不使用
+  addr: ""
+
+mq:
+  # 预留，初始化阶段不使用
+  driver: ""
+  topic_prefix: backend
