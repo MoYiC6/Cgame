@@ -1,3 +1,5 @@
+.PHONY: run-api run-worker test lint
+
 run-api:
 	go run ./cmd/api
 
