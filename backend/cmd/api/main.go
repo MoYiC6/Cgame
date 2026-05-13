@@ -20,7 +20,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadConfig(os.Getenv("APP_ENV"))
+	cfg, err := config.LoadConfig("")
 	if err != nil {
 		log.Fatalf("load config: %v", err)
 	}
