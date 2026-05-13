@@ -17,6 +17,12 @@ func NewAPIEngine(deps Dependencies, registrars ...HTTPRouteRegistrar) *gin.Engi
 		response.Success(c, gin.H{"status": "ok"})
 	})
 	engine.GET("/readyz", func(c *gin.Context) {
+		if deps.DB != nil {
+			if err := deps.DB.Ping(c.Request.Context()); err != nil {
+				response.Fail(c, err)
+				return
+			}
+		}
 		response.Success(c, gin.H{"status": "ok", "dependencies": "skipped"})
 	})
 

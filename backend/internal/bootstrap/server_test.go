@@ -38,7 +38,7 @@ func TestNewAPIEngineRegistersHealthRoutes(t *testing.T) {
 			t.Fatalf("expected 200 for %s, got %d", path, recorder.Code)
 		}
 
-		var body response.APIResponse[map[string]any]
+		var body response.APIResponse
 		if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
 			t.Fatalf("json.Unmarshal returned error: %v", err)
 		}
