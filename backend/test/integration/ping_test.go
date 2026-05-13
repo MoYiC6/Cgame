@@ -69,15 +69,19 @@ func TestBootstrapRegistersAllPingRoutes(t *testing.T) {
 				t.Fatalf("expected X-Trace-ID trace-int for %s, got %q", tt.path, recorder.Header().Get("X-Trace-ID"))
 			}
 
-			var body response.APIResponse[map[string]any]
+			var body response.APIResponse
 			if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
 				t.Fatalf("json.Unmarshal returned error: %v", err)
 			}
-			if body.Data["module"] != tt.module {
-				t.Fatalf("expected module %s, got %#v", tt.module, body.Data["module"])
+			data, ok := body.Data.(map[string]any)
+			if !ok {
+				t.Fatalf("expected data map for %s, got %#v", tt.path, body.Data)
 			}
-			if body.Data["trace_id"] != "trace-int" {
-				t.Fatalf("expected trace_id trace-int, got %#v", body.Data["trace_id"])
+			if data["module"] != tt.module {
+				t.Fatalf("expected module %s, got %#v", tt.module, data["module"])
+			}
+			if data["trace_id"] != "trace-int" {
+				t.Fatalf("expected trace_id trace-int, got %#v", data["trace_id"])
 			}
 		})
 	}

@@ -26,7 +26,7 @@ func TestSuccessWritesRequestID(t *testing.T) {
 		t.Fatalf("expected status 200, got %d", recorder.Code)
 	}
 
-	var body APIResponse[map[string]any]
+	var body APIResponse
 	if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
 		t.Fatalf("json.Unmarshal returned error: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestFailUsesAppErrorMetadata(t *testing.T) {
 		t.Fatalf("expected status 400, got %d", recorder.Code)
 	}
 
-	var body APIResponse[map[string]any]
+	var body APIResponse
 	if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
 		t.Fatalf("json.Unmarshal returned error: %v", err)
 	}
@@ -67,3 +67,33 @@ func TestFailUsesAppErrorMetadata(t *testing.T) {
 		t.Fatalf("expected request_id req-500, got %q", body.RequestID)
 	}
 }
+
+func TestFailFallsBackForGenericError(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	request := httptest.NewRequest(http.MethodGet, "/panic", nil)
+	ctx.Request = request
+
+	Fail(ctx, assertErr("boom"))
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status 500, got %d", recorder.Code)
+	}
+
+	var body APIResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
+		t.Fatalf("json.Unmarshal returned error: %v", err)
+	}
+	if body.Code != "INTERNAL_ERROR" {
+		t.Fatalf("expected INTERNAL_ERROR, got %q", body.Code)
+	}
+	if body.Message != "internal error" {
+		t.Fatalf("expected internal error, got %q", body.Message)
+	}
+}
+
+type assertErr string
+
+func (e assertErr) Error() string { return string(e) }

@@ -39,15 +39,19 @@ func TestRequestAndTraceMiddlewarePopulateHeadersAndContext(t *testing.T) {
 		t.Fatalf("expected response trace id trace-mw, got %q", recorder.Header().Get("X-Trace-ID"))
 	}
 
-	var body response.APIResponse[map[string]any]
+	var body response.APIResponse
 	if err := json.Unmarshal(recorder.Body.Bytes(), &body); err != nil {
 		t.Fatalf("json.Unmarshal returned error: %v", err)
 	}
 	if body.RequestID != "req-mw" {
 		t.Fatalf("expected request_id req-mw, got %q", body.RequestID)
 	}
-	if body.Data["trace_id"] != "trace-mw" {
-		t.Fatalf("expected trace_id trace-mw, got %#v", body.Data["trace_id"])
+	data, ok := body.Data.(map[string]any)
+	if !ok {
+		t.Fatalf("expected data map, got %#v", body.Data)
+	}
+	if data["trace_id"] != "trace-mw" {
+		t.Fatalf("expected trace_id trace-mw, got %#v", data["trace_id"])
 	}
 }
 

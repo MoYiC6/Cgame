@@ -8,19 +8,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type APIResponse[T any] struct {
+type APIResponse struct {
 	Code      string `json:"code"`
 	Message   string `json:"message"`
-	Data      T      `json:"data,omitempty"`
-	RequestID string `json:"request_id"`
+	Data      any    `json:"data,omitempty"`
+	RequestID string `json:"request_id,omitempty"`
 }
 
 func Success(c *gin.Context, data any) {
 	requestID, _ := observability.RequestIDFromContext(c.Request.Context())
-	c.JSON(http.StatusOK, APIResponse[any]{Code: "OK", Message: "success", Data: data, RequestID: requestID})
+	c.JSON(http.StatusOK, APIResponse{Code: "OK", Message: "success", Data: data, RequestID: requestID})
 }
 
 func Fail(c *gin.Context, err error) {
 	requestID, _ := observability.RequestIDFromContext(c.Request.Context())
-	c.JSON(apperrors.Status(err), APIResponse[any]{Code: apperrors.Code(err), Message: apperrors.SafeMessage(err), RequestID: requestID})
+	c.JSON(apperrors.Status(err), APIResponse{Code: apperrors.Code(err), Message: apperrors.SafeMessage(err), RequestID: requestID})
 }
