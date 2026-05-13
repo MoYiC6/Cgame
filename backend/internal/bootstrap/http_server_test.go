@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"testing"
@@ -13,7 +14,11 @@ func TestHTTPServerRunAndShutdown(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Listen returned error: %v", err)
 	}
-	defer listener.Close()
+	defer func() {
+		if err := listener.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
+			t.Fatalf("Close returned error: %v", err)
+		}
+	}()
 
 	server := NewHTTPServer(listener.Addr().String(), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
