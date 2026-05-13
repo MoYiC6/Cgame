@@ -12,13 +12,17 @@ type AppError struct {
 	Cause      error
 }
 
+func New(code, message string, httpStatus int, cause error) *AppError {
+	return &AppError{Code: code, Message: message, HTTPStatus: httpStatus, Cause: cause}
+}
+
 func NewAppError(code, message string, httpStatus int) *AppError {
-	return &AppError{Code: code, Message: message, HTTPStatus: httpStatus}
+	return New(code, message, httpStatus, nil)
 }
 
 func Wrap(base *AppError, cause error) *AppError {
 	if base == nil {
-		return &AppError{Code: "INTERNAL_ERROR", Message: "internal error", HTTPStatus: http.StatusInternalServerError, Cause: cause}
+		return New("INTERNAL_ERROR", "internal error", http.StatusInternalServerError, cause)
 	}
 	clone := *base
 	clone.Cause = cause

@@ -34,3 +34,15 @@ func TestMetadataHelpersHandleGenericErrors(t *testing.T) {
 		t.Fatalf("expected generic safe message, got %q", SafeMessage(err))
 	}
 }
+
+func TestNewSetsCause(t *testing.T) {
+	cause := stderrors.New("redis unavailable")
+	err := New("REDIS_UNAVAILABLE", "redis unavailable", http.StatusServiceUnavailable, cause)
+
+	if err.Cause != cause {
+		t.Fatal("expected cause to be set by New")
+	}
+	if !stderrors.Is(err, cause) {
+		t.Fatal("expected errors.Is to match cause")
+	}
+}
