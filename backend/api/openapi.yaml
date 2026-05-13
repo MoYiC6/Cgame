@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: Backend Bootstrap API
+  version: 0.1.0
+paths:
+  /healthz:
+    get:
+      summary: Process health check
+      responses:
+        '200':
+          description: OK
+  /readyz:
+    get:
+      summary: Dependency readiness check
+      responses:
+        '200':
+          description: OK
