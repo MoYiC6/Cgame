@@ -1,0 +1,27 @@
+services:
+  api:
+    image: golang:1.26
+    working_dir: /workspace
+    command: go run ./cmd/api
+    volumes:
+      - ./:/workspace
+    networks:
+      - backend-net
+    ports:
+      - "8080:8080"
+
+  worker:
+    image: golang:1.26
+    working_dir: /workspace
+    command: go run ./cmd/worker
+    volumes:
+      - ./:/workspace
+    networks:
+      - backend-net
+
+networks:
+  backend-net:
+    driver: bridge
+
+volumes:
+  backend-data:
