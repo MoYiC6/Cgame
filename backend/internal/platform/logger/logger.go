@@ -10,6 +10,21 @@ import (
 	"backend/internal/platform/observability"
 )
 
+type Field = any
+
+type Logger interface {
+	Info(msg string, fields ...Field)
+	Error(msg string, fields ...Field)
+}
+
+func String(key, value string) Field {
+	return slog.String(key, value)
+}
+
+func Any(key string, value any) Field {
+	return slog.Any(key, value)
+}
+
 func New(level string, writer io.Writer) *slog.Logger {
 	if writer == nil {
 		writer = os.Stdout
