@@ -1,0 +1,13 @@
+task-7-response-bootstrap-happy
+status: PASS
+scope:
+- backend/internal/platform/response
+- backend/internal/bootstrap
+
+verification:
+- go test ./internal/platform/response ./internal/bootstrap -count=1
+- lsp diagnostics on changed files: clean
+
+changes:
+- backend/internal/bootstrap/server_test.go: added top-level TraceID assertion
+- backend/test/integration/ping_test.go: switched to asserting APIResponse.TraceID instead of data["trace_id"]

@@ -12,6 +12,16 @@ db:
   # 预留，初始化阶段不使用
   driver: postgres
   dsn: ""
+  max_open_conns: 16
+  max_idle_conns: 8
+  conn_max_lifetime_secs: 300
+
+observability:
+  trace_exporter_type: none
+  trace_exporter_endpoint: ""
+  service_name: backend
+  service_version: "1.0.0"
+  environment: dev
 
 redis:
   # 预留，初始化阶段不使用

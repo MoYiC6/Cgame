@@ -12,6 +12,16 @@ db:
   # 预留，初始化阶段不使用
   driver: postgres
   dsn: "postgres://user:secret@localhost:5432/backend_test"
+  max_open_conns: 16
+  max_idle_conns: 8
+  conn_max_lifetime_secs: 300
+
+observability:
+  trace_exporter_type: otlp
+  trace_exporter_endpoint: "http://localhost:4318"
+  service_name: backend-test
+  service_version: "1.0.0"
+  environment: test
 
 redis:
   # 预留，初始化阶段不使用

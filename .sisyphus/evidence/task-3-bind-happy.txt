@@ -1,0 +1,8 @@
+=== RUN   TestBindAndValidateBindsAllSupportedSources
+--- PASS: TestBindAndValidateBindsAllSupportedSources (0.00s)
+=== RUN   TestBindAndValidateMapsValidationErrorsToAppError
+--- PASS: TestBindAndValidateMapsValidationErrorsToAppError (0.00s)
+=== RUN   TestBindAndValidateMapsBindErrorsToAppError
+--- PASS: TestBindAndValidateMapsBindErrorsToAppError (0.00s)
+PASS
+ok  	backend/internal/platform/httpx	0.936s

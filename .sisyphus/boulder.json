@@ -1,0 +1,59 @@
+{
+  "active_plan": "/Users/chening/Desktop/zuhao/.sisyphus/plans/p1-backend-foundation.md",
+  "started_at": "2026-05-14T03:00:45.539Z",
+  "session_ids": [
+    "ses_1ddd83609ffeauv15D1n3LmPcB"
+  ],
+  "session_origins": {
+    "ses_1ddd83609ffeauv15D1n3LmPcB": "direct"
+  },
+  "plan_name": "p1-backend-foundation",
+  "agent": "atlas",
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "锁定配置与命令基线",
+      "session_id": "ses_1db88cd30ffe4rEGcpualF82iK",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-14T03:17:20.002Z"
+    },
+    "todo:2": {
+      "task_key": "todo:2",
+      "task_label": "2",
+      "task_title": "完成统一响应顶层 trace_id 契约",
+      "session_id": "ses_1db7c9dc4ffe1nZjLXOC72PFoi",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-14T03:54:11.804Z"
+    },
+    "todo:4": {
+      "task_key": "todo:4",
+      "task_label": "4",
+      "task_title": "锁定 TxManager / repository 协作事务契约",
+      "session_id": "ses_1db2e3c2cffeY7jvyVo47xGW5g",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-14T04:58:24.849Z"
+    },
+    "todo:5": {
+      "task_key": "todo:5",
+      "task_label": "5",
+      "task_title": "锁定 observability 契约与 OTEL 最小闭环测试",
+      "session_id": "ses_1db0ade2affeX1Ev89IFVNK2JB",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-14T05:30:38.032Z"
+    },
+    "todo:7": {
+      "task_key": "todo:7",
+      "task_label": "7",
+      "task_title": "落地统一响应顶层 trace_id 实现并回归 bootstrap 消费方",
+      "session_id": "ses_1db04a2a5ffezGoGmG3K3gMMVP",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-14T05:36:32.478Z"
+    }
+  }
+}

@@ -48,5 +48,8 @@ func TestNewAPIEngineRegistersHealthRoutes(t *testing.T) {
 		if body.RequestID == "" {
 			t.Fatalf("expected request_id for %s", path)
 		}
+		if body.TraceID == "" {
+			t.Fatalf("expected trace_id for %s", path)
+		}
 	}
 }

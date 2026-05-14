@@ -13,14 +13,17 @@ type APIResponse struct {
 	Message   string `json:"message"`
 	Data      any    `json:"data,omitempty"`
 	RequestID string `json:"request_id,omitempty"`
+	TraceID   string `json:"trace_id,omitempty"`
 }
 
 func Success(c *gin.Context, data any) {
 	requestID, _ := observability.RequestIDFromContext(c.Request.Context())
-	c.JSON(http.StatusOK, APIResponse{Code: "OK", Message: "success", Data: data, RequestID: requestID})
+	traceID, _ := observability.TraceIDFromContext(c.Request.Context())
+	c.JSON(http.StatusOK, APIResponse{Code: "OK", Message: "success", Data: data, RequestID: requestID, TraceID: traceID})
 }
 
 func Fail(c *gin.Context, err *apperrors.AppError) {
 	requestID, _ := observability.RequestIDFromContext(c.Request.Context())
-	c.JSON(apperrors.Status(err), APIResponse{Code: apperrors.Code(err), Message: apperrors.SafeMessage(err), RequestID: requestID})
+	traceID, _ := observability.TraceIDFromContext(c.Request.Context())
+	c.JSON(apperrors.Status(err), APIResponse{Code: apperrors.Code(err), Message: apperrors.SafeMessage(err), RequestID: requestID, TraceID: traceID})
 }

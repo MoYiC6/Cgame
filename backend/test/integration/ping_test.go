@@ -80,8 +80,8 @@ func TestBootstrapRegistersAllPingRoutes(t *testing.T) {
 			if data["module"] != tt.module {
 				t.Fatalf("expected module %s, got %#v", tt.module, data["module"])
 			}
-			if data["trace_id"] != "trace-int" {
-				t.Fatalf("expected trace_id trace-int, got %#v", data["trace_id"])
+			if body.TraceID != "trace-int" {
+				t.Fatalf("expected top-level trace_id trace-int, got %q", body.TraceID)
 			}
 		})
 	}

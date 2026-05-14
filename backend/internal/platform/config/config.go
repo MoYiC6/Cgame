@@ -4,18 +4,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	App    AppConfig    `yaml:"app"`
-	Server ServerConfig `yaml:"server"`
-	Log    LogConfig    `yaml:"log"`
-	DB     DBConfig     `yaml:"db"`
-	Redis  RedisConfig  `yaml:"redis"`
-	MQ     MQConfig     `yaml:"mq"`
+	App           AppConfig           `yaml:"app"`
+	Server        ServerConfig        `yaml:"server"`
+	Log           LogConfig           `yaml:"log"`
+	DB            DBConfig            `yaml:"db"`
+	Redis         RedisConfig         `yaml:"redis"`
+	MQ            MQConfig            `yaml:"mq"`
+	Observability ObservabilityConfig `yaml:"observability"`
 }
 
 type AppConfig struct {
@@ -32,8 +34,19 @@ type LogConfig struct {
 }
 
 type DBConfig struct {
-	Driver string `yaml:"driver"`
-	DSN    string `yaml:"dsn"`
+	Driver              string `yaml:"driver"`
+	DSN                 string `yaml:"dsn"`
+	MaxOpenConns        int    `yaml:"max_open_conns"`
+	MaxIdleConns        int    `yaml:"max_idle_conns"`
+	ConnMaxLifetimeSecs int    `yaml:"conn_max_lifetime_secs"`
+}
+
+type ObservabilityConfig struct {
+	TraceExporterType     string `yaml:"trace_exporter_type"`
+	TraceExporterEndpoint string `yaml:"trace_exporter_endpoint"`
+	ServiceName           string `yaml:"service_name"`
+	ServiceVersion        string `yaml:"service_version"`
+	Environment           string `yaml:"environment"`
 }
 
 type RedisConfig struct {
@@ -125,8 +138,35 @@ func applyEnvOverrides(cfg *Config) {
 	if value := os.Getenv("DB_DSN"); strings.TrimSpace(value) != "" {
 		cfg.DB.DSN = value
 	}
-	if value := os.Getenv("REDIS_ADDR"); strings.TrimSpace(value) != "" {
-		cfg.Redis.Addr = value
+	if value := os.Getenv("DB_MAX_OPEN_CONNS"); strings.TrimSpace(value) != "" {
+		if parsed, err := strconv.Atoi(strings.TrimSpace(value)); err == nil {
+			cfg.DB.MaxOpenConns = parsed
+		}
+	}
+	if value := os.Getenv("DB_MAX_IDLE_CONNS"); strings.TrimSpace(value) != "" {
+		if parsed, err := strconv.Atoi(strings.TrimSpace(value)); err == nil {
+			cfg.DB.MaxIdleConns = parsed
+		}
+	}
+	if value := os.Getenv("DB_CONN_MAX_LIFETIME_SECS"); strings.TrimSpace(value) != "" {
+		if parsed, err := strconv.Atoi(strings.TrimSpace(value)); err == nil {
+			cfg.DB.ConnMaxLifetimeSecs = parsed
+		}
+	}
+	if value := os.Getenv("OTEL_TRACE_EXPORTER_TYPE"); strings.TrimSpace(value) != "" {
+		cfg.Observability.TraceExporterType = value
+	}
+	if value := os.Getenv("OTEL_TRACE_EXPORTER_ENDPOINT"); strings.TrimSpace(value) != "" {
+		cfg.Observability.TraceExporterEndpoint = value
+	}
+	if value := os.Getenv("OTEL_SERVICE_NAME"); strings.TrimSpace(value) != "" {
+		cfg.Observability.ServiceName = value
+	}
+	if value := os.Getenv("OTEL_SERVICE_VERSION"); strings.TrimSpace(value) != "" {
+		cfg.Observability.ServiceVersion = value
+	}
+	if value := os.Getenv("OTEL_ENVIRONMENT"); strings.TrimSpace(value) != "" {
+		cfg.Observability.Environment = value
 	}
 	if value := os.Getenv("MQ_DRIVER"); strings.TrimSpace(value) != "" {
 		cfg.MQ.Driver = value
@@ -143,20 +183,50 @@ func (c Config) Validate() error {
 	if strings.TrimSpace(c.Server.Addr) == "" {
 		return fmt.Errorf("server.addr is required")
 	}
+	if c.DB.MaxOpenConns < 0 {
+		return fmt.Errorf("db.max_open_conns must be >= 0")
+	}
+	if c.DB.MaxIdleConns < 0 {
+		return fmt.Errorf("db.max_idle_conns must be >= 0")
+	}
+	if c.DB.ConnMaxLifetimeSecs < 0 {
+		return fmt.Errorf("db.conn_max_lifetime_secs must be >= 0")
+	}
+	if c.DB.MaxOpenConns > 0 && c.DB.MaxIdleConns > c.DB.MaxOpenConns {
+		return fmt.Errorf("db.max_idle_conns must be <= db.max_open_conns")
+	}
+	traceExporterType := strings.TrimSpace(c.Observability.TraceExporterType)
+	if traceExporterType != "" && traceExporterType != "none" && traceExporterType != "otlp" {
+		return fmt.Errorf("observability.trace_exporter_type must be one of: none, otlp")
+	}
+	if traceExporterType == "otlp" && strings.TrimSpace(c.Observability.TraceExporterEndpoint) == "" {
+		return fmt.Errorf("observability.trace_exporter_endpoint is required when trace exporter type is otlp")
+	}
+	if strings.TrimSpace(c.Observability.ServiceName) == "" {
+		return fmt.Errorf("observability.service_name is required")
+	}
 	return nil
 }
 
 func (c Config) MaskedSummary() map[string]string {
 	return map[string]string{
-		"app_name":  c.App.Name,
-		"app_env":   c.App.Env,
-		"server":    c.Server.Addr,
-		"log_level": c.Log.Level,
-		"db_driver": c.DB.Driver,
-		"db_dsn":    maskSecret(c.DB.DSN),
-		"redis":     maskSecret(c.Redis.Addr),
-		"mq_driver": c.MQ.Driver,
-		"mq_topic":  c.MQ.TopicPrefix,
+		"app_name":                  c.App.Name,
+		"app_env":                   c.App.Env,
+		"server":                    c.Server.Addr,
+		"log_level":                 c.Log.Level,
+		"db_driver":                 c.DB.Driver,
+		"db_dsn":                    maskSecret(c.DB.DSN),
+		"db_max_open_conns":         strconv.Itoa(c.DB.MaxOpenConns),
+		"db_max_idle_conns":         strconv.Itoa(c.DB.MaxIdleConns),
+		"db_conn_max_lifetime_secs": strconv.Itoa(c.DB.ConnMaxLifetimeSecs),
+		"redis":                     maskSecret(c.Redis.Addr),
+		"mq_driver":                 c.MQ.Driver,
+		"mq_topic":                  c.MQ.TopicPrefix,
+		"otel_trace_exporter_type":  c.Observability.TraceExporterType,
+		"otel_exporter_endpoint":    maskSecret(c.Observability.TraceExporterEndpoint),
+		"otel_service_name":         c.Observability.ServiceName,
+		"otel_service_version":      c.Observability.ServiceVersion,
+		"otel_environment":          c.Observability.Environment,
 	}
 }
 
