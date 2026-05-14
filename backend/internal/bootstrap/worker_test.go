@@ -54,3 +54,13 @@ func TestWorkerProbeRecognizesOptionalTaskProbe(t *testing.T) {
 		t.Fatalf("Probe() error = %v, want nil", err)
 	}
 }
+
+func TestWorkerShutdownHandlesFailures(t *testing.T) {
+	worker := NewWorker(logger.New("debug", io.Discard))
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if err := worker.Shutdown(ctx); err != nil {
+		t.Fatalf("Shutdown() error = %v, want nil", err)
+	}
+}

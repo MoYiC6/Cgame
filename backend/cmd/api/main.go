@@ -26,12 +26,30 @@ func main() {
 	}
 
 	appLogger := logger.New(cfg.Log.Level, os.Stdout)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	provider, err := observability.InitProvider(ctx, cfg.Observability)
+	if err != nil {
+		if provider == nil {
+			appLogger.Error("init observability provider failed", "error", err)
+			os.Exit(1)
+		}
+		appLogger.Info("init observability provider degraded", "degraded", true, "error", err)
+	}
+
+	dbPool, err := database.NewPgxPool(ctx, cfg.DB)
+	if err != nil {
+		appLogger.Error("init db pool failed", "error", err)
+		os.Exit(1)
+	}
+
 	deps := bootstrap.Dependencies{
 		Config:     *cfg,
 		Logger:     appLogger,
-		Tracer:     observability.NewNoopTracer(),
-		Propagator: observability.NewNoopPropagator(),
-		DB:         database.DummyDB{},
+		Tracer:     provider.Tracer(),
+		Propagator: provider.Propagator(),
+		DB:         dbPool,
 	}
 
 	engine := bootstrap.NewAPIEngine(
@@ -43,9 +61,7 @@ func main() {
 	)
 
 	httpServer := bootstrap.NewHTTPServer(cfg.Server.Addr, engine)
-	app := bootstrap.NewApp(httpServer)
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
+	app := bootstrap.NewApp(httpServer, dbPool, provider)
 
 	go func() {
 		<-ctx.Done()

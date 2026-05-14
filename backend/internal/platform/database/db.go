@@ -67,6 +67,11 @@ func (p *PgxPool) Close() {
 	p.pool.Close()
 }
 
+func (p *PgxPool) Shutdown(ctx context.Context) error {
+	p.Close()
+	return nil
+}
+
 func (p *PgxPool) Pool() *pgxpool.Pool {
 	if p == nil {
 		return nil

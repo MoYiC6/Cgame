@@ -14,6 +14,7 @@ type Field = any
 
 type Logger interface {
 	Info(msg string, fields ...Field)
+	Warn(msg string, fields ...Field)
 	Error(msg string, fields ...Field)
 }
 
@@ -52,6 +53,10 @@ func New(level string, writer io.Writer) Logger {
 
 func (l *structuredLogger) Info(msg string, fields ...Field) {
 	l.inner.Info(msg, fields...)
+}
+
+func (l *structuredLogger) Warn(msg string, fields ...Field) {
+	l.inner.Warn(msg, fields...)
 }
 
 func (l *structuredLogger) Error(msg string, fields ...Field) {

@@ -67,3 +67,19 @@ Wave 1 中 Task 1-6 全部无前置依赖，设计为并行执行，但为避免
 
 - `response.APIResponse` 的顶层 `trace_id` 已生效后，bootstrap 侧测试应直接断言 `APIResponse.TraceID`，避免继续依赖 `data.trace_id` 的历史双轨字段。
 - `ping_test.go` 的回归重点是顶层响应封装，不是业务 payload；业务 `data` 仅保留 `module` 断言，`trace_id` 统一从 `APIResponse.TraceID` 读取。
+
+## 2026-05-14 Task 9
+- SQLTxManager 使用 Beginner + sqlTx 接口解耦 *sql.Tx concrete type，便于 pure Go fake 单测。
+- 嵌套事务判定必须先调用 ExecutorFromContext(ctx, nil)，已有 executor 时直接复用 ctx，不再 BeginTx。
+
+- Task 10: sqlc v2 配置使用 ，生成的  依赖  风格 （Exec/Query/QueryRow 带 context），因此 integration test 需直接基于  使用生成代码，而 goose 迁移仍可通过独立  + pgx stdlib 执行。
+- Task 10: 为兼容 macOS Colima，保留 ；本地 Docker 通过  成功跑通 Postgres + Ryuk。
+
+- Task 10（修正记录）: 上一条 Task 10 学习记录因 shell 反引号插值被污染；以下为准。
+- Task 10: `sqlc` v2 配置应使用 `sql_package: pgx/v5`，生成的 `dbgen.Queries` 依赖 `pgx` 风格 `DBTX`（`Exec/Query/QueryRow` 均携带 `context.Context`），因此 integration test 需直接基于 `*pgxpool.Pool` 调用生成查询，而 goose 迁移仍通过独立 `database/sql` + pgx stdlib 跑通即可。
+- Task 10: 在 macOS + Colima 环境下，保留 `configureTestcontainersDockerEnvironment` 很关键；本次验证通过 `unix:///Users/chening/.colima/default/docker.sock` 成功跑通 Postgres 与 Ryuk。
+
+## Task 11 - OTEL provider
+- observability provider now initializes from config, keeps noop fallback for trace_exporter_type=none, and returns a usable noop provider plus observable error when OTLP endpoint is missing.
+- Propagator preserves X-Trace-ID compatibility while preferring W3C traceparent on extract and injecting traceparent for valid W3C trace IDs.
+- go mod tidy is required when importing OTLP trace gRPC exporter packages so go.mod/go.sum stay consistent.

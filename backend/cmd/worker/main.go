@@ -10,7 +10,9 @@ import (
 
 	"backend/internal/bootstrap"
 	"backend/internal/platform/config"
+	"backend/internal/platform/database"
 	"backend/internal/platform/logger"
+	"backend/internal/platform/observability"
 )
 
 type placeholderTask struct{}
@@ -34,8 +36,23 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	provider, err := observability.InitProvider(ctx, cfg.Observability)
+	if err != nil {
+		if provider == nil {
+			appLogger.Error("init observability provider failed", "error", err)
+			os.Exit(1)
+		}
+		appLogger.Info("init observability provider degraded", "degraded", true, "error", err)
+	}
+
+	dbPool, err := database.NewPgxPool(ctx, cfg.DB)
+	if err != nil {
+		appLogger.Error("init db pool failed", "error", err)
+		os.Exit(1)
+	}
+
 	worker := bootstrap.NewWorker(appLogger)
-	app := bootstrap.NewApp(worker)
+	app := bootstrap.NewApp(worker, dbPool, provider)
 	worker.RegisterRunnable("placeholder", placeholderTask{})
 
 	appLogger.Info("worker starting", logger.Any("config", cfg.MaskedSummary()))

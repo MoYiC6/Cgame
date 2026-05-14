@@ -54,6 +54,42 @@
       "agent": "Sisyphus-Junior",
       "category": "quick",
       "updated_at": "2026-05-14T05:36:32.478Z"
+    },
+    "todo:9": {
+      "task_key": "todo:9",
+      "task_label": "9",
+      "task_title": "落地 TxManager、DBTX 与嵌套事务复用实现",
+      "session_id": "ses_1db0041d6ffebXK4m1ULpALk7O",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-05-14T05:44:41.690Z"
+    },
+    "todo:10": {
+      "task_key": "todo:10",
+      "task_label": "10",
+      "task_title": "接入真实 DB groundwork：pgx + goose + sqlc + Testcontainers 目标实现",
+      "session_id": "ses_1daf14bdfffe8ca2E8YSD4sKHD",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-05-14T06:15:44.252Z"
+    },
+    "todo:11": {
+      "task_key": "todo:11",
+      "task_label": "11",
+      "task_title": "接入 OTEL provider / propagator / tracer / shutdown 真实实现",
+      "session_id": "ses_1dadb06a6ffeedmGRp7kvFiy4L",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-05-14T06:28:40.029Z"
+    },
+    "todo:12": {
+      "task_key": "todo:12",
+      "task_label": "12",
+      "task_title": "接入 API / worker bootstrap 装配与 graceful shutdown 闭环",
+      "session_id": "ses_1dac0738dffeY7QmsubpnJp3GW",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-05-14T06:53:29.148Z"
     }
   }
 }

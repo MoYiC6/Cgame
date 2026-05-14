@@ -1165,7 +1165,7 @@ Max Concurrent: 6
   - Files: `backend/internal/platform/observability/*`, `backend/internal/platform/config/*`
   - Pre-commit: `cd backend && go test ./internal/platform/observability -count=1`
 
-- [ ] 12. 接入 API / worker bootstrap 装配与 graceful shutdown 闭环
+- [x] 12. 接入 API / worker bootstrap 装配与 graceful shutdown 闭环
 
   **What to do**:
   - 更新 `backend/cmd/api/main.go` 和 `backend/cmd/worker/main.go`，不再装配 noop tracer / dummy DB，而是使用真实 config-driven platform 初始化结果。
