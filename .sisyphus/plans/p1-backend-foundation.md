@@ -913,7 +913,7 @@ Max Concurrent: 6
   - Files: `backend/internal/platform/httpx/*`（或最终目录）, `backend/internal/platform/errors/*`
   - Pre-commit: `cd backend && go test ./internal/platform/... -run TestBindAndValidate -count=1`
 
-- [ ] 9. 落地 TxManager、DBTX 与嵌套事务复用实现
+- [x] 9. 落地 TxManager、DBTX 与嵌套事务复用实现
 
   **What to do**:
   - 在 `backend/internal/platform/database/` 内实现真实 `TxManager`、`DBTX`/executor 抽象、context 事务句柄传递与 nested reuse outer transaction 逻辑。
