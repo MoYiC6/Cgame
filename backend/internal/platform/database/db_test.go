@@ -2,7 +2,7 @@ package database
 
 import (
 	"context"
-	"path/filepath"
+	"strings"
 	"testing"
 
 	"backend/internal/platform/config"
@@ -15,12 +15,32 @@ func TestDummyDBPingReturnsNil(t *testing.T) {
 	}
 }
 
-func TestRunMigrationsAcceptsConfig(t *testing.T) {
-	cfg, err := config.Load(filepath.Join("..", "..", "..", "configs", "config.test.yaml"))
-	if err != nil {
-		t.Fatalf("Load returned error: %v", err)
+func TestNewPgxPoolRequiresDSN(t *testing.T) {
+	_, err := NewPgxPool(context.Background(), config.DBConfig{})
+	if err == nil {
+		t.Fatal("expected missing dsn error")
 	}
-	if err := RunMigrations(&cfg); err != nil {
-		t.Fatalf("RunMigrations returned error: %v", err)
+	if !strings.Contains(err.Error(), "dsn") {
+		t.Fatalf("expected dsn error, got %v", err)
+	}
+}
+
+func TestRunMigrationsRequiresConfig(t *testing.T) {
+	err := RunMigrations(nil)
+	if err == nil {
+		t.Fatal("expected nil config error")
+	}
+	if !strings.Contains(err.Error(), "config") {
+		t.Fatalf("expected config error, got %v", err)
+	}
+}
+
+func TestRunMigrationsRequiresDSN(t *testing.T) {
+	err := RunMigrations(&config.Config{})
+	if err == nil {
+		t.Fatal("expected missing dsn error")
+	}
+	if !strings.Contains(err.Error(), "dsn") {
+		t.Fatalf("expected dsn error, got %v", err)
 	}
 }

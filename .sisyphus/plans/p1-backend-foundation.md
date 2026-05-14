@@ -989,7 +989,7 @@ Max Concurrent: 6
   - Files: `backend/internal/platform/database/*`, `backend/internal/modules/*/service.go`, `backend/internal/modules/*/repository.go`
   - Pre-commit: `cd backend && go test ./internal/platform/database -run TestTxManager -count=1`
 
-- [ ] 10. 接入真实 DB groundwork：pgx + goose + sqlc + Testcontainers 目标实现
+- [x] 10. 接入真实 DB groundwork：pgx + goose + sqlc + Testcontainers 目标实现
 
   **What to do**:
   - 用 `pgx` 落地真实数据库连接池与 `Ping(ctx)`，替换 `DummyDB` 占位实现。

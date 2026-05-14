@@ -1,0 +1,50 @@
+== CMD: go run github.com/sqlc-dev/sqlc/cmd/sqlc@latest generate ==
+
+== CMD: go build ./... ==
+
+== CMD: go test ./test/integration -run TestDatabaseGroundwork -count=1 -v ==
+=== RUN   TestDatabaseGroundwork
+2026/05/14 14:10:48 github.com/testcontainers/testcontainers-go - Connected to docker: 
+  Server Version: 29.2.1
+  API Version: 1.53
+  Operating System: Ubuntu 24.04.4 LTS
+  Total Memory: 1959 MB
+  Testcontainers for Go Version: v0.42.0
+  Resolved Docker Host: unix:///Users/chening/.colima/default/docker.sock
+  Resolved Docker Socket Path: /var/run/docker.sock
+  Test SessionID: 1d0ca533736dba2dff3fb380dd6d2b0592fd4b5ebd0e0fe399cce8f648bb1274
+  Test ProcessID: 92c3ef3b-3364-480e-9f55-d4d9cf30c893
+2026/05/14 14:10:48 🐳 Creating container for image postgres:16-alpine
+2026/05/14 14:10:48 🐳 Creating container for image testcontainers/ryuk:0.13.0
+2026/05/14 14:10:48 ✅ Container created: 8a3240cb5267
+2026/05/14 14:10:48 🐳 Starting container: 8a3240cb5267
+2026/05/14 14:10:48 ✅ Container started: 8a3240cb5267
+2026/05/14 14:10:48 ⏳ Waiting for container id 8a3240cb5267 image: testcontainers/ryuk:0.13.0. Waiting for: port 8080/tcp to be listening
+2026/05/14 14:10:48 Shell not found in container
+2026/05/14 14:10:48 🔔 Container is ready: 8a3240cb5267
+2026/05/14 14:10:48 ✅ Container created: ed0f36f68f26
+2026/05/14 14:10:48 🐳 Starting container: ed0f36f68f26
+2026/05/14 14:10:48 ✅ Container started: ed0f36f68f26
+2026/05/14 14:10:48 ⏳ Waiting for container id ed0f36f68f26 image: postgres:16-alpine. Waiting for: all of: [log message "database system is ready to accept connections" (occurrence: 2)]
+2026/05/14 14:10:49 🔔 Container is ready: ed0f36f68f26
+2026/05/14 14:10:49 OK   00001_create_platform_runtime_probes.sql (3.26ms)
+2026/05/14 14:10:49 goose: successfully migrated database to version: 1
+2026/05/14 14:10:49 🐳 Stopping container: ed0f36f68f26
+2026/05/14 14:10:49 ✅ Container stopped: ed0f36f68f26
+2026/05/14 14:10:49 🐳 Terminating container: ed0f36f68f26
+2026/05/14 14:10:49 🚫 Container terminated: ed0f36f68f26
+--- PASS: TestDatabaseGroundwork (1.08s)
+=== RUN   TestDatabaseGroundworkFailsOnBrokenMigration
+2026/05/14 14:10:49 🐳 Creating container for image postgres:16-alpine
+2026/05/14 14:10:49 ✅ Container created: 47c600d21fa5
+2026/05/14 14:10:49 🐳 Starting container: 47c600d21fa5
+2026/05/14 14:10:49 ✅ Container started: 47c600d21fa5
+2026/05/14 14:10:49 ⏳ Waiting for container id 47c600d21fa5 image: postgres:16-alpine. Waiting for: all of: [log message "database system is ready to accept connections" (occurrence: 2)]
+2026/05/14 14:10:50 🔔 Container is ready: 47c600d21fa5
+2026/05/14 14:10:50 🐳 Stopping container: 47c600d21fa5
+2026/05/14 14:10:50 ✅ Container stopped: 47c600d21fa5
+2026/05/14 14:10:50 🐳 Terminating container: 47c600d21fa5
+2026/05/14 14:10:50 🚫 Container terminated: 47c600d21fa5
+--- PASS: TestDatabaseGroundworkFailsOnBrokenMigration (0.88s)
+PASS
+ok  	backend/test/integration	2.539s
