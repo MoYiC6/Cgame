@@ -1,0 +1,2 @@
+go test ./internal/platform/database/... -count=1
+ok  	backend/internal/platform/database	0.813s
