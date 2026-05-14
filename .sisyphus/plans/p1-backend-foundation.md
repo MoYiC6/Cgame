@@ -1242,7 +1242,7 @@ Max Concurrent: 6
   - Files: `backend/cmd/api/main.go`, `backend/cmd/worker/main.go`, `backend/internal/bootstrap/*`
   - Pre-commit: `cd backend && go test ./internal/bootstrap -count=1`
 
-- [ ] 13. 把 /readyz 改造成真实 DB readiness，保持 /healthz 仅表明进程存活
+- [x] 13. 把 /readyz 改造成真实 DB readiness，保持 /healthz 仅表明进程存活
 
   **What to do**:
   - 在 `backend/internal/bootstrap/server.go` 中落实：`/healthz` 只检查进程活着，不依赖 DB；`/readyz` 通过真实 `deps.DB.Ping(ctx)` 判定 readiness。

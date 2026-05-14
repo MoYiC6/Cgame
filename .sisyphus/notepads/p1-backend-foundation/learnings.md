@@ -83,3 +83,9 @@ Wave 1 中 Task 1-6 全部无前置依赖，设计为并行执行，但为避免
 - observability provider now initializes from config, keeps noop fallback for trace_exporter_type=none, and returns a usable noop provider plus observable error when OTLP endpoint is missing.
 - Propagator preserves X-Trace-ID compatibility while preferring W3C traceparent on extract and injecting traceparent for valid W3C trace IDs.
 - go mod tidy is required when importing OTLP trace gRPC exporter packages so go.mod/go.sum stay consistent.
+
+## Task 12 - bootstrap 装配与 shutdown 闭环
+- API/worker 入口统一走 observability.InitProvider + database.NewPgxPool；provider=nil 视为致命错误，degrade 模式使用 Info 日志并带 degraded=true 继续启动。
+- bootstrap.NewApp(...) 统一聚合 httpServer/worker、dbPool、provider 的 Shutdown；PgxPool 通过 Shutdown(ctx) 适配 lifecycle 接口。
+- InMemoryWorker.Shutdown 当前契约保持 no-op 并返回 nil；实际停机由 Run(ctx) 负责等待 ctx.Done() 与任务退出，避免 shutdown 聚合产生伪失败。
+2026-05-14: /readyz 语义已切换为真实 DB readiness：DB 健康返回 200，DB 失败或缺失返回 503；成功响应只保留 status=ok，不再暴露 dependencies=skipped。
