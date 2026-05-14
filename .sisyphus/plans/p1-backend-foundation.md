@@ -1086,7 +1086,7 @@ Max Concurrent: 6
   - Files: `backend/internal/platform/database/*`, `backend/migrations/*`, `backend/sql/queries/*`, `backend/sqlc.yaml`, `backend/configs/*`
   - Pre-commit: `cd backend && make sqlc-generate && go test ./test/integration -run TestDatabaseGroundwork -count=1`
 
-- [ ] 11. 接入 OTEL provider / propagator / tracer / shutdown 真实实现
+- [x] 11. 接入 OTEL provider / propagator / tracer / shutdown 真实实现
 
   **What to do**:
   - 在 `backend/internal/platform/observability/` 中把 noop tracer / propagator 升级为可配置的真实 OTEL provider 与 propagator，实现 provider 初始化、propagator 注册、tracer 获取、shutdown flush。

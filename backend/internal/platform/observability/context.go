@@ -1,6 +1,11 @@
 package observability
 
-import "context"
+import (
+	"context"
+	"strings"
+
+	oteltrace "go.opentelemetry.io/otel/trace"
+)
 
 type contextKey string
 
@@ -23,6 +28,12 @@ func WithTraceID(ctx context.Context, traceID string) context.Context {
 }
 
 func TraceIDFromContext(ctx context.Context) (string, bool) {
+	if spanContext := oteltrace.SpanContextFromContext(ctx); spanContext.IsValid() {
+		traceID := spanContext.TraceID().String()
+		if strings.TrimSpace(traceID) != "" {
+			return traceID, true
+		}
+	}
 	value, ok := ctx.Value(traceIDKey).(string)
 	return value, ok && value != ""
 }

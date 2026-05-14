@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"backend/internal/platform/config"
 )
 
 func TestRequestAndTraceContextRoundTrip(t *testing.T) {
@@ -136,5 +138,98 @@ func TestNoopPropagatorInjectExtract(t *testing.T) {
 	traceID, ok := TraceIDFromContext(newCtx)
 	if !ok || traceID != "trace-prop" {
 		t.Fatalf("expected extracted trace id trace-prop, got %q", traceID)
+	}
+}
+
+func TestPropagatorExtractPrefersTraceparentOverXTraceID(t *testing.T) {
+	propagator := NewNoopPropagator()
+	carrier := MapCarrier{
+		"traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+		"X-Trace-ID":  "legacy-trace",
+	}
+
+	ctx := propagator.Extract(context.Background(), carrier)
+
+	traceID, ok := TraceIDFromContext(ctx)
+	if !ok || traceID != "4bf92f3577b34da6a3ce929d0e0e4736" {
+		t.Fatalf("expected W3C trace id to win, got %q", traceID)
+	}
+}
+
+func TestPropagatorInjectWritesTraceparentAndXTraceID(t *testing.T) {
+	propagator := NewNoopPropagator()
+	carrier := MapCarrier{}
+	ctx := WithTraceID(context.Background(), "4bf92f3577b34da6a3ce929d0e0e4736")
+
+	propagator.Inject(ctx, carrier)
+
+	if got := carrier.Get("X-Trace-ID"); got != "4bf92f3577b34da6a3ce929d0e0e4736" {
+		t.Fatalf("expected legacy trace header, got %q", got)
+	}
+	if got := carrier.Get("traceparent"); got == "" {
+		t.Fatal("expected W3C traceparent header")
+	}
+}
+
+func TestObservabilityProviderInitializes(t *testing.T) {
+	provider, err := InitProvider(context.Background(), config.ObservabilityConfig{
+		TraceExporterType: "none",
+		ServiceName:       "zuhao-test",
+		ServiceVersion:    "test",
+		Environment:       "test",
+	})
+	if err != nil {
+		t.Fatalf("expected noop provider init without error, got %v", err)
+	}
+	if provider == nil {
+		t.Fatal("expected provider")
+	}
+	if provider.Tracer() == nil {
+		t.Fatal("expected tracer")
+	}
+	if provider.Propagator() == nil {
+		t.Fatal("expected propagator")
+	}
+	if !provider.IsNoop() {
+		t.Fatal("expected none exporter to initialize noop provider")
+	}
+}
+
+func TestObservabilityShutdownFlushesProvider(t *testing.T) {
+	provider, err := InitProvider(context.Background(), config.ObservabilityConfig{
+		TraceExporterType: "none",
+		ServiceName:       "zuhao-test",
+	})
+	if err != nil {
+		t.Fatalf("expected provider init without error, got %v", err)
+	}
+
+	ctx, span := provider.Tracer().StartSpan(context.Background(), "shutdown-test")
+	if ctx == nil {
+		t.Fatal("expected span context")
+	}
+	span.End(nil)
+
+	if err := provider.Shutdown(context.Background()); err != nil {
+		t.Fatalf("expected shutdown to flush without error, got %v", err)
+	}
+}
+
+func TestObservabilityProviderDegradesGracefully(t *testing.T) {
+	provider, err := InitProvider(context.Background(), config.ObservabilityConfig{
+		TraceExporterType: "otlp",
+		ServiceName:       "zuhao-test",
+	})
+	if err == nil {
+		t.Fatal("expected observable degrade error")
+	}
+	if provider == nil {
+		t.Fatal("expected noop provider after degrade")
+	}
+	if !provider.IsNoop() {
+		t.Fatal("expected provider to degrade to noop")
+	}
+	if provider.Tracer() == nil || provider.Propagator() == nil {
+		t.Fatal("expected degraded provider to keep tracer and propagator")
 	}
 }

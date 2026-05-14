@@ -1,0 +1,2 @@
+$ cd backend && go test ./internal/platform/observability -count=1
+ok  	backend/internal/platform/observability	0.904s
