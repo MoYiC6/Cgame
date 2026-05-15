@@ -5,13 +5,122 @@ info:
 paths:
   /healthz:
     get:
-      summary: Process health check
+      summary: Liveness check
+      tags:
+        - Health
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                code: "OK"
+                message: "success"
+                data:
+                  status: "ok"
+                request_id: "req_123"
+                trace_id: "trace_456"
   /readyz:
     get:
-      summary: Dependency readiness check
+      summary: Readiness check
+      tags:
+        - Health
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                code: "OK"
+                message: "success"
+                data:
+                  status: "ok"
+                request_id: "req_123"
+                trace_id: "trace_456"
+        '503':
+          description: Dependency Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+              example:
+                code: "DEPENDENCY_UNAVAILABLE"
+                message: "dependency unavailable"
+                request_id: "req_123"
+                trace_id: "trace_456"
+  /api/v1/order/ping:
+    get:
+      summary: Order module ping
+      tags:
+        - Order
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+  /api/v1/payment/ping:
+    get:
+      summary: Payment module ping
+      tags:
+        - Payment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+  /api/v1/inventory/ping:
+    get:
+      summary: Inventory module ping
+      tags:
+        - Inventory
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+  /api/v1/notification/ping:
+    get:
+      summary: Notification module ping
+      tags:
+        - Notification
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIResponse'
+components:
+  schemas:
+    APIResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Business error code (e.g., "OK", "INVALID_PARAMS")
+        message:
+          type: string
+          description: Safe error message or success message
+        data:
+          type: object
+          description: Actual response payload
+          nullable: true
+        request_id:
+          type: string
+          description: Unique request identifier
+        trace_id:
+          type: string
+          description: Distributed tracing identifier

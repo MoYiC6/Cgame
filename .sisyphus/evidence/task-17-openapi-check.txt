@@ -1,0 +1,29 @@
+  /healthz:
+                code: "OK"
+                message: "success"
+                data:
+                request_id: "req_123"
+                trace_id: "trace_456"
+  /readyz:
+                code: "OK"
+                message: "success"
+                data:
+                request_id: "req_123"
+                trace_id: "trace_456"
+                code: "DEPENDENCY_UNAVAILABLE"
+                message: "dependency unavailable"
+                request_id: "req_123"
+                trace_id: "trace_456"
+  /api/v1/order/ping:
+  /api/v1/payment/ping:
+  /api/v1/inventory/ping:
+  /api/v1/notification/ping:
+        - code
+        - message
+        code:
+          description: Business error code (e.g., "OK", "INVALID_PARAMS")
+        message:
+          description: Safe error message or success message
+        data:
+        request_id:
+        trace_id:

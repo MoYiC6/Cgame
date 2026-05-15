@@ -1551,7 +1551,7 @@ Max Concurrent: 6
   - Files: `backend/test/integration/*`
   - Pre-commit: `cd backend && go test ./test/integration -count=1`
 
-- [ ] 17. 更新 OpenAPI：统一响应结构 + health/readiness + 四模块 ping 契约
+- [x] 17. 更新 OpenAPI：统一响应结构 + health/readiness + 四模块 ping 契约
 
   **What to do**:
   - 更新 `backend/api/openapi.yaml`，补齐统一响应 schema，顶层明确 `code / message / data / request_id / trace_id`。
