@@ -1710,7 +1710,7 @@ Max Concurrent: 6
   - Files: `backend/Makefile`
   - Pre-commit: `cd backend && make test && make lint`
 
-- [ ] 19. 补齐 .golangci.yml 到 P1 要求并验证 lint 可跑
+- [x] 19. 补齐 .golangci.yml 到 P1 要求并验证 lint 可跑
 
   **What to do**:
   - 将 `backend/.golangci.yml` 从当前 `errcheck/govet/staticcheck/unused` 扩展到至少包含用户要求的 `govet`、`errcheck`、`gofmt`、`gosimple`、`staticcheck`、`structcheck`。
@@ -1782,7 +1782,7 @@ Max Concurrent: 6
   - Files: `backend/.golangci.yml`
   - Pre-commit: `cd backend && golangci-lint run`
 
-- [ ] 20. 校准 worker 占位任务与 observability / shutdown / config 一致性
+- [x] 20. 校准 worker 占位任务与 observability / shutdown / config 一致性
 
   **What to do**:
   - 更新 `backend/cmd/worker/main.go` 与 `backend/internal/bootstrap/worker.go`，让 worker 路径在配置、日志、OTEL provider、DB（如需要 probe 或 future hook）、shutdown 约定上与 API 入口保持一致。
