@@ -1632,7 +1632,7 @@ Max Concurrent: 6
   - Files: `backend/api/openapi.yaml`
   - Pre-commit: 记录路由对照证据后再提交
 
-- [ ] 18. 扩展 Makefile 与显式命令入口
+- [x] 18. 扩展 Makefile 与显式命令入口
 
   **What to do**:
   - 在 `backend/Makefile` 中补齐 `sqlc-generate`、`migrate-up`、`migrate-down`、`test-integration` 等显式命令入口。
