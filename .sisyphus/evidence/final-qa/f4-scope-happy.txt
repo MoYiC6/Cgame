@@ -1,0 +1,21 @@
+Verdict: APPROVE
+
+Scope Checks Executed
+1. 路由/处理器越界 endpoint 检查：grep `GET|POST|PUT|PATCH|DELETE|/api/v1|/healthz|/readyz|/ping` 并读取 `internal/bootstrap/server.go` 与四个模块 `handler.go`。
+2. 真实业务表/schema 检查：grep `CREATE TABLE|orders|payments|inventory|notifications|platform_runtime_probes` 并读取 `migrations/00001_create_platform_runtime_probes.sql`、`sql/queries/platform_runtime_probes.sql`。
+3. outbox/saga/mq/workflow 越界基础设施检查：grep `outbox|saga|mq|kafka|rabbitmq|nats|workflow`，并补充 grep Go 代码中的相关类型/发布订阅实现。
+4. OpenAPI 范围检查：读取 `api/openapi.yaml`，确认 paths 与统一响应 schema。
+
+Findings
+- Endpoint scope: 通过。`backend/internal/bootstrap/server.go:22-35` 仅注册 `/healthz`、`/readyz`、`/api/v1`。模块 handler 仅暴露 ping：
+  - `backend/internal/modules/order/handler.go:19-29` → `GET /order/ping`
+  - `backend/internal/modules/payment/handler.go:19-29` → `GET /payment/ping`
+  - `backend/internal/modules/inventory/handler.go:19-29` → `GET /inventory/ping`
+  - `backend/internal/modules/notification/handler.go:19-29` → `GET /notification/ping`
+  未发现 create/list/update/delete 等真实业务 CRUD endpoint。
+- Schema scope: 通过。唯一真实 migration 为 `backend/migrations/00001_create_platform_runtime_probes.sql:2-13`，仅创建平台级 `platform_runtime_probes`。对应 query `backend/sql/queries/platform_runtime_probes.sql:1-17` 仅含 probe 插入/计数/删除。未发现 `orders`、`payments`、`inventory`、`notifications` 业务表。
+- Infra scope: 通过。未在 `backend/internal/**/*.go` 发现 outbox/saga/MQ workflow 实现、发布订阅代码或工作流编排。`backend/internal/platform/config/config.go:56-59` 与 `backend/configs/config.*.yaml:30-33` 仅保留 `mq` 配置骨架，不构成 MQ workflow 越界实现。命中的 outbox/MQ 内容位于文档规范文件，不属于当前实现。
+- OpenAPI scope: 通过。`backend/api/openapi.yaml:6-102` 仅声明 `/healthz`、`/readyz`、`/api/v1/{order,payment,inventory,notification}/ping`；`backend/api/openapi.yaml:105-126` 统一通过 `APIResponse` schema 暴露 `code`、`message`、`data`、`request_id`、`trace_id`。未发现额外业务路径或越界 schema。
+
+Conclusion
+- 当前实现符合 P1 scope：仅落地 foundation + skeleton，没有引入真实业务 CRUD、真实业务 schema、跨模块流程、outbox/saga/MQ workflow 等越界内容。

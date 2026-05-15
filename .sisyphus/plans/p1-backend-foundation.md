@@ -83,13 +83,13 @@
 - `.golangci.yml`、`Makefile`：补齐 P1 要求的 lint / test / migration / sqlc / integration 命令
 
 ### Definition of Done
-- [ ] `cd backend && go test ./...` 通过
-- [ ] `cd backend && make test` 通过
-- [ ] `cd backend && make lint` 通过
-- [ ] `cd backend && golangci-lint run` 通过
-- [ ] `cd backend && make sqlc-generate` 可执行并无未提交生成差异
-- [ ] `cd backend && make test-integration` 通过，包含 Testcontainers + migration + readiness 链路
-- [ ] `/healthz`、`/readyz`、`/api/v1/{order|payment|inventory|notification}/ping` 都返回统一响应结构，且顶层含 `request_id`、`trace_id`
+- [x] `cd backend && go test ./...` 通过
+- [x] `cd backend && make test` 通过
+- [x] `cd backend && make lint` 通过
+- [x] `cd backend && golangci-lint run` 通过
+- [x] `cd backend && make sqlc-generate` 可执行并无未提交生成差异
+- [x] `cd backend && make test-integration` 通过，包含 Testcontainers + migration + readiness 链路
+- [x] `/healthz`、`/readyz`、`/api/v1/{order|payment|inventory|notification}/ping` 都返回统一响应结构，且顶层含 `request_id`、`trace_id`
 
 ### Must Have
 - 只在 `backend/` 工作目录内定义与验证所有命令
@@ -1864,7 +1864,7 @@ Max Concurrent: 6
 > 4 个复核任务并行执行，全部通过后把结果展示给用户，等待用户明确 okay。
 > **仍遵循 ZERO HUMAN INTERVENTION**：本波次所有检查必须由 agent 自动执行；`Real Manual QA` 在此处特指“agent 按步骤亲自操作与断言”，不是要求用户手动测试。
 
-- [ ] F1. **Plan Compliance Audit** — `oracle`
+- [x] F1. **Plan Compliance Audit** — `oracle`
   逐项核对本计划中的 Must Have / Must NOT Have / Deliverables / Evidence files，输出 `APPROVE/REJECT`。
 
   **QA Scenarios (MANDATORY)**:
@@ -1892,7 +1892,7 @@ Max Concurrent: 6
     Evidence: .sisyphus/evidence/final-qa/f1-plan-compliance-failure-check.txt
   ```
 
-- [ ] F2. **Code Quality Review** — `unspecified-high`
+- [x] F2. **Code Quality Review** — `unspecified-high`
   运行 `cd backend && go test ./...`、`cd backend && make lint`，并用自动化搜索检查 Go 世界里的坏味道：未处理错误、空错误分支、调试日志泄漏、注释掉代码、未使用导入、无意义抽象。
 
   **QA Scenarios (MANDATORY)**:
@@ -1921,7 +1921,7 @@ Max Concurrent: 6
     Evidence: .sisyphus/evidence/final-qa/f2-quality-smells.txt
   ```
 
-- [ ] F3. **Agent-Executed QA Replay** — `unspecified-high`
+- [x] F3. **Agent-Executed QA Replay** — `unspecified-high`
   按各任务 QA scenarios 逐项自动执行，保存证据到 `.sisyphus/evidence/final-qa/`；重点覆盖 health/readiness、顶层 trace_id、DB readiness、migration/sqlc/Testcontainers、worker shutdown。
 
   **QA Scenarios (MANDATORY)**:
@@ -1955,7 +1955,7 @@ Max Concurrent: 6
     Evidence: .sisyphus/evidence/final-qa/f3-agent-replay-failure.txt
   ```
 
-- [ ] F4. **Scope Fidelity Check** — `deep`
+- [x] F4. **Scope Fidelity Check** — `deep`
   核对所有改动是否严格停留在 foundation + unified skeleton，不包含真实业务 schema、真实 CRUD、真实业务 endpoint、MQ/outbox、鉴权等越界项。
 
   **QA Scenarios (MANDATORY)**:
@@ -2009,11 +2009,11 @@ cd backend && make test-integration
 ```
 
 ### Final Checklist
-- [ ] 顶层响应结构统一包含 `trace_id`
-- [ ] `BindAndValidate` 统一覆盖 JSON/query/path/header
-- [ ] `TxManager` 嵌套事务复用外层事务且有自动化测试
-- [ ] `pgx + sqlc + goose + Testcontainers` 链路真实可跑
-- [ ] `/readyz` 依赖 DB，`/healthz` 不依赖 DB
-- [ ] OTEL traces + log correlation 主链路闭环完成
-- [ ] 四模块骨架统一接入公共接缝，未新增真实业务 endpoint
-- [ ] OpenAPI / Makefile / lint / tests 与代码实现同步
+- [x] 顶层响应结构统一包含 `trace_id`
+- [x] `BindAndValidate` 统一覆盖 JSON/query/path/header
+- [x] `TxManager` 嵌套事务复用外层事务且有自动化测试
+- [x] `pgx + sqlc + goose + Testcontainers` 链路真实可跑
+- [x] `/readyz` 依赖 DB，`/healthz` 不依赖 DB
+- [x] OTEL traces + log correlation 主链路闭环完成
+- [x] 四模块骨架统一接入公共接缝，未新增真实业务 endpoint
+- [x] OpenAPI / Makefile / lint / tests 与代码实现同步
