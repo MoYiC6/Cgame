@@ -3,6 +3,7 @@ module backend
 go 1.26
 
 require (
+	github.com/exaring/otelpgx v0.10.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/pressly/goose/v3 v3.27.1

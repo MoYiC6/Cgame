@@ -1,0 +1,6 @@
+$ cd backend && go test ./internal/platform/database -run TestPgxPoolTracingHookRegistered -count=1
+--- FAIL: TestPgxPoolTracingHookRegistered (0.00s)
+    db_tracing_test.go:22: expected pgx pool tracer hook to be registered
+FAIL
+FAIL	backend/internal/platform/database	0.890s
+FAIL

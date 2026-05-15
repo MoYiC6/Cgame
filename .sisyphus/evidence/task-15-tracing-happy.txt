@@ -1,0 +1,11 @@
+$ cd backend && go test ./internal/platform/database -run TestPgxPoolTracingHookRegistered -count=1
+ok  	backend/internal/platform/database	0.884s
+
+$ cd backend && go test ./internal/platform/logger -run 'TestLoggerWithContextIncludesTraceID|TestLoggerWithContextFallsBackToCustomTraceID' -count=1
+ok  	backend/internal/platform/logger	1.104s
+
+$ cd backend && go test ./internal/platform/database -run TestPgxPool -count=1
+ok  	backend/internal/platform/database	0.625s
+
+$ cd backend && go test ./internal/platform/logger -run TestLoggerWith -count=1
+ok  	backend/internal/platform/logger	0.844s

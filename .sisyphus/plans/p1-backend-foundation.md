@@ -1399,7 +1399,7 @@ Max Concurrent: 6
   - Files: `backend/internal/modules/order/*`, `backend/internal/modules/payment/*`, `backend/internal/modules/inventory/*`, `backend/internal/modules/notification/*`
   - Pre-commit: `cd backend && go test ./internal/modules/... -count=1`
 
-- [ ] 15. 打通日志关联与 DB tracing 主链路闭环
+- [x] 15. 打通日志关联与 DB tracing 主链路闭环
 
   **What to do**:
   - 让 `backend/internal/platform/logger/logger.go` 与真实 observability provider 协同，把 request_id / trace_id 稳定打入日志字段。

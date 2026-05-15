@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"backend/internal/platform/config"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
 
@@ -41,6 +42,7 @@ func NewPgxPool(ctx context.Context, cfg config.DBConfig) (*PgxPool, error) {
 	if cfg.ConnMaxLifetimeSecs > 0 {
 		poolConfig.MaxConnLifetime = time.Duration(cfg.ConnMaxLifetimeSecs) * time.Second
 	}
+	poolConfig.ConnConfig.Tracer = otelpgx.NewTracer()
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
