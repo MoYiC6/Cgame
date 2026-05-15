@@ -106,7 +106,9 @@ func RunMigrationsFrom(cfg *config.Config, dir string) error {
 	if err != nil {
 		return fmt.Errorf("open migration db: %w", err)
 	}
-	defer db.Close()
+	defer func() {
+		_ = db.Close()
+	}()
 
 	if cfg.DB.MaxOpenConns > 0 {
 		db.SetMaxOpenConns(cfg.DB.MaxOpenConns)

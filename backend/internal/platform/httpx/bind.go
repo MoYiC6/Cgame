@@ -78,7 +78,7 @@ func collectHeaderValues(targetType reflect.Type, header http.Header, values map
 	if targetType == nil {
 		return
 	}
-	if targetType.Kind() == reflect.Ptr {
+	if targetType.Kind() == reflect.Pointer {
 		targetType = targetType.Elem()
 	}
 	if targetType.Kind() != reflect.Struct {
@@ -98,7 +98,7 @@ func collectHeaderValues(targetType reflect.Type, header http.Header, values map
 		}
 
 		fieldType := field.Type
-		if fieldType.Kind() == reflect.Ptr {
+		if fieldType.Kind() == reflect.Pointer {
 			fieldType = fieldType.Elem()
 		}
 		if fieldType.Kind() == reflect.Struct {

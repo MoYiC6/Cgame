@@ -89,3 +89,23 @@ Wave 1 中 Task 1-6 全部无前置依赖，设计为并行执行，但为避免
 - bootstrap.NewApp(...) 统一聚合 httpServer/worker、dbPool、provider 的 Shutdown；PgxPool 通过 Shutdown(ctx) 适配 lifecycle 接口。
 - InMemoryWorker.Shutdown 当前契约保持 no-op 并返回 nil；实际停机由 Run(ctx) 负责等待 ctx.Done() 与任务退出，避免 shutdown 聚合产生伪失败。
 2026-05-14: /readyz 语义已切换为真实 DB readiness：DB 健康返回 200，DB 失败或缺失返回 503；成功响应只保留 status=ok，不再暴露 dependencies=skipped。
+- 2026-05-15: Task 14 completed: order/payment/inventory/notification 四模块已统一迁移到 repo+txManager seam，handler 不再手动回填 payload trace_id，顶层 trace contract 完全由 response 层承担。repository 现通过 dbtx fallback + ExecutorFromContext 预留统一事务 executor 接缝。
+- 2026-05-15: Oracle review follow-up completed: 补充了 nil txManager fallback 契约测试，并为 Task 14 落盘 build/LSP evidence，四模块新契约验收证据闭环已补齐。
+
+- 2026-05-15: Task 15 completed: `database.NewPgxPool` 现在通过 `poolConfig.ConnConfig.Tracer = otelpgx.NewTracer()` 接入 pgx OTEL hook；由于 `otelpgx` 默认走全局 tracer provider，provider 为 noop 时无实际 span，provider 初始化后即可自动打通 DB span。logger 侧无需改实现，只需在测试中验证 `TraceIDFromContext` 对 OTel span context 优先、无 span 时回退 custom trace_id。
+
+## Task 16 - integration contract split
+- `backend/test/integration` should be split by responsibility: `health_test.go` for `/healthz`, `readiness_test.go` for `/readyz`, and `ping_test.go` for the four module `/ping` routes.
+- Integration tests should use an in-process `bootstrap.NewAPIEngine(...)` helper so they stay independent from manually started servers and can assert top-level `request_id` / `trace_id` through `response.APIResponse`.
+- `/readyz` failure is best exercised with a tiny stub DB implementing only `Ping(context.Context) error`; this keeps the 503 path deterministic without relying on Testcontainers.
+- `X-Trace-ID` and `X-Request-ID` should be set explicitly in integration requests when asserting header/body echo behavior; avoid checking generated values unless the generation itself is the subject under test.
+
+## Task 18 - Makefile command entry expansion
+- `make sqlc-generate` should stay as a thin wrapper around `sqlc generate -f sqlc.yaml` so generation is explicitly tied to the checked-in sqlc config.
+- `make migrate-up` / `make migrate-down` should fail fast when `DB_DSN` is unset and print a clear Chinese error message before invoking goose.
+- `make test-integration` must target only `./test/integration` and must not degrade into `go test ./...`.
+- In Makefile recipes, escape shell variables with `$$` so `make -n` shows the runtime command and does not expand `DB_DSN` too early.
+## task-19 lint cleanup
+- `golangci-lint v2.12.2` 里 `gofmt` 必须放到 `formatters.enable`，不能放进 `linters.enable`。
+- 同版本里 `gosimple` 不再作为独立 linter 暴露，相关规则已并入 `staticcheck`。
+- `structcheck` 在新版本 golangci-lint 中已移除，替代应使用 `unused` / `revive`。

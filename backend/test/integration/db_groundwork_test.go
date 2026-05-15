@@ -141,7 +141,7 @@ func newDatabaseGroundworkHarness(ctx context.Context, t *testing.T) (*databaseG
 	pingCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	if err := sqlDB.PingContext(pingCtx); err != nil {
-		sqlDB.Close()
+		_ = sqlDB.Close()
 		if terminateErr := container.Terminate(ctx); terminateErr != nil {
 			return nil, fmt.Errorf("ping error: %w; terminate error: %v", err, terminateErr)
 		}
@@ -150,7 +150,7 @@ func newDatabaseGroundworkHarness(ctx context.Context, t *testing.T) (*databaseG
 
 	pool, err := database.NewPgxPool(ctx, config.DBConfig{DSN: connString, MaxOpenConns: 16, ConnMaxLifetimeSecs: 300})
 	if err != nil {
-		sqlDB.Close()
+		_ = sqlDB.Close()
 		if terminateErr := container.Terminate(ctx); terminateErr != nil {
 			return nil, fmt.Errorf("new pgx pool error: %w; terminate error: %v", err, terminateErr)
 		}
@@ -158,7 +158,7 @@ func newDatabaseGroundworkHarness(ctx context.Context, t *testing.T) (*databaseG
 	}
 	if err := pool.Ping(pingCtx); err != nil {
 		pool.Close()
-		sqlDB.Close()
+		_ = sqlDB.Close()
 		if terminateErr := container.Terminate(ctx); terminateErr != nil {
 			return nil, fmt.Errorf("pgx pool ping error: %w; terminate error: %v", err, terminateErr)
 		}

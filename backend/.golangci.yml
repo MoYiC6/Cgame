@@ -9,3 +9,10 @@ linters:
     - govet
     - staticcheck
     - unused
+
+formatters:
+  enable:
+    - gofmt
+
+# golangci-lint v2.12.2 已不再将 gosimple 作为独立 linter 暴露；
+# 其规则已并入 staticcheck。structcheck 也已在新版本移除，需用 unused / revive 替代。

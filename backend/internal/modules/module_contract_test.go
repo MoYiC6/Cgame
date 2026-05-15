@@ -62,8 +62,10 @@ func TestModulePingHandlersReturnTopLevelTraceIDWithoutPayloadTrace(t *testing.T
 			path:          "/api/v1/notification/ping",
 			module:        "notification",
 			newRepository: func() any { return notification.NewRepository() },
-			newService:    func(repo any) any { return notification.NewService(repo.(notification.Repository), database.NoopTxManager{}) },
-			newHandler:    func(service any) routeRegistrar { return notification.NewHandler(service.(notification.Service)) },
+			newService: func(repo any) any {
+				return notification.NewService(repo.(notification.Repository), database.NoopTxManager{})
+			},
+			newHandler: func(service any) routeRegistrar { return notification.NewHandler(service.(notification.Service)) },
 		},
 	}
 
@@ -116,30 +118,35 @@ func TestModuleConstructorsExposeSymmetricServiceAndRepositorySeams(t *testing.T
 	tests := []struct {
 		name           string
 		service        any
+		nilTxService   any
 		repository     any
 		repositoryType reflect.Type
 	}{
 		{
 			name:           "order",
 			service:        order.NewService(order.NewRepository(), database.NoopTxManager{}),
+			nilTxService:   order.NewService(order.NewRepository(), nil),
 			repository:     order.NewRepository(),
 			repositoryType: reflect.TypeFor[order.Repository](),
 		},
 		{
 			name:           "payment",
 			service:        payment.NewService(payment.NewRepository(), database.NoopTxManager{}),
+			nilTxService:   payment.NewService(payment.NewRepository(), nil),
 			repository:     payment.NewRepository(),
 			repositoryType: reflect.TypeFor[payment.Repository](),
 		},
 		{
 			name:           "inventory",
 			service:        inventory.NewService(inventory.NewRepository(), database.NoopTxManager{}),
+			nilTxService:   inventory.NewService(inventory.NewRepository(), nil),
 			repository:     inventory.NewRepository(),
 			repositoryType: reflect.TypeFor[inventory.Repository](),
 		},
 		{
 			name:           "notification",
 			service:        notification.NewService(notification.NewRepository(), database.NoopTxManager{}),
+			nilTxService:   notification.NewService(notification.NewRepository(), nil),
 			repository:     notification.NewRepository(),
 			repositoryType: reflect.TypeFor[notification.Repository](),
 		},
@@ -167,6 +174,11 @@ func TestModuleConstructorsExposeSymmetricServiceAndRepositorySeams(t *testing.T
 			}
 			if !txManagerField.Type.Implements(reflect.TypeFor[database.TxManager]()) {
 				t.Fatalf("expected txManager field to implement database.TxManager, got %s", txManagerField.Type)
+			}
+
+			nilTxManagerField := reflect.ValueOf(tt.nilTxService).Elem().FieldByName("txManager")
+			if nilTxManagerField.IsNil() {
+				t.Fatalf("expected nil txManager constructor input to fall back to database.NoopTxManager")
 			}
 
 			repoType := reflect.TypeOf(tt.repository)

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	apperrors "backend/internal/platform/errors"
 	"backend/internal/platform/database"
+	apperrors "backend/internal/platform/errors"
 	"backend/internal/platform/response"
 	"github.com/gin-gonic/gin"
 )

@@ -1,0 +1,21 @@
+internal/platform/database/db.go:109:16: Error return value of `db.Close` is not checked (errcheck)
+	defer db.Close()
+	              ^
+test/integration/db_groundwork_test.go:144:14: Error return value of `sqlDB.Close` is not checked (errcheck)
+		sqlDB.Close()
+		           ^
+test/integration/db_groundwork_test.go:153:14: Error return value of `sqlDB.Close` is not checked (errcheck)
+		sqlDB.Close()
+		           ^
+test/integration/db_groundwork_test.go:161:14: Error return value of `sqlDB.Close` is not checked (errcheck)
+		sqlDB.Close()
+		           ^
+internal/platform/httpx/bind.go:81:26: inline: Constant reflect.Ptr should be inlined (govet)
+	if targetType.Kind() == reflect.Ptr {
+	                        ^
+internal/platform/httpx/bind.go:101:26: inline: Constant reflect.Ptr should be inlined (govet)
+		if fieldType.Kind() == reflect.Ptr {
+		                       ^
+6 issues:
+* errcheck: 4
+* govet: 2

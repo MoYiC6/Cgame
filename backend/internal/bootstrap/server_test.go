@@ -1,9 +1,9 @@
 package bootstrap
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
