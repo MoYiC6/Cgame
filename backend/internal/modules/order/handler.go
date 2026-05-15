@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	apperrors "backend/internal/platform/errors"
-	"backend/internal/platform/observability"
 	"backend/internal/platform/response"
 	"github.com/gin-gonic/gin"
 )
@@ -26,9 +25,6 @@ func (h *Handler) Ping(c *gin.Context) {
 	if err != nil {
 		response.Fail(c, apperrors.New("ORDER_PING_FAILED", "order ping failed", http.StatusInternalServerError, err))
 		return
-	}
-	if traceID, ok := observability.TraceIDFromContext(c.Request.Context()); ok {
-		payload.TraceID = traceID
 	}
 	response.Success(c, payload)
 }

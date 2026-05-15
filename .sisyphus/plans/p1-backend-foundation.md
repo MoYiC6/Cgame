@@ -1317,7 +1317,7 @@ Max Concurrent: 6
   - Files: `backend/internal/bootstrap/server.go`, `backend/internal/bootstrap/server_test.go`, `backend/test/integration/*`
   - Pre-commit: `cd backend && go test ./internal/bootstrap -run 'TestReadyz|TestHealthz' -count=1`
 
-- [ ] 14. 四模块骨架统一接入 handler/service/repository 新契约
+- [x] 14. 四模块骨架统一接入 handler/service/repository 新契约
 
   **What to do**:
   - 在 `backend/internal/modules/{order,payment,inventory,notification}/` 中统一接入新的 handler/service/repository 构造风格：handler 用统一 bind/validate 与 response；service 持有 repository + `TxManager`；repository 仅依赖 DB executor/CRUD 接口。

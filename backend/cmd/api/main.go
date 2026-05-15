@@ -54,10 +54,10 @@ func main() {
 
 	engine := bootstrap.NewAPIEngine(
 		deps,
-		order.NewHandler(order.NewService(order.NewRepository())),
-		payment.NewHandler(payment.NewService(payment.NewRepository())),
-		inventory.NewHandler(inventory.NewService(inventory.NewRepository())),
-		notification.NewHandler(notification.NewService(notification.NewRepository())),
+		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
+		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
+		inventory.NewHandler(inventory.NewService(inventory.NewRepository(), database.NoopTxManager{})),
+		notification.NewHandler(notification.NewService(notification.NewRepository(), database.NoopTxManager{})),
 	)
 
 	httpServer := bootstrap.NewHTTPServer(cfg.Server.Addr, engine)

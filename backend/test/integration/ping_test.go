@@ -13,6 +13,7 @@ import (
 	"backend/internal/modules/order"
 	"backend/internal/modules/payment"
 	"backend/internal/platform/config"
+	"backend/internal/platform/database"
 	"backend/internal/platform/logger"
 	"backend/internal/platform/observability"
 	"backend/internal/platform/response"
@@ -34,10 +35,10 @@ func TestBootstrapRegistersAllPingRoutes(t *testing.T) {
 
 	engine := bootstrap.NewAPIEngine(
 		deps,
-		order.NewHandler(order.NewService(order.NewRepository())),
-		payment.NewHandler(payment.NewService(payment.NewRepository())),
-		inventory.NewHandler(inventory.NewService(inventory.NewRepository())),
-		notification.NewHandler(notification.NewService(notification.NewRepository())),
+		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
+		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
+		inventory.NewHandler(inventory.NewService(inventory.NewRepository(), database.NoopTxManager{})),
+		notification.NewHandler(notification.NewService(notification.NewRepository(), database.NoopTxManager{})),
 	)
 
 	tests := []struct {
