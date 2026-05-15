@@ -1476,7 +1476,7 @@ Max Concurrent: 6
   - Files: `backend/internal/platform/logger/*`, `backend/internal/platform/observability/*`, `backend/internal/platform/database/*`
   - Pre-commit: `cd backend && go test ./internal/platform/... -count=1`
 
-- [ ] 16. 扩展集成测试矩阵到顶层 trace_id、readiness、ping 与 DB 主链路
+- [x] 16. 扩展集成测试矩阵到顶层 trace_id、readiness、ping 与 DB 主链路
 
   **What to do**:
   - 扩展 `backend/test/integration/ping_test.go`，必要时拆分为 `backend/test/integration/health_test.go`、`backend/test/integration/readiness_test.go`、`backend/test/integration/ping_test.go`，分别覆盖 `/healthz`、`/readyz`、四模块 `/ping`、顶层 `request_id/trace_id`、header 透传、DB readiness。
