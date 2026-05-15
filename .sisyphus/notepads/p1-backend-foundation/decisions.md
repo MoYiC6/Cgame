@@ -6,3 +6,4 @@
 ## task-19 lint config decision
 - 保留 `govet`、`errcheck`、`staticcheck`、`unused`，并将 `gofmt` 迁移到 `formatters.enable`。
 - 不再尝试单独启用 `gosimple`，因为当前 golangci-lint 版本已将其规则纳入 `staticcheck`。
+- Final QA F4 recorded APPROVE because scope checks found no runtime CRUD endpoints, no business tables, and OpenAPI remained limited to health/readyz/module ping plus unified APIResponse.

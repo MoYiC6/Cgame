@@ -1,4 +1,4 @@
-ok  	backend/internal/modules	0.378s
+ok  	backend/internal/modules	0.710s
 ?   	backend/internal/modules/inventory	[no test files]
 ?   	backend/internal/modules/notification	[no test files]
 ?   	backend/internal/modules/order	[no test files]

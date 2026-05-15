@@ -1,0 +1,8 @@
+Task 14 LSP diagnostics summary
+backend/internal/modules/order/{handler.go,service.go,repository.go}: no diagnostics
+backend/internal/modules/payment/{handler.go,service.go,repository.go}: no diagnostics
+backend/internal/modules/inventory/{handler.go,service.go,repository.go}: no diagnostics
+backend/internal/modules/notification/{handler.go,service.go,repository.go}: no diagnostics
+backend/internal/modules/module_contract_test.go: no diagnostics
+backend/cmd/api/main.go: no diagnostics
+backend/test/integration/ping_test.go: no diagnostics

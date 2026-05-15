@@ -1,1 +1,5 @@
-ok  	backend/internal/bootstrap	0.704s
+$ cd backend && go build ./cmd/api ./cmd/worker
+(no output)
+
+$ cd backend && go test ./internal/bootstrap -count=1
+ok  	backend/internal/bootstrap	0.702s

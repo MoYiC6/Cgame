@@ -109,3 +109,11 @@ Wave 1 中 Task 1-6 全部无前置依赖，设计为并行执行，但为避免
 - `golangci-lint v2.12.2` 里 `gofmt` 必须放到 `formatters.enable`，不能放进 `linters.enable`。
 - 同版本里 `gosimple` 不再作为独立 linter 暴露，相关规则已并入 `staticcheck`。
 - `structcheck` 在新版本 golangci-lint 中已移除，替代应使用 `unused` / `revive`。
+- F4 scope audit confirms runtime implementation remains within P1 foundation+skeleton scope: only health/readyz plus four module ping routes, only platform_runtime_probes schema/query chain, and no outbox/saga/MQ workflow code beyond config/documentation references.
+
+## 2026-05-15 F4 scope fidelity check
+- F4 final QA scope check verdict: APPROVE. Current implementation stays within P1 foundation + skeleton scope.
+- Allowed endpoints observed: /healthz, /readyz, /api/v1/order/ping, /api/v1/payment/ping, /api/v1/inventory/ping, /api/v1/notification/ping.
+- Allowed DB validation carrier observed: platform_runtime_probes only; no orders/payments/inventory/notifications business tables.
+- MQ config skeleton exists, but no outbox/saga/MQ workflow implementation found in internal Go code.
+- Evidence written to .sisyphus/evidence/final-qa/f4-scope-happy.txt and f4-scope-failure.txt.

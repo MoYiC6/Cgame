@@ -90,6 +90,78 @@
       "agent": "Sisyphus-Junior",
       "category": "deep",
       "updated_at": "2026-05-14T06:53:29.148Z"
+    },
+    "todo:13": {
+      "task_key": "todo:13",
+      "task_label": "13",
+      "task_title": "把 /readyz 改造成真实 DB readiness，保持 /healthz 仅表明进程存活",
+      "session_id": "ses_1daaea07fffeAToVTl3arxii30",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-14T07:11:12.470Z"
+    },
+    "todo:14": {
+      "task_key": "todo:14",
+      "task_label": "14",
+      "task_title": "四模块骨架统一接入 handler/service/repository 新契约",
+      "session_id": "ses_1da9361a9ffe1CTn1SELNC77on",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-05-14T07:50:45.528Z"
+    },
+    "todo:15": {
+      "task_key": "todo:15",
+      "task_label": "15",
+      "task_title": "打通日志关联与 DB tracing 主链路闭环",
+      "session_id": "ses_1d60043f9ffe7wsQzsB5dgdE6i",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-05-15T05:11:38.776Z"
+    },
+    "todo:16": {
+      "task_key": "todo:16",
+      "task_label": "16",
+      "task_title": "扩展集成测试矩阵到顶层 trace_id、readiness、ping 与 DB 主链路",
+      "session_id": "ses_1d5f130d2ffe0L6bwgZ6GpaBnS",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-15T05:15:05.506Z"
+    },
+    "todo:17": {
+      "task_key": "todo:17",
+      "task_label": "17",
+      "task_title": "更新 OpenAPI：统一响应结构 + health/readiness + 四模块 ping 契约",
+      "session_id": "ses_1d5ea5224ffek0jmQi2ONNRRhN",
+      "agent": "Sisyphus-Junior",
+      "category": "writing",
+      "updated_at": "2026-05-15T05:24:56.148Z"
+    },
+    "todo:18": {
+      "task_key": "todo:18",
+      "task_label": "18",
+      "task_title": "扩展 Makefile 与显式命令入口",
+      "session_id": "ses_1d5e62285ffexIYPFvKhPIUMNM",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-15T05:28:44.472Z"
+    },
+    "todo:19": {
+      "task_key": "todo:19",
+      "task_label": "19",
+      "task_title": "补齐 .golangci.yml 到 P1 要求并验证 lint 可跑",
+      "session_id": "ses_1d5e10773ffetPt3hEbANFvc28",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-05-15T05:36:55.583Z"
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**Plan Compliance Audit** — `oracle`",
+      "session_id": "ses_1d5da087affeZTGA4qyQXV3vHD",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-05-15T05:44:22.479Z"
     }
   }
 }
