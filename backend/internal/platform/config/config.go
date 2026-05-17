@@ -11,13 +11,17 @@ import (
 )
 
 type Config struct {
-	App           AppConfig           `yaml:"app"`
-	Server        ServerConfig        `yaml:"server"`
-	Log           LogConfig           `yaml:"log"`
-	DB            DBConfig            `yaml:"db"`
-	Redis         RedisConfig         `yaml:"redis"`
-	MQ            MQConfig            `yaml:"mq"`
-	Observability ObservabilityConfig `yaml:"observability"`
+	App             AppConfig             `yaml:"app"`
+	Server          ServerConfig          `yaml:"server"`
+	Log             LogConfig             `yaml:"log"`
+	DB              DBConfig              `yaml:"db"`
+	Redis           RedisConfig           `yaml:"redis"`
+	MQ              MQConfig              `yaml:"mq"`
+	Observability   ObservabilityConfig   `yaml:"observability"`
+	CORS            CORSConfig            `yaml:"cors"`
+	SecurityHeaders SecurityHeadersConfig `yaml:"security_headers"`
+	RateLimit       RateLimitConfig       `yaml:"rate_limit"`
+	Metrics         MetricsConfig         `yaml:"metrics"`
 }
 
 type AppConfig struct {
@@ -56,6 +60,29 @@ type RedisConfig struct {
 type MQConfig struct {
 	Driver      string `yaml:"driver"`
 	TopicPrefix string `yaml:"topic_prefix"`
+}
+
+type MetricsConfig struct {
+	Enabled bool `yaml:"enabled"`
+}
+
+type CORSConfig struct {
+	AllowedOrigins   []string `yaml:"allowed_origins"`
+	AllowedMethods   []string `yaml:"allowed_methods"`
+	AllowedHeaders   []string `yaml:"allowed_headers"`
+	AllowCredentials bool     `yaml:"allow_credentials"`
+	MaxAgeSecs       int      `yaml:"max_age_secs"`
+}
+
+type SecurityHeadersConfig struct {
+	FrameOptions       string `yaml:"frame_options"`
+	ContentTypeOptions bool   `yaml:"content_type_options"`
+	ReferrerPolicy     string `yaml:"referrer_policy"`
+}
+
+type RateLimitConfig struct {
+	Requests   int `yaml:"requests"`
+	WindowSecs int `yaml:"window_secs"`
 }
 
 func Load(path string) (Config, error) {
@@ -227,6 +254,10 @@ func (c Config) MaskedSummary() map[string]string {
 		"otel_service_name":         c.Observability.ServiceName,
 		"otel_service_version":      c.Observability.ServiceVersion,
 		"otel_environment":          c.Observability.Environment,
+		"metrics_enabled":           strconv.FormatBool(c.Metrics.Enabled),
+		"cors_allowed_origins":      strings.Join(c.CORS.AllowedOrigins, ","),
+		"rate_limit_requests":       strconv.Itoa(c.RateLimit.Requests),
+		"rate_limit_window_secs":    strconv.Itoa(c.RateLimit.WindowSecs),
 	}
 }
 

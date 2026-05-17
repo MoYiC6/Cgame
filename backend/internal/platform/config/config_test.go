@@ -43,6 +43,9 @@ func TestLoadFromFile(t *testing.T) {
 	if cfg.MQ.TopicPrefix != "backend.test" {
 		t.Fatalf("expected topic prefix backend.test, got %q", cfg.MQ.TopicPrefix)
 	}
+	if cfg.Metrics.Enabled {
+		t.Fatalf("expected metrics disabled by default in test config")
+	}
 }
 
 func TestLoadRejectsMissingAppName(t *testing.T) {
@@ -98,22 +101,32 @@ observability:
 	}
 }
 
-func TestMaskedSummaryHidesSecrets(t *testing.T) {
+func TestMaskedSummaryIncludesPhaseAFields(t *testing.T) {
 	cfg := Config{
-		App:    AppConfig{Name: "backend", Env: "test"},
-		Server: ServerConfig{Addr: ":18080"},
-		Log:    LogConfig{Level: "debug"},
-		DB:     DBConfig{Driver: "postgres", DSN: "postgres://user:secret@localhost:5432/backend_test"},
-		Redis:  RedisConfig{Addr: "127.0.0.1:6379"},
-		MQ:     MQConfig{Driver: "in-memory", TopicPrefix: "backend.test"},
+		App:             AppConfig{Name: "backend", Env: "test"},
+		Server:          ServerConfig{Addr: ":18080"},
+		Log:             LogConfig{Level: "debug"},
+		DB:              DBConfig{Driver: "postgres", DSN: "postgres://user:secret@localhost:5432/backend_test"},
+		Redis:           RedisConfig{Addr: "127.0.0.1:6379"},
+		MQ:              MQConfig{Driver: "in-memory", TopicPrefix: "backend.test"},
+		Metrics:         MetricsConfig{Enabled: true},
+		CORS:            CORSConfig{AllowedOrigins: []string{"https://frontend.example.com"}},
+		RateLimit:       RateLimitConfig{Requests: 100, WindowSecs: 60},
+		SecurityHeaders: SecurityHeadersConfig{FrameOptions: "DENY"},
 	}
 
 	summary := cfg.MaskedSummary()
-	if strings.Contains(summary["db_dsn"], "secret") {
-		t.Fatalf("expected masked db_dsn, got %q", summary["db_dsn"])
+	if summary["metrics_enabled"] != "true" {
+		t.Fatalf("expected metrics_enabled true, got %q", summary["metrics_enabled"])
 	}
-	if summary["app_name"] != "backend" {
-		t.Fatalf("expected app_name backend, got %q", summary["app_name"])
+	if summary["cors_allowed_origins"] != "https://frontend.example.com" {
+		t.Fatalf("expected cors_allowed_origins set, got %q", summary["cors_allowed_origins"])
+	}
+	if summary["rate_limit_requests"] != "100" {
+		t.Fatalf("expected rate_limit_requests 100, got %q", summary["rate_limit_requests"])
+	}
+	if summary["rate_limit_window_secs"] != "60" {
+		t.Fatalf("expected rate_limit_window_secs 60, got %q", summary["rate_limit_window_secs"])
 	}
 }
 
