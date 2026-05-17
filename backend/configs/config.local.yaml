@@ -23,6 +23,37 @@ observability:
   service_version: "1.0.0"
   environment: local
 
+cors:
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+  allowed_methods:
+    - GET
+    - POST
+    - PUT
+    - PATCH
+    - DELETE
+    - OPTIONS
+  allowed_headers:
+    - Authorization
+    - Content-Type
+    - X-Request-ID
+    - X-Trace-ID
+  allow_credentials: true
+  max_age_secs: 600
+
+security_headers:
+  frame_options: "SAMEORIGIN"
+  content_type_options: true
+  referrer_policy: "strict-origin-when-cross-origin"
+
+rate_limit:
+  requests: 120
+  window_secs: 60
+
+metrics:
+  enabled: true
+
 redis:
   # 预留，初始化阶段不使用
   addr: ""

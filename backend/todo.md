@@ -1113,67 +1113,60 @@ Database：连接池、事务、底层 DB 能力
 
 ## P0：第一天就要有
 
-```text
-项目目录结构
-配置加载
-日志初始化
-数据库连接
-数据库 migration
-统一错误
-统一响应
-Gin router
-基础 middleware
-优雅关闭
-Makefile
-Docker Compose
-```
+- [x] 项目目录结构
+- [x] 配置加载
+- [x] 日志初始化
+- [x] 数据库连接
+- [x] 数据库 migration
+- [x] 统一错误
+- [x] 统一响应
+- [x] Gin router
+- [ ] 基础 middleware（已实现 request_id / trace_id / recovery / CORS / 安全 header / 限流，仍缺 access log / timeout / auth）
+- [x] 优雅关闭
+- [x] Makefile
+- [ ] Docker Compose（已提供 api / worker，仍缺数据库与 Redis 的本地联调编排）
 
 ## P1：第一个业务接口前要有
 
-```text
-参数校验
-事务封装
-Repository 规范
-Service 规范
-OpenAPI 文档
-健康检查
-request_id
-trace_id
-基础测试
-golangci-lint
-```
+- [ ] 参数校验（`BindAndValidate` 已具备，业务 handler 尚未大范围落地）
+- [ ] 事务封装（`SQLTxManager` 已具备，主启动仍注入 `NoopTxManager`）
+- [x] Repository 规范
+- [x] Service 规范
+- [x] OpenAPI 文档
+- [x] 健康检查
+- [x] request_id
+- [x] trace_id
+- [x] 基础测试
+- [x] golangci-lint
 
 ## P2：上线前要有
 
-```text
-鉴权
-权限
-审计日志
-OpenTelemetry
-metrics
-慢查询日志
-限流
-CORS
-安全 header
-CI
-集成测试
-错误告警
-```
+- [ ] 鉴权
+- [ ] 权限
+- [ ] 审计日志
+- [x] OpenTelemetry
+- [x] metrics
+- [ ] 慢查询日志
+- [x] 限流
+- [x] CORS
+- [x] 安全 header
+- [x] CI
+- [x] 集成测试
+- [ ] 错误告警
 
 ## P3：业务复杂后再加
 
-```text
-Redis 缓存
-消息队列
-异步任务
-分布式锁
-Outbox
-幂等框架
-文件存储抽象
-多租户
-配置中心
-服务发现
-```
+- [ ] Redis 缓存
+- [ ] 消息队列
+- [ ] 异步任务
+- [ ] 分布式锁
+- [ ] Outbox
+- [ ] 幂等框架
+- [ ] 文件存储抽象
+- [ ] 多租户
+- [ ] 配置中心
+- [ ] 服务发现
+
 
 ---
 

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"backend/internal/platform/config"
@@ -64,6 +65,62 @@ func TestNewAPIEngineRegistersHealthRoutes(t *testing.T) {
 		if body.TraceID == "" {
 			t.Fatalf("expected trace_id for %s", path)
 		}
+	}
+}
+
+func TestNewAPIEngineRegistersMetricsRouteWhenEnabled(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	deps := Dependencies{
+		Config: config.Config{
+			App:     config.AppConfig{Name: "backend-test", Env: "test"},
+			Server:  config.ServerConfig{Addr: ":18080"},
+			Log:     config.LogConfig{Level: "debug"},
+			Metrics: config.MetricsConfig{Enabled: true},
+		},
+		Logger:     logger.New("debug", io.Discard),
+		Tracer:     observability.NewNoopTracer(),
+		Propagator: observability.NewNoopPropagator(),
+		DB:         stubDB{},
+	}
+
+	engine := NewAPIEngine(deps)
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	engine.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 for /metrics, got %d", recorder.Code)
+	}
+	if contentType := recorder.Header().Get("Content-Type"); !strings.HasPrefix(contentType, "text/plain") {
+		t.Fatalf("expected text/plain metrics content type, got %q", contentType)
+	}
+	if recorder.Body.Len() == 0 {
+		t.Fatal("expected metrics body to be non-empty")
+	}
+}
+
+func TestNewAPIEngineReturnsNotFoundForMetricsWhenDisabled(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	deps := Dependencies{
+		Config: config.Config{
+			App:     config.AppConfig{Name: "backend-test", Env: "test"},
+			Server:  config.ServerConfig{Addr: ":18080"},
+			Log:     config.LogConfig{Level: "debug"},
+			Metrics: config.MetricsConfig{Enabled: false},
+		},
+		Logger:     logger.New("debug", io.Discard),
+		Tracer:     observability.NewNoopTracer(),
+		Propagator: observability.NewNoopPropagator(),
+		DB:         stubDB{},
+	}
+
+	engine := NewAPIEngine(deps)
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	engine.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for disabled /metrics, got %d", recorder.Code)
 	}
 }
 

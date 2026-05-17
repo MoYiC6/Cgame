@@ -9,6 +9,7 @@ import (
 	apperrors "backend/internal/platform/errors"
 	"backend/internal/platform/response"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type HTTPRouteRegistrar interface {
@@ -17,7 +18,14 @@ type HTTPRouteRegistrar interface {
 
 func NewAPIEngine(deps Dependencies, registrars ...HTTPRouteRegistrar) *gin.Engine {
 	engine := gin.New()
-	engine.Use(RequestIDMiddleware(), TraceContextMiddleware(deps.Propagator), RecoveryMiddleware(deps.Logger))
+	engine.Use(
+		RequestIDMiddleware(),
+		TraceContextMiddleware(deps.Propagator),
+		CORSMiddleware(deps.Config.CORS),
+		SecurityHeadersMiddleware(deps.Config.SecurityHeaders),
+		RateLimitMiddleware(deps.Config.RateLimit),
+		RecoveryMiddleware(deps.Logger),
+	)
 
 	engine.GET("/healthz", func(c *gin.Context) {
 		response.Success(c, gin.H{"status": "ok"})
@@ -29,6 +37,9 @@ func NewAPIEngine(deps Dependencies, registrars ...HTTPRouteRegistrar) *gin.Engi
 		}
 		response.Success(c, gin.H{"status": "ok"})
 	})
+	if deps.Config.Metrics.Enabled {
+		engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	}
 
 	api := engine.Group("/api/v1")
 	for _, registrar := range registrars {

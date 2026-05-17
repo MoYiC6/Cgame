@@ -23,6 +23,33 @@ observability:
   service_version: "1.0.0"
   environment: test
 
+cors:
+  allowed_origins:
+    - "https://frontend.example.com"
+  allowed_methods:
+    - GET
+    - POST
+    - OPTIONS
+  allowed_headers:
+    - Authorization
+    - Content-Type
+    - X-Request-ID
+    - X-Trace-ID
+  allow_credentials: true
+  max_age_secs: 600
+
+security_headers:
+  frame_options: "DENY"
+  content_type_options: true
+  referrer_policy: "strict-origin-when-cross-origin"
+
+rate_limit:
+  requests: 120
+  window_secs: 60
+
+metrics:
+  enabled: false
+
 redis:
   # 预留，初始化阶段不使用
   addr: "127.0.0.1:6379"
