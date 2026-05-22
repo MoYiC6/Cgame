@@ -7,6 +7,38 @@ import (
 	"testing"
 )
 
+func TestLoadConfigLoadsAuthSection(t *testing.T) {
+	cfg, err := Load(filepath.Join("..", "..", "..", "configs", "config.test.yaml"))
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Auth.Issuer != "backend" {
+		t.Fatalf("expected auth issuer backend, got %q", cfg.Auth.Issuer)
+	}
+	if cfg.Auth.Cookie.Name != "refresh_token" {
+		t.Fatalf("expected refresh cookie name refresh_token, got %q", cfg.Auth.Cookie.Name)
+	}
+	if cfg.Auth.JWT.Algorithm != "HS256" {
+		t.Fatalf("expected jwt algorithm HS256, got %q", cfg.Auth.JWT.Algorithm)
+	}
+}
+
+func TestLoadConfigRejectsProdWithoutJWTSecret(t *testing.T) {
+	t.Setenv("APP_ENV", "prod")
+	t.Setenv("APP_CONFIG_PATH", filepath.Join("..", "..", "..", "configs", "config.prod.yaml"))
+	t.Setenv("JWT_HMAC_SECRET", "")
+
+	_, err := LoadConfig("")
+	if err == nil {
+		t.Fatal("expected error when prod jwt secret is missing")
+	}
+
+	if !strings.Contains(strings.ToLower(err.Error()), "jwt_hmac_secret") {
+		t.Fatalf("expected jwt_hmac_secret validation error, got %v", err)
+	}
+}
+
 func TestLoadFromFile(t *testing.T) {
 	cfg, err := Load(filepath.Join("..", "..", "..", "configs", "config.test.yaml"))
 	if err != nil {
@@ -146,6 +178,7 @@ func TestLoadConfigAppliesEnvironmentOverrides(t *testing.T) {
 	t.Setenv("OTEL_SERVICE_NAME", "override-otel-service")
 	t.Setenv("OTEL_SERVICE_VERSION", "2.0.0")
 	t.Setenv("OTEL_ENVIRONMENT", "staging")
+	t.Setenv("REDIS_ADDR", "redis:6379")
 
 	cfg, err := LoadConfig("test")
 	if err != nil {
@@ -194,6 +227,9 @@ func TestLoadConfigAppliesEnvironmentOverrides(t *testing.T) {
 	if cfg.Observability.Environment != "staging" {
 		t.Fatalf("expected observability environment staging, got %q", cfg.Observability.Environment)
 	}
+	if cfg.Redis.Addr != "redis:6379" {
+		t.Fatalf("expected redis addr overridden, got %q", cfg.Redis.Addr)
+	}
 }
 
 func TestLoadConfigUsesAPPENVWhenArgumentEmpty(t *testing.T) {
@@ -223,5 +259,20 @@ func TestLoadConfigUsesAPPENVWhenArgumentEmpty(t *testing.T) {
 	}
 	if cfg.Server.Addr != ":18080" {
 		t.Fatalf("expected server addr from config.test.yaml, got %q", cfg.Server.Addr)
+	}
+}
+
+func TestLocalConfigTargetsDockerDatastores(t *testing.T) {
+	cfg, err := Load(filepath.Join("..", "..", "..", "configs", "config.local.yaml"))
+	if err != nil {
+		t.Fatalf("Load returned error: %v", err)
+	}
+
+	const expectedDSN = "postgres://backend:backend@localhost:25432/Cgame?sslmode=disable"
+	if cfg.DB.DSN != expectedDSN {
+		t.Fatalf("expected local db dsn %q, got %q", expectedDSN, cfg.DB.DSN)
+	}
+	if cfg.Redis.Addr != "localhost:26379" {
+		t.Fatalf("expected local redis addr localhost:26379, got %q", cfg.Redis.Addr)
 	}
 }

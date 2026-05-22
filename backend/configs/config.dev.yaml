@@ -16,6 +16,29 @@ db:
   max_idle_conns: 8
   conn_max_lifetime_secs: 300
 
+auth:
+  issuer: backend
+  audience: admin-api
+  access_token_ttl: 15m
+  refresh_token_ttl: 168h
+  password:
+    min_length: 12
+    max_length: 128
+    argon2_memory_kib: 19456
+    argon2_iterations: 2
+    argon2_parallelism: 1
+  cookie:
+    enabled: true
+    name: refresh_token
+    domain: ""
+    path: "/api/v1/auth"
+    secure: true
+    http_only: true
+    same_site: lax
+  jwt:
+    algorithm: HS256
+    key_id: dev-key
+
 observability:
   trace_exporter_type: none
   trace_exporter_endpoint: ""
