@@ -9,14 +9,17 @@ import (
 	"time"
 
 	"backend/internal/bootstrap"
+	"backend/internal/modules/auth"
 	"backend/internal/modules/inventory"
 	"backend/internal/modules/notification"
 	"backend/internal/modules/order"
 	"backend/internal/modules/payment"
+	"backend/internal/modules/user"
 	"backend/internal/platform/config"
 	"backend/internal/platform/database"
 	"backend/internal/platform/logger"
 	"backend/internal/platform/observability"
+	"backend/internal/platform/security"
 )
 
 func main() {
@@ -52,8 +55,36 @@ func main() {
 		DB:         dbPool,
 	}
 
+	passwordHasher := security.NewArgon2idHasher(
+		cfg.Auth.Password.Argon2MemoryKiB,
+		cfg.Auth.Password.Argon2Iterations,
+		cfg.Auth.Password.Argon2Parallelism,
+		os.Getenv("PASSWORD_PEPPER"),
+	)
+	tokenManager := security.NewHMACTokenManager(security.HMACTokenConfig{
+		Issuer:         cfg.Auth.Issuer,
+		Audience:       cfg.Auth.Audience,
+		KeyID:          cfg.Auth.JWT.KeyID,
+		Secret:         []byte(os.Getenv("JWT_HMAC_SECRET")),
+		AccessTokenTTL: cfg.Auth.AccessTokenTTL,
+		ClockSkew:      30 * time.Second,
+	})
+	authHandler := auth.NewHandler(
+		auth.NewService(
+			user.NewRepository(),
+			auth.NewRepository(),
+			database.NoopTxManager{},
+			passwordHasher,
+			tokenManager,
+			security.CryptoRandomTokenGenerator{},
+			auth.ServiceConfig{RefreshTokenTTL: cfg.Auth.RefreshTokenTTL, RefreshCookieName: cfg.Auth.Cookie.Name},
+		),
+		auth.NewHandlerConfigFromAuth(cfg.Auth),
+	)
+
 	engine := bootstrap.NewAPIEngine(
 		deps,
+		authHandler,
 		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
 		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(), database.NoopTxManager{})),
