@@ -350,6 +350,7 @@ func TestRepositoryListRecentFailedAttemptTimesByUserID(t *testing.T) {
 
 type authRepositoryHarness struct {
 	db        *sql.DB
+	dbDSN     string
 	container *postgres.PostgresContainer
 }
 
@@ -388,7 +389,7 @@ func newAuthRepositoryHarness(ctx context.Context, t *testing.T) (*authRepositor
 		return nil, fmt.Errorf("ping postgres: %w", err)
 	}
 
-	return &authRepositoryHarness{db: db, container: container}, nil
+	return &authRepositoryHarness{db: db, dbDSN: connString, container: container}, nil
 }
 
 func (h *authRepositoryHarness) ApplyMigrations(ctx context.Context) error {

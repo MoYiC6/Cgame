@@ -164,6 +164,7 @@ func (s *service) Refresh(ctx context.Context, req *RefreshRequest) (*AuthRespon
 	tokenHash := sha256Hex(req.RefreshToken)
 	var response *AuthResponse
 	var cookie *RefreshCookie
+	var compromiseEvent *refreshCompromiseEvent
 	err := s.txManager.WithinTx(ctx, func(txCtx context.Context) error {
 		stored, err := s.repo.GetRefreshTokenByHashForUpdate(txCtx, tokenHash)
 		if err != nil {
@@ -177,9 +178,15 @@ func (s *service) Refresh(ctx context.Context, req *RefreshRequest) (*AuthRespon
 			return ErrRefreshInvalid
 		}
 		if stored.UsedAt != nil {
-			_ = s.repo.RevokeRefreshTokenFamily(txCtx, stored.FamilyID)
-			_ = s.repo.RevokeSession(txCtx, stored.SessionID)
-			s.writeAuditLog(txCtx, &AuditLog{EventType: "refresh_reuse_detected", Result: "failure", SessionID: stored.SessionID, IPHash: ClientIPHashFromContext(txCtx), UserAgentHash: UserAgentHashFromContext(txCtx), OccurredAt: now})
+			compromiseEvent = &refreshCompromiseEvent{
+				familyID:      stored.FamilyID,
+				sessionID:     stored.SessionID,
+				eventType:     "refresh_reuse_detected",
+				result:        "failure",
+				occurredAt:    now,
+				ipHash:        ClientIPHashFromContext(txCtx),
+				userAgentHash: UserAgentHashFromContext(txCtx),
+			}
 			return ErrRefreshReused
 		}
 		session, err := s.repo.GetSessionByID(txCtx, stored.SessionID)
@@ -197,9 +204,17 @@ func (s *service) Refresh(ctx context.Context, req *RefreshRequest) (*AuthRespon
 			return ErrRefreshInvalid
 		}
 		if passwordChangedAfterSession(u, session, stored) {
-			_ = s.repo.RevokeRefreshTokenFamily(txCtx, stored.FamilyID)
-			_ = s.repo.RevokeSession(txCtx, stored.SessionID)
-			s.writeAuditLog(txCtx, &AuditLog{EventType: "session_revoked", Result: "failure", UserPublicID: u.PublicID, SessionID: stored.SessionID, IPHash: ClientIPHashFromContext(txCtx), UserAgentHash: UserAgentHashFromContext(txCtx), MetadataJSON: map[string]any{"reason": "password_changed"}, OccurredAt: now})
+			compromiseEvent = &refreshCompromiseEvent{
+				familyID:      stored.FamilyID,
+				sessionID:     stored.SessionID,
+				userPublicID:  u.PublicID,
+				eventType:     "session_revoked",
+				result:        "failure",
+				occurredAt:    now,
+				ipHash:        ClientIPHashFromContext(txCtx),
+				userAgentHash: UserAgentHashFromContext(txCtx),
+				metadata:      map[string]any{"reason": "password_changed"},
+			}
 			return ErrRefreshInvalid
 		}
 		roles, err := s.repo.ListUserRoles(txCtx, u.ID)
@@ -225,6 +240,15 @@ func (s *service) Refresh(ctx context.Context, req *RefreshRequest) (*AuthRespon
 			return err
 		}
 		if !used {
+			compromiseEvent = &refreshCompromiseEvent{
+				familyID:      stored.FamilyID,
+				sessionID:     stored.SessionID,
+				eventType:     "refresh_reuse_detected",
+				result:        "failure",
+				occurredAt:    now,
+				ipHash:        ClientIPHashFromContext(txCtx),
+				userAgentHash: UserAgentHashFromContext(txCtx),
+			}
 			return ErrRefreshReused
 		}
 		principal := &security.Principal{UserID: fmt.Sprintf("%d", u.ID), PublicID: u.PublicID, SessionID: stored.SessionID, Roles: security.NormalizeStrings(roles), Permissions: security.NormalizeStrings(permissions), Status: u.Status}
@@ -237,6 +261,11 @@ func (s *service) Refresh(ctx context.Context, req *RefreshRequest) (*AuthRespon
 		cookie = &RefreshCookie{Value: refreshValue, ExpiresAt: expiresAt}
 		return nil
 	})
+	if compromiseEvent != nil {
+		if revokeErr := s.persistRefreshCompromise(ctx, *compromiseEvent); revokeErr != nil {
+			return nil, nil, revokeErr
+		}
+	}
 	if err != nil {
 		if errors.Is(err, ErrRefreshInvalid) || errors.Is(err, ErrRefreshReused) {
 			return nil, s.clearRefreshCookie(), err
@@ -309,6 +338,54 @@ func sha256Hex(value string) string {
 
 func (s *service) clearRefreshCookie() *RefreshCookie {
 	return &RefreshCookie{Clear: true}
+}
+
+type refreshCompromiseEvent struct {
+	familyID      string
+	sessionID     string
+	userPublicID  string
+	eventType     string
+	result        string
+	occurredAt    time.Time
+	ipHash        string
+	userAgentHash string
+	metadata      map[string]any
+}
+
+func (s *service) persistRefreshCompromise(ctx context.Context, event refreshCompromiseEvent) error {
+	if strings.TrimSpace(event.familyID) == "" && strings.TrimSpace(event.sessionID) == "" {
+		return nil
+	}
+	baseCtx := context.Background()
+	if requestID, ok := observability.RequestIDFromContext(ctx); ok {
+		baseCtx = observability.WithRequestID(baseCtx, requestID)
+	}
+	if traceID, ok := observability.TraceIDFromContext(ctx); ok {
+		baseCtx = observability.WithTraceID(baseCtx, traceID)
+	}
+	return s.txManager.WithinTx(baseCtx, func(txCtx context.Context) error {
+		if strings.TrimSpace(event.familyID) != "" {
+			if err := s.repo.RevokeRefreshTokenFamily(txCtx, event.familyID); err != nil {
+				return err
+			}
+		}
+		if strings.TrimSpace(event.sessionID) != "" {
+			if err := s.repo.RevokeSession(txCtx, event.sessionID); err != nil {
+				return err
+			}
+		}
+		s.writeAuditLog(txCtx, &AuditLog{
+			EventType:     event.eventType,
+			Result:        event.result,
+			UserPublicID:  event.userPublicID,
+			SessionID:     event.sessionID,
+			IPHash:        event.ipHash,
+			UserAgentHash: event.userAgentHash,
+			MetadataJSON:  cloneMetadata(event.metadata),
+			OccurredAt:    event.occurredAt,
+		})
+		return nil
+	})
 }
 
 type loginAttemptTarget struct {
