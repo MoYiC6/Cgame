@@ -27,7 +27,7 @@
           />
           <div class="w-[calc(100%-60px)] h-full">
             <span class="block text-sm font-medium text-g-800 truncate">{{
-              userInfo.userName
+              userInfo.userName || userInfo.id
             }}</span>
             <span class="block mt-0.5 text-xs text-g-500 truncate">{{ userInfo.email }}</span>
           </div>

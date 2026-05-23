@@ -24,6 +24,10 @@ type PgxPool struct {
 	pool *pgxpool.Pool
 }
 
+type SQLDB struct {
+	db *sql.DB
+}
+
 func NewPgxPool(ctx context.Context, cfg config.DBConfig) (*PgxPool, error) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -79,6 +83,79 @@ func (p *PgxPool) Pool() *pgxpool.Pool {
 		return nil
 	}
 	return p.pool
+}
+
+func NewSQLDB(cfg config.DBConfig) (*SQLDB, error) {
+	if cfg.DSN == "" {
+		return nil, fmt.Errorf("db dsn is required")
+	}
+	db, err := sql.Open("pgx", cfg.DSN)
+	if err != nil {
+		return nil, fmt.Errorf("open sql db: %w", err)
+	}
+	if cfg.MaxOpenConns > 0 {
+		db.SetMaxOpenConns(cfg.MaxOpenConns)
+	}
+	if cfg.MaxIdleConns > 0 {
+		db.SetMaxIdleConns(cfg.MaxIdleConns)
+	}
+	if cfg.ConnMaxLifetimeSecs > 0 {
+		db.SetConnMaxLifetime(time.Duration(cfg.ConnMaxLifetimeSecs) * time.Second)
+	}
+	return &SQLDB{db: db}, nil
+}
+
+func (d *SQLDB) Ping(ctx context.Context) error {
+	if d == nil || d.db == nil {
+		return fmt.Errorf("sql db is nil")
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return d.db.PingContext(ctx)
+}
+
+func (d *SQLDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (sqlTx, error) {
+	if d == nil || d.db == nil {
+		return nil, fmt.Errorf("sql db is nil")
+	}
+	return d.db.BeginTx(ctx, opts)
+}
+
+func (d *SQLDB) Exec(query string, args ...any) (sql.Result, error) {
+	return d.db.Exec(query, args...)
+}
+
+func (d *SQLDB) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	return d.db.ExecContext(ctx, query, args...)
+}
+
+func (d *SQLDB) Query(query string, args ...any) (*sql.Rows, error) {
+	return d.db.Query(query, args...)
+}
+
+func (d *SQLDB) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	return d.db.QueryContext(ctx, query, args...)
+}
+
+func (d *SQLDB) QueryRow(query string, args ...any) *sql.Row {
+	return d.db.QueryRow(query, args...)
+}
+
+func (d *SQLDB) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+	return d.db.QueryRowContext(ctx, query, args...)
+}
+
+func (d *SQLDB) Close() error {
+	if d == nil || d.db == nil {
+		return nil
+	}
+	return d.db.Close()
+}
+
+func (d *SQLDB) Shutdown(ctx context.Context) error {
+	_ = ctx
+	return d.Close()
 }
 
 type DummyDB struct{}

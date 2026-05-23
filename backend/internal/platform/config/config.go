@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -15,6 +16,7 @@ type Config struct {
 	Server          ServerConfig          `yaml:"server"`
 	Log             LogConfig             `yaml:"log"`
 	DB              DBConfig              `yaml:"db"`
+	Auth            AuthConfig            `yaml:"auth"`
 	Redis           RedisConfig           `yaml:"redis"`
 	MQ              MQConfig              `yaml:"mq"`
 	Observability   ObservabilityConfig   `yaml:"observability"`
@@ -43,6 +45,39 @@ type DBConfig struct {
 	MaxOpenConns        int    `yaml:"max_open_conns"`
 	MaxIdleConns        int    `yaml:"max_idle_conns"`
 	ConnMaxLifetimeSecs int    `yaml:"conn_max_lifetime_secs"`
+}
+
+type AuthConfig struct {
+	Issuer          string             `yaml:"issuer"`
+	Audience        string             `yaml:"audience"`
+	AccessTokenTTL  time.Duration      `yaml:"access_token_ttl"`
+	RefreshTokenTTL time.Duration      `yaml:"refresh_token_ttl"`
+	Password        AuthPasswordConfig `yaml:"password"`
+	Cookie          AuthCookieConfig   `yaml:"cookie"`
+	JWT             AuthJWTConfig      `yaml:"jwt"`
+}
+
+type AuthPasswordConfig struct {
+	MinLength         int `yaml:"min_length"`
+	MaxLength         int `yaml:"max_length"`
+	Argon2MemoryKiB   int `yaml:"argon2_memory_kib"`
+	Argon2Iterations  int `yaml:"argon2_iterations"`
+	Argon2Parallelism int `yaml:"argon2_parallelism"`
+}
+
+type AuthCookieConfig struct {
+	Enabled  bool   `yaml:"enabled"`
+	Name     string `yaml:"name"`
+	Domain   string `yaml:"domain"`
+	Path     string `yaml:"path"`
+	Secure   bool   `yaml:"secure"`
+	HTTPOnly bool   `yaml:"http_only"`
+	SameSite string `yaml:"same_site"`
+}
+
+type AuthJWTConfig struct {
+	Algorithm string `yaml:"algorithm"`
+	KeyID     string `yaml:"key_id"`
 }
 
 type ObservabilityConfig struct {
@@ -90,6 +125,18 @@ func Load(path string) (Config, error) {
 }
 
 func LoadConfig(env string) (*Config, error) {
+	explicitEnv := strings.TrimSpace(env)
+	if explicitEnv == "" {
+		explicitEnv = strings.TrimSpace(os.Getenv("APP_ENV"))
+	}
+	skipEnvFileKeys := []string(nil)
+	if explicitEnv != "" && strings.TrimSpace(os.Getenv("APP_CONFIG_PATH")) == "" {
+		skipEnvFileKeys = append(skipEnvFileKeys, "APP_CONFIG_PATH")
+	}
+	if err := loadEnvFileIfExists(".env", skipEnvFileKeys...); err != nil {
+		return nil, err
+	}
+
 	env = normalizeEnv(env)
 	path := os.Getenv("APP_CONFIG_PATH")
 	if strings.TrimSpace(path) == "" {
@@ -102,6 +149,9 @@ func LoadConfig(env string) (*Config, error) {
 	}
 	applyEnvOverrides(&cfg)
 	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+	if err := validateAuthSecrets(&cfg); err != nil {
 		return nil, err
 	}
 	return &cfg, nil
@@ -130,6 +180,51 @@ func loadFromPath(path string) (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func loadEnvFileIfExists(path string, skipKeys ...string) error {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("read env file: %w", err)
+	}
+
+	lines := strings.Split(string(content), "\n")
+	for index, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		line = strings.TrimPrefix(line, "export ")
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			return fmt.Errorf("invalid env file line %d", index+1)
+		}
+		key = strings.TrimSpace(key)
+		value = strings.TrimSpace(value)
+		if key == "" {
+			return fmt.Errorf("invalid env file line %d", index+1)
+		}
+		value = strings.Trim(value, "\"'")
+		if shouldSkipEnvKey(key, skipKeys) || strings.TrimSpace(os.Getenv(key)) != "" {
+			continue
+		}
+		if err := os.Setenv(key, value); err != nil {
+			return fmt.Errorf("set env %s: %w", key, err)
+		}
+	}
+	return nil
+}
+
+func shouldSkipEnvKey(key string, skipKeys []string) bool {
+	for _, skipKey := range skipKeys {
+		if key == skipKey {
+			return true
+		}
+	}
+	return false
 }
 
 func normalizeEnv(env string) string {
@@ -179,6 +274,9 @@ func applyEnvOverrides(cfg *Config) {
 		if parsed, err := strconv.Atoi(strings.TrimSpace(value)); err == nil {
 			cfg.DB.ConnMaxLifetimeSecs = parsed
 		}
+	}
+	if value := os.Getenv("REDIS_ADDR"); strings.TrimSpace(value) != "" {
+		cfg.Redis.Addr = value
 	}
 	if value := os.Getenv("OTEL_TRACE_EXPORTER_TYPE"); strings.TrimSpace(value) != "" {
 		cfg.Observability.TraceExporterType = value
@@ -232,6 +330,41 @@ func (c Config) Validate() error {
 	if strings.TrimSpace(c.Observability.ServiceName) == "" {
 		return fmt.Errorf("observability.service_name is required")
 	}
+	if strings.TrimSpace(c.Auth.Issuer) == "" {
+		return fmt.Errorf("auth.issuer is required")
+	}
+	if strings.TrimSpace(c.Auth.Audience) == "" {
+		return fmt.Errorf("auth.audience is required")
+	}
+	if c.Auth.AccessTokenTTL <= 0 {
+		return fmt.Errorf("auth.access_token_ttl must be > 0")
+	}
+	if c.Auth.RefreshTokenTTL <= 0 {
+		return fmt.Errorf("auth.refresh_token_ttl must be > 0")
+	}
+	if strings.TrimSpace(c.Auth.Cookie.Name) == "" {
+		return fmt.Errorf("auth.cookie.name is required")
+	}
+	if strings.TrimSpace(c.Auth.Cookie.Path) == "" {
+		return fmt.Errorf("auth.cookie.path is required")
+	}
+	if strings.TrimSpace(c.Auth.JWT.Algorithm) == "" {
+		return fmt.Errorf("auth.jwt.algorithm is required")
+	}
+	return nil
+}
+
+func validateAuthSecrets(cfg *Config) error {
+	if cfg == nil {
+		return fmt.Errorf("config is required")
+	}
+	secret := strings.TrimSpace(os.Getenv("JWT_HMAC_SECRET"))
+	if cfg.App.Env == "prod" && secret == "" {
+		return fmt.Errorf("jwt_hmac_secret is required in prod")
+	}
+	if strings.TrimSpace(cfg.Auth.JWT.Algorithm) != "HS256" {
+		return fmt.Errorf("auth.jwt.algorithm must be HS256 in p1")
+	}
 	return nil
 }
 
@@ -246,6 +379,15 @@ func (c Config) MaskedSummary() map[string]string {
 		"db_max_open_conns":         strconv.Itoa(c.DB.MaxOpenConns),
 		"db_max_idle_conns":         strconv.Itoa(c.DB.MaxIdleConns),
 		"db_conn_max_lifetime_secs": strconv.Itoa(c.DB.ConnMaxLifetimeSecs),
+		"auth_issuer":               c.Auth.Issuer,
+		"auth_audience":             c.Auth.Audience,
+		"auth_access_token_ttl":     c.Auth.AccessTokenTTL.String(),
+		"auth_refresh_token_ttl":    c.Auth.RefreshTokenTTL.String(),
+		"auth_cookie_name":          c.Auth.Cookie.Name,
+		"auth_cookie_path":          c.Auth.Cookie.Path,
+		"auth_cookie_same_site":     c.Auth.Cookie.SameSite,
+		"auth_jwt_algorithm":        c.Auth.JWT.Algorithm,
+		"auth_jwt_key_id":           c.Auth.JWT.KeyID,
 		"redis":                     maskSecret(c.Redis.Addr),
 		"mq_driver":                 c.MQ.Driver,
 		"mq_topic":                  c.MQ.TopicPrefix,

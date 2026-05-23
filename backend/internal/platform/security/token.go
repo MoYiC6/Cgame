@@ -1,0 +1,137 @@
+package security
+
+import (
+	"context"
+	"errors"
+	"time"
+
+	jwt "github.com/golang-jwt/jwt/v5"
+)
+
+var (
+	ErrTokenInvalid = errors.New("token invalid")
+	ErrTokenExpired = errors.New("token expired")
+)
+
+type AccessToken struct {
+	Token     string
+	TokenType string
+	ExpiresIn int64
+	ExpiresAt time.Time
+}
+
+type TokenClaims struct {
+	TokenID     string
+	Subject     string
+	SessionID   string
+	Issuer      string
+	Audience    string
+	IssuedAt    time.Time
+	NotBefore   time.Time
+	ExpiresAt   time.Time
+	Roles       []string
+	Permissions []string
+}
+
+type TokenManager interface {
+	IssueAccessToken(ctx context.Context, p *Principal) (*AccessToken, error)
+	VerifyAccessToken(ctx context.Context, raw string) (*Principal, *TokenClaims, error)
+}
+
+type HMACTokenConfig struct {
+	Issuer         string
+	Audience       string
+	KeyID          string
+	Secret         []byte
+	AccessTokenTTL time.Duration
+	ClockSkew      time.Duration
+}
+
+type customClaims struct {
+	SessionID   string   `json:"sid"`
+	Roles       []string `json:"roles,omitempty"`
+	Permissions []string `json:"permissions,omitempty"`
+	jwt.RegisteredClaims
+}
+
+type HMACTokenManager struct {
+	config HMACTokenConfig
+	random RandomTokenGenerator
+}
+
+func NewHMACTokenManager(cfg HMACTokenConfig) *HMACTokenManager {
+	return &HMACTokenManager{config: cfg, random: CryptoRandomTokenGenerator{}}
+}
+
+func (m *HMACTokenManager) IssueAccessToken(ctx context.Context, p *Principal) (*AccessToken, error) {
+	now := time.Now().UTC()
+	jwtID, err := m.random.GenerateURLSafe(16)
+	if err != nil {
+		return nil, err
+	}
+	claims := customClaims{
+		SessionID:   p.SessionID,
+		Roles:       NormalizeStrings(p.Roles),
+		Permissions: NormalizeStrings(p.Permissions),
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    m.config.Issuer,
+			Subject:   p.PublicID,
+			Audience:  jwt.ClaimStrings{m.config.Audience},
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(m.config.AccessTokenTTL)),
+			ID:        jwtID,
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token.Header["kid"] = m.config.KeyID
+	raw, err := token.SignedString(m.config.Secret)
+	if err != nil {
+		return nil, err
+	}
+	return &AccessToken{Token: raw, TokenType: "Bearer", ExpiresIn: int64(m.config.AccessTokenTTL.Seconds()), ExpiresAt: now.Add(m.config.AccessTokenTTL)}, nil
+}
+
+func (m *HMACTokenManager) VerifyAccessToken(ctx context.Context, raw string) (*Principal, *TokenClaims, error) {
+	claims := &customClaims{}
+	parser := jwt.NewParser(
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+		jwt.WithIssuer(m.config.Issuer),
+		jwt.WithAudience(m.config.Audience),
+		jwt.WithLeeway(m.config.ClockSkew),
+	)
+	token, err := parser.ParseWithClaims(raw, claims, func(token *jwt.Token) (any, error) {
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, ErrTokenInvalid
+		}
+		return m.config.Secret, nil
+	})
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, nil, ErrTokenExpired
+		}
+		return nil, nil, ErrTokenInvalid
+	}
+	if !token.Valid {
+		return nil, nil, ErrTokenInvalid
+	}
+	principal := &Principal{
+		PublicID:    claims.Subject,
+		SessionID:   claims.SessionID,
+		Roles:       NormalizeStrings(claims.Roles),
+		Permissions: NormalizeStrings(claims.Permissions),
+	}
+	resultClaims := &TokenClaims{
+		TokenID:     claims.ID,
+		Subject:     claims.Subject,
+		SessionID:   claims.SessionID,
+		Issuer:      claims.Issuer,
+		Audience:    m.config.Audience,
+		IssuedAt:    claims.IssuedAt.Time,
+		NotBefore:   claims.NotBefore.Time,
+		ExpiresAt:   claims.ExpiresAt.Time,
+		Roles:       principal.Roles,
+		Permissions: principal.Permissions,
+	}
+	return principal, resultClaims, nil
+}

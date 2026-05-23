@@ -169,7 +169,7 @@ async function handleRouteGuard(
   }
 
   // 3. 处理动态路由注册
-  if (!routeRegistry?.isRegistered() && userStore.isLogin) {
+  if ((!routeRegistry?.isRegistered() || !userStore.info.userId) && userStore.isLogin) {
     // 防止并发请求（快速连续导航场景）
     if (routeInitInProgress) {
       // 正在初始化中，等待完成后重新导航

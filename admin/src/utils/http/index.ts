@@ -1,46 +1,24 @@
-/**
- * HTTP 请求封装模块
- * 基于 Axios 封装的 HTTP 请求工具，提供统一的请求/响应处理
- *
- * ## 主要功能
- *
- * - 请求/响应拦截器（自动添加 Token、统一错误处理）
- * - 401 未授权自动登出（带防抖机制）
- * - 请求失败自动重试（可配置）
- * - 统一的成功/错误消息提示
- * - 支持 GET/POST/PUT/DELETE 等常用方法
- *
- * @module utils/http
- * @author Art Design Pro Team
- */
-
 import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { useUserStore } from '@/store/modules/user'
 import { ApiStatus, isSuccessCode } from './status'
 import { HttpError, handleError, showError, showSuccess } from './error'
 import { $t } from '@/locales'
 import { BaseResponse } from '@/types'
+import { AuthRetryConfig, canAttemptAuthRefresh, ensureAccessToken } from './auth-refresh'
 
-/** 请求配置常量 */
 const REQUEST_TIMEOUT = 15000
-const LOGOUT_DELAY = 500
 const MAX_RETRIES = 0
 const RETRY_DELAY = 1000
-const UNAUTHORIZED_DEBOUNCE_TIME = 3000
 
-/** 401防抖状态 */
-let isUnauthorizedErrorShown = false
-let unauthorizedTimer: NodeJS.Timeout | null = null
-
-/** 扩展 AxiosRequestConfig */
 interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
   showErrorMessage?: boolean
   showSuccessMessage?: boolean
+  skipAuthRefresh?: boolean
+  _retry?: boolean
 }
 
 const { VITE_API_URL, VITE_WITH_CREDENTIALS } = import.meta.env
 
-/** Axios实例 */
 const axiosInstance = axios.create({
   timeout: REQUEST_TIMEOUT,
   baseURL: VITE_API_URL,
@@ -61,11 +39,12 @@ const axiosInstance = axios.create({
   ]
 })
 
-/** 请求拦截器 */
 axiosInstance.interceptors.request.use(
   (request: InternalAxiosRequestConfig) => {
     const { accessToken } = useUserStore()
-    if (accessToken) request.headers.set('Authorization', accessToken)
+    if (accessToken) {
+      request.headers.set('Authorization', `Bearer ${accessToken}`)
+    }
 
     if (request.data && !(request.data instanceof FormData) && !request.headers['Content-Type']) {
       request.headers.set('Content-Type', 'application/json')
@@ -80,23 +59,31 @@ axiosInstance.interceptors.request.use(
   }
 )
 
-/** 响应拦截器 */
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse<BaseResponse>) => {
+  async (response: AxiosResponse<BaseResponse>) => {
     const { code } = response.data
     const message = response.data.message || response.data.msg
 
     if (isSuccessCode(code)) return response
-    if (code === ApiStatus.unauthorized) handleUnauthorizedError(message)
+    if (code === ApiStatus.unauthorized && canAttemptAuthRefresh(response.config as AuthRetryConfig)) {
+      return retryAfterRefresh(response.config as AuthRetryConfig)
+    }
     throw createHttpError(message || $t('httpMsg.requestFailed'), normalizeErrorCode(code))
   },
-  (error) => {
-    if (error.response?.status === ApiStatus.unauthorized) handleUnauthorizedError()
+  async (error) => {
+    const config = error.config as AuthRetryConfig | undefined
+    if (error.response?.status === ApiStatus.unauthorized && canAttemptAuthRefresh(config)) {
+      try {
+        return await retryAfterRefresh(config)
+      } catch (refreshError) {
+        await handleUnauthorizedFailure(refreshError)
+        return Promise.reject(refreshError)
+      }
+    }
     return Promise.reject(handleError(error))
   }
 )
 
-/** 统一创建HttpError */
 function createHttpError(message: string, code: number) {
   return new HttpError(message, code)
 }
@@ -105,38 +92,35 @@ function normalizeErrorCode(code: number | string) {
   return typeof code === 'number' ? code : ApiStatus.error
 }
 
-/** 处理401错误（带防抖） */
-function handleUnauthorizedError(message?: string): never {
-  const error = createHttpError(message || $t('httpMsg.unauthorized'), ApiStatus.unauthorized)
-
-  if (!isUnauthorizedErrorShown) {
-    isUnauthorizedErrorShown = true
-    logOut()
-
-    unauthorizedTimer = setTimeout(resetUnauthorizedError, UNAUTHORIZED_DEBOUNCE_TIME)
-
-    showError(error, true)
+async function retryAfterRefresh(config?: AuthRetryConfig) {
+  if (!canAttemptAuthRefresh(config)) {
+    const error = createHttpError($t('httpMsg.unauthorized'), ApiStatus.unauthorized)
+    await handleUnauthorizedFailure(error)
     throw error
   }
 
-  throw error
+  const nextConfig: AuthRetryConfig = {
+    ...(config ?? {}),
+    _retry: true
+  }
+
+  const accessToken = await ensureAccessToken()
+  nextConfig.headers = {
+    ...(nextConfig.headers as Record<string, unknown> | undefined),
+    Authorization: `Bearer ${accessToken}`
+  }
+
+  return axiosInstance.request(nextConfig)
 }
 
-/** 重置401防抖状态 */
-function resetUnauthorizedError() {
-  isUnauthorizedErrorShown = false
-  if (unauthorizedTimer) clearTimeout(unauthorizedTimer)
-  unauthorizedTimer = null
+async function handleUnauthorizedFailure(error?: unknown): Promise<void> {
+  const userStore = useUserStore()
+  await userStore.logOut({ revoke: false })
+  if (error instanceof HttpError) {
+    showError(error, true)
+  }
 }
 
-/** 退出登录函数 */
-function logOut() {
-  setTimeout(() => {
-    useUserStore().logOut()
-  }, LOGOUT_DELAY)
-}
-
-/** 是否需要重试 */
 function shouldRetry(statusCode: number) {
   return [
     ApiStatus.requestTimeout,
@@ -147,7 +131,6 @@ function shouldRetry(statusCode: number) {
   ].includes(statusCode)
 }
 
-/** 请求重试逻辑 */
 async function retryRequest<T>(
   config: ExtendedAxiosRequestConfig,
   retries: number = MAX_RETRIES
@@ -163,14 +146,11 @@ async function retryRequest<T>(
   }
 }
 
-/** 延迟函数 */
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-/** 请求函数 */
 async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> {
-  // POST | PUT 参数自动填充
   if (
     ['POST', 'PUT'].includes(config.method?.toUpperCase() || '') &&
     config.params &&
@@ -184,14 +164,13 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
     const res = await axiosInstance.request<BaseResponse<T>>(config)
     const message = res.data.message || res.data.msg
 
-    // 显示成功消息
     if (config.showSuccessMessage && message) {
       showSuccess(message)
     }
 
     return res.data.data as T
   } catch (error) {
-    if (error instanceof HttpError && error.code !== ApiStatus.unauthorized) {
+    if (error instanceof HttpError) {
       const showMsg = config.showErrorMessage !== false
       showError(error, showMsg)
     }
@@ -199,7 +178,6 @@ async function request<T = any>(config: ExtendedAxiosRequestConfig): Promise<T> 
   }
 }
 
-/** API方法集合 */
 const api = {
   get<T>(config: ExtendedAxiosRequestConfig) {
     return retryRequest<T>({ ...config, method: 'GET' })
