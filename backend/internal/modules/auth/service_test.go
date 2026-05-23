@@ -273,7 +273,7 @@ func TestServiceRefreshSuccessRotatesTokenAndWritesAudit(t *testing.T) {
 	}}
 	tokenManager := security.NewHMACTokenManager(security.HMACTokenConfig{Issuer: "backend", Audience: "admin-api", KeyID: "test-key", Secret: []byte("01234567890123456789012345678901"), AccessTokenTTL: 15 * time.Minute, ClockSkew: 30 * time.Second})
 
-	svc := NewService(userRepo, authRepo, database.NoopTxManager{}, nil, tokenManager, stubRandomTokenGenerator{values: []string{"refresh-rotated"}}, ServiceConfig{RefreshTokenTTL: 24 * time.Hour, RefreshCookieName: "refresh_token"})
+	svc := NewService(userRepo, authRepo, database.NoopTxManager{}, nil, tokenManager, &stubRandomTokenGenerator{values: []string{"refresh-rotated"}}, ServiceConfig{RefreshTokenTTL: 24 * time.Hour, RefreshCookieName: "refresh_token"})
 
 	resp, cookie, err := svc.Refresh(ctx, &RefreshRequest{RefreshToken: "refresh-ok"})
 	if err != nil {
@@ -595,7 +595,7 @@ type stubRandomTokenGenerator struct {
 	index  int
 }
 
-func (s stubRandomTokenGenerator) GenerateURLSafe(n int) (string, error) {
+func (s *stubRandomTokenGenerator) GenerateURLSafe(n int) (string, error) {
 	if s.index >= len(s.values) {
 		return "", fmt.Errorf("unexpected GenerateURLSafe(%d)", n)
 	}

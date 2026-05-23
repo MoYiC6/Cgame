@@ -374,18 +374,19 @@ func validateAuthSecrets(cfg *Config) error {
 	if cfg == nil {
 		return fmt.Errorf("config is required")
 	}
+	algorithm := strings.TrimSpace(cfg.Auth.JWT.Algorithm)
+	if strings.TrimSpace(cfg.Auth.JWT.KeyID) == "" {
+		return fmt.Errorf("auth.jwt.key_id is required")
+	}
+	if algorithm != "HS256" {
+		return fmt.Errorf("unsupported jwt algorithm: %s", algorithm)
+	}
 	secret := strings.TrimSpace(os.Getenv("JWT_HMAC_SECRET"))
 	if secret == "" {
 		return fmt.Errorf("jwt_hmac_secret is required")
 	}
 	if len(secret) < 32 {
 		return fmt.Errorf("jwt_hmac_secret must be at least 32 bytes for HS256")
-	}
-	if strings.TrimSpace(cfg.Auth.JWT.Algorithm) != "HS256" {
-		return fmt.Errorf("auth.jwt.algorithm must be HS256 in p1")
-	}
-	if strings.TrimSpace(cfg.Auth.JWT.KeyID) == "" {
-		return fmt.Errorf("auth.jwt.key_id is required")
 	}
 	return nil
 }

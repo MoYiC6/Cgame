@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -68,14 +69,11 @@ func main() {
 		cfg.Auth.Password.Argon2Parallelism,
 		os.Getenv("PASSWORD_PEPPER"),
 	)
-	tokenManager := security.NewHMACTokenManager(security.HMACTokenConfig{
-		Issuer:         cfg.Auth.Issuer,
-		Audience:       cfg.Auth.Audience,
-		KeyID:          cfg.Auth.JWT.KeyID,
-		Secret:         []byte(os.Getenv("JWT_HMAC_SECRET")),
-		AccessTokenTTL: cfg.Auth.AccessTokenTTL,
-		ClockSkew:      30 * time.Second,
-	})
+	tokenManager, err := newTokenManager(cfg)
+	if err != nil {
+		appLogger.Error("init token manager failed", "error", err)
+		os.Exit(1)
+	}
 	authHandler := auth.NewHandler(
 		auth.NewService(
 			user.NewRepository(sqlDB),
@@ -116,5 +114,21 @@ func main() {
 		appLogger.Error("api stopped", "error", err)
 		os.Exit(1)
 	}
-	appLogger.Info("api stopped cleanly")
+}
+
+func newTokenManager(cfg *config.Config) (security.TokenManager, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("config is required")
+	}
+	if cfg.Auth.JWT.Algorithm != "HS256" {
+		return nil, fmt.Errorf("unsupported jwt algorithm: %s", cfg.Auth.JWT.Algorithm)
+	}
+	return security.NewHMACTokenManager(security.HMACTokenConfig{
+		Issuer:         cfg.Auth.Issuer,
+		Audience:       cfg.Auth.Audience,
+		KeyID:          cfg.Auth.JWT.KeyID,
+		Secret:         []byte(os.Getenv("JWT_HMAC_SECRET")),
+		AccessTokenTTL: cfg.Auth.AccessTokenTTL,
+		ClockSkew:      30 * time.Second,
+	}), nil
 }

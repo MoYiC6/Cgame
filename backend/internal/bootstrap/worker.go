@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"sync"
 
+	"backend/internal/modules/user"
 	"backend/internal/platform/logger"
+	"backend/internal/platform/security"
 )
 
 type Worker interface {
@@ -48,11 +50,33 @@ func (w *InMemoryWorker) RegisterTask(name string, handler func(ctx context.Cont
 
 func (w *InMemoryWorker) RegisterRunnable(name string, task RunnableTask) {
 	w.RegisterTask(name, task.Run)
-	if probe, ok := task.(TaskProbe); ok {
-		w.mu.Lock()
-		w.probes[name] = probe
-		w.mu.Unlock()
+	w.registerProbe(name, task)
+}
+
+func (w *InMemoryWorker) RegisterRunnableWithSystemPrincipal(name string, task RunnableTask) {
+	principal := &security.Principal{
+		UserID:      "worker:" + name,
+		SessionID:   "worker:" + name,
+		Roles:       []string{"system"},
+		Permissions: []string{"internal:worker"},
+		Status:      user.StatusActive,
 	}
+	w.RegisterTask(name, func(ctx context.Context) error {
+		ctx = security.WithPrincipal(ctx, principal)
+		ctx = security.WithSessionID(ctx, principal.SessionID)
+		return task.Run(ctx)
+	})
+	w.registerProbe(name, task)
+}
+
+func (w *InMemoryWorker) registerProbe(name string, task RunnableTask) {
+	probe, ok := task.(TaskProbe)
+	if !ok {
+		return
+	}
+	w.mu.Lock()
+	w.probes[name] = probe
+	w.mu.Unlock()
 }
 
 func (w *InMemoryWorker) Probe(ctx context.Context) error {

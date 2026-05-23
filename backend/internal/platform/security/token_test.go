@@ -20,7 +20,7 @@ func TestTokenManagerIssueAndVerifyRoundTrip(t *testing.T) {
 		ClockSkew:      30 * time.Second,
 	})
 
-	p := &Principal{PublicID: "usr_123", SessionID: "ses_123", Roles: []string{"admin"}, Permissions: []string{"order:read", "order:read"}}
+	p := &Principal{UserID: "42", PublicID: "usr_123", SessionID: "ses_123", Roles: []string{"admin"}, Permissions: []string{"order:read", "order:read"}, Status: "active"}
 	tok, err := mgr.IssueAccessToken(context.Background(), p)
 	if err != nil {
 		t.Fatalf("IssueAccessToken() error = %v", err)
@@ -30,8 +30,14 @@ func TestTokenManagerIssueAndVerifyRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("VerifyAccessToken() error = %v", err)
 	}
-	if principal.PublicID != "usr_123" || claims.Subject != "usr_123" {
-		t.Fatalf("unexpected principal/claims: %+v %+v", principal, claims)
+	if principal.UserID != "42" || claims.Subject != "42" {
+		t.Fatalf("expected user id subject round trip, principal=%+v claims=%+v", principal, claims)
+	}
+	if principal.PublicID != "usr_123" {
+		t.Fatalf("expected public id to round trip via explicit claim, got %+v", principal)
+	}
+	if principal.Status != "active" {
+		t.Fatalf("expected status active, got %+v", principal)
 	}
 	if !reflect.DeepEqual(principal.Permissions, []string{"order:read"}) {
 		t.Fatalf("expected deduped sorted permissions, got %#v", principal.Permissions)
@@ -42,9 +48,10 @@ func TestTokenManagerRejectsTokenWithoutExp(t *testing.T) {
 	mgr := newTestTokenManager()
 	raw := signTestToken(t, mgr.config.Secret, mgr.config.KeyID, customClaims{
 		SessionID: "ses_123",
+		Status:    "active",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    mgr.config.Issuer,
-			Subject:   "usr_123",
+			Subject:   "42",
 			Audience:  jwt.ClaimStrings{mgr.config.Audience},
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 			NotBefore: jwt.NewNumericDate(time.Now().UTC()),
@@ -62,9 +69,10 @@ func TestTokenManagerRejectsTokenWithoutNbf(t *testing.T) {
 	now := time.Now().UTC()
 	raw := signTestToken(t, mgr.config.Secret, mgr.config.KeyID, customClaims{
 		SessionID: "ses_123",
+		Status:    "active",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    mgr.config.Issuer,
-			Subject:   "usr_123",
+			Subject:   "42",
 			Audience:  jwt.ClaimStrings{mgr.config.Audience},
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(15 * time.Minute)),
@@ -82,9 +90,10 @@ func TestTokenManagerRejectsTokenWithoutIat(t *testing.T) {
 	now := time.Now().UTC()
 	raw := signTestToken(t, mgr.config.Secret, mgr.config.KeyID, customClaims{
 		SessionID: "ses_123",
+		Status:    "active",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    mgr.config.Issuer,
-			Subject:   "usr_123",
+			Subject:   "42",
 			Audience:  jwt.ClaimStrings{mgr.config.Audience},
 			NotBefore: jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(15 * time.Minute)),
@@ -102,9 +111,10 @@ func TestTokenManagerRejectsMismatchedKid(t *testing.T) {
 	now := time.Now().UTC()
 	raw := signTestToken(t, mgr.config.Secret, "other-key", customClaims{
 		SessionID: "ses_123",
+		Status:    "active",
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    mgr.config.Issuer,
-			Subject:   "usr_123",
+			Subject:   "42",
 			Audience:  jwt.ClaimStrings{mgr.config.Audience},
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
@@ -155,4 +165,34 @@ func signTestToken(t *testing.T, secret []byte, kid string, claims customClaims)
 		t.Fatalf("SignedString() error = %v", err)
 	}
 	return raw
+}
+
+func TestTokenManagerVerifyAccessTokenFallsBackToSubjectForLegacyPublicID(t *testing.T) {
+	mgr := newTestTokenManager()
+	now := time.Now().UTC()
+	raw := signTestToken(t, mgr.config.Secret, mgr.config.KeyID, customClaims{
+		SessionID: "ses_legacy",
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    mgr.config.Issuer,
+			Subject:   "usr_legacy",
+			Audience:  jwt.ClaimStrings{mgr.config.Audience},
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(15 * time.Minute)),
+		},
+	})
+
+	principal, claims, err := mgr.VerifyAccessToken(context.Background(), raw)
+	if err != nil {
+		t.Fatalf("VerifyAccessToken() error = %v", err)
+	}
+	if principal.UserID != "" {
+		t.Fatalf("expected legacy token to avoid fabricating user id, got %+v", principal)
+	}
+	if principal.PublicID != "usr_legacy" {
+		t.Fatalf("expected legacy subject fallback into public id, got %+v", principal)
+	}
+	if claims.PublicID != "usr_legacy" {
+		t.Fatalf("expected legacy subject fallback into claims public id, got %+v", claims)
+	}
 }

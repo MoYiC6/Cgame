@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -130,7 +131,7 @@ func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 		}
 		refreshHash := sha256Hex(refreshValue)
 		expiresAt := now.Add(s.config.RefreshTokenTTL)
-		principal := &security.Principal{PublicID: u.PublicID, SessionID: sessionID, Roles: security.NormalizeStrings(roles), Permissions: security.NormalizeStrings(permissions)}
+		principal := &security.Principal{UserID: fmt.Sprintf("%d", u.ID), PublicID: u.PublicID, SessionID: sessionID, Roles: security.NormalizeStrings(roles), Permissions: security.NormalizeStrings(permissions), Status: u.Status}
 		if err := s.repo.CreateSession(txCtx, &AuthSession{ID: sessionID, UserID: u.ID, Status: "active", UserAgentHash: userAgentHash, IPHash: clientIPHash, CreatedAt: now, LastSeenAt: ptrTime(now), ExpiresAt: expiresAt}); err != nil {
 			return err
 		}
@@ -226,7 +227,7 @@ func (s *service) Refresh(ctx context.Context, req *RefreshRequest) (*AuthRespon
 		if !used {
 			return ErrRefreshReused
 		}
-		principal := &security.Principal{PublicID: u.PublicID, SessionID: stored.SessionID, Roles: security.NormalizeStrings(roles), Permissions: security.NormalizeStrings(permissions)}
+		principal := &security.Principal{UserID: fmt.Sprintf("%d", u.ID), PublicID: u.PublicID, SessionID: stored.SessionID, Roles: security.NormalizeStrings(roles), Permissions: security.NormalizeStrings(permissions), Status: u.Status}
 		accessToken, err := s.tokenManager.IssueAccessToken(txCtx, principal)
 		if err != nil {
 			return err

@@ -6,10 +6,12 @@ import (
 )
 
 type Principal struct {
+	UserID      string
 	PublicID    string
 	SessionID   string
 	Roles       []string
 	Permissions []string
+	Status      string
 }
 
 func NormalizeStrings(values []string) []string {

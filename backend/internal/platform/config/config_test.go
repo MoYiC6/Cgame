@@ -370,9 +370,74 @@ func TestDotEnvDoesNotOverrideExistingEnvironment(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsUnsupportedJWTAlgorithm(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	content := []byte(`app:
+  name: backend-test
+  env: test
+server:
+  addr: ":18080"
+log:
+  level: debug
+db:
+  driver: postgres
+  dsn: "postgres://user:secret@localhost:5432/backend_test"
+  max_open_conns: 16
+  max_idle_conns: 8
+  conn_max_lifetime_secs: 300
+observability:
+  trace_exporter_type: none
+  service_name: backend-test
+auth:
+  issuer: backend
+  audience: admin-api
+  access_token_ttl: 15m
+  refresh_token_ttl: 168h
+  login:
+    max_failed_attempts: 5
+    failed_window: 15m
+    lock_duration: 30m
+  password:
+    min_length: 8
+    max_length: 72
+    argon2_memory_kib: 65536
+    argon2_iterations: 3
+    argon2_parallelism: 2
+  cookie:
+    name: refresh_token
+    path: /api/v1/auth
+    same_site: Lax
+  jwt:
+    algorithm: EdDSA
+    key_id: eddsa-key-1
+redis:
+  addr: localhost:6379
+mq:
+  driver: in-memory
+  topic_prefix: backend.test
+`)
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+
+	t.Setenv("APP_ENV", "test")
+	t.Setenv("APP_CONFIG_PATH", path)
+	t.Setenv("JWT_HMAC_SECRET", "")
+
+	_, err := LoadConfig("")
+	if err == nil {
+		t.Fatal("expected unsupported algorithm error")
+	}
+	if !strings.Contains(err.Error(), "unsupported jwt algorithm") {
+		t.Fatalf("expected unsupported jwt algorithm error, got %v", err)
+	}
+}
+
 func TestLoadConfigUsesAPPENVWhenArgumentEmpty(t *testing.T) {
 	t.Setenv("APP_CONFIG_PATH", "")
 	t.Setenv("APP_ENV", "test")
+	t.Setenv("JWT_HMAC_SECRET", "01234567890123456789012345678901")
 
 	wd, err := os.Getwd()
 	if err != nil {

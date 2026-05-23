@@ -35,6 +35,8 @@ type TokenClaims struct {
 	ExpiresAt   time.Time
 	Roles       []string
 	Permissions []string
+	Status      string
+	PublicID    string
 }
 
 type TokenManager interface {
@@ -53,6 +55,8 @@ type HMACTokenConfig struct {
 
 type customClaims struct {
 	SessionID   string   `json:"sid"`
+	PublicID    string   `json:"pid,omitempty"`
+	Status      string   `json:"status,omitempty"`
 	Roles       []string `json:"roles,omitempty"`
 	Permissions []string `json:"permissions,omitempty"`
 	jwt.RegisteredClaims
@@ -79,13 +83,19 @@ func (m *HMACTokenManager) IssueAccessToken(ctx context.Context, p *Principal) (
 	if err != nil {
 		return nil, err
 	}
+	subject := strings.TrimSpace(p.UserID)
+	if subject == "" {
+		subject = strings.TrimSpace(p.PublicID)
+	}
 	claims := customClaims{
 		SessionID:   p.SessionID,
+		PublicID:    strings.TrimSpace(p.PublicID),
+		Status:      strings.TrimSpace(p.Status),
 		Roles:       NormalizeStrings(p.Roles),
 		Permissions: NormalizeStrings(p.Permissions),
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    m.config.Issuer,
-			Subject:   p.PublicID,
+			Subject:   subject,
 			Audience:  jwt.ClaimStrings{m.config.Audience},
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
@@ -134,11 +144,19 @@ func (m *HMACTokenManager) VerifyAccessToken(ctx context.Context, raw string) (*
 	if claims.IssuedAt == nil || claims.NotBefore == nil || claims.ExpiresAt == nil {
 		return nil, nil, ErrTokenInvalid
 	}
+	publicID := strings.TrimSpace(claims.PublicID)
+	userID := strings.TrimSpace(claims.Subject)
+	if publicID == "" {
+		publicID = userID
+		userID = ""
+	}
 	principal := &Principal{
-		PublicID:    claims.Subject,
+		UserID:      userID,
+		PublicID:    publicID,
 		SessionID:   claims.SessionID,
 		Roles:       NormalizeStrings(claims.Roles),
 		Permissions: NormalizeStrings(claims.Permissions),
+		Status:      strings.TrimSpace(claims.Status),
 	}
 	resultClaims := &TokenClaims{
 		TokenID:     claims.ID,
@@ -151,6 +169,8 @@ func (m *HMACTokenManager) VerifyAccessToken(ctx context.Context, raw string) (*
 		ExpiresAt:   claims.ExpiresAt.Time,
 		Roles:       principal.Roles,
 		Permissions: principal.Permissions,
+		Status:      principal.Status,
+		PublicID:    principal.PublicID,
 	}
 	return principal, resultClaims, nil
 }
