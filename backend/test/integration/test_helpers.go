@@ -52,6 +52,11 @@ func newIntegrationEngine(db database.DB) *gin.Engine {
 				Audience:        "admin-api",
 				AccessTokenTTL:  15 * time.Minute,
 				RefreshTokenTTL: 24 * time.Hour,
+				Login: config.AuthLoginConfig{
+					MaxFailedAttempts: 5,
+					FailedWindow:      15 * time.Minute,
+					LockDuration:      30 * time.Minute,
+				},
 				Cookie: config.AuthCookieConfig{
 					Name:     "refresh_token",
 					Path:     "/api/v1/auth",
@@ -99,7 +104,7 @@ func newIntegrationEngine(db database.DB) *gin.Engine {
 			passwordHasher,
 			tokenManager,
 			security.CryptoRandomTokenGenerator{},
-			auth.ServiceConfig{RefreshTokenTTL: deps.Config.Auth.RefreshTokenTTL, RefreshCookieName: deps.Config.Auth.Cookie.Name},
+			auth.ServiceConfig{RefreshTokenTTL: deps.Config.Auth.RefreshTokenTTL, RefreshCookieName: deps.Config.Auth.Cookie.Name, MaxFailedAttempts: deps.Config.Auth.Login.MaxFailedAttempts, FailedWindow: deps.Config.Auth.Login.FailedWindow, LockDuration: deps.Config.Auth.Login.LockDuration},
 		),
 		auth.NewHandlerConfigFromAuth(deps.Config.Auth),
 		auth.AuthMiddleware(tokenManager),

@@ -249,8 +249,11 @@ func TestRepositoryWriteLoginAttemptAndAuditLog(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 	err = repo.CreateLoginAttempt(ctx, &LoginAttempt{
 		IdentifierHash: "ident_hash",
+		UserID:         ptrInt64(77),
 		Success:        false,
 		Reason:         "invalid_credentials",
+		IPHash:         "ip_hash",
+		UserAgentHash:  "ua_hash",
 		RequestID:      "req_auth",
 		TraceID:        "trace_auth",
 		CreatedAt:      now,
@@ -281,6 +284,20 @@ func TestRepositoryWriteLoginAttemptAndAuditLog(t *testing.T) {
 		t.Fatalf("expected 1 login_attempt, got %d", attempts)
 	}
 
+	var storedUserID sql.NullInt64
+	var storedIPHash sql.NullString
+	var storedUserAgentHash sql.NullString
+	err = h.db.QueryRowContext(ctx, `SELECT user_id, ip_hash, user_agent_hash FROM login_attempts WHERE identifier_hash = $1`, "ident_hash").Scan(&storedUserID, &storedIPHash, &storedUserAgentHash)
+	if err != nil {
+		t.Fatalf("query login_attempts detail error = %v", err)
+	}
+	if !storedUserID.Valid || storedUserID.Int64 != 77 {
+		t.Fatalf("expected user_id 77, got %#v", storedUserID)
+	}
+	if storedIPHash.String != "ip_hash" || storedUserAgentHash.String != "ua_hash" {
+		t.Fatalf("expected ip/user_agent hashes persisted, got ip=%#v ua=%#v", storedIPHash, storedUserAgentHash)
+	}
+
 	var metadataRaw []byte
 	err = h.db.QueryRowContext(ctx, `SELECT metadata_json FROM audit_logs WHERE event_type = $1`, "login_failed").Scan(&metadataRaw)
 	if err != nil {
@@ -292,6 +309,42 @@ func TestRepositoryWriteLoginAttemptAndAuditLog(t *testing.T) {
 	}
 	if metadata["reason"] != "invalid_credentials" {
 		t.Fatalf("expected metadata reason invalid_credentials, got %#v", metadata)
+	}
+}
+
+func TestRepositoryListRecentFailedAttemptTimesByUserID(t *testing.T) {
+	ctx := context.Background()
+	h, err := newAuthRepositoryHarness(ctx, t)
+	if err != nil {
+		t.Fatalf("newAuthRepositoryHarness() error = %v", err)
+	}
+	defer func() {
+		if err := h.Close(ctx); err != nil {
+			t.Fatalf("Close() error = %v", err)
+		}
+	}()
+
+	if err := h.ApplyMigrations(ctx); err != nil {
+		t.Fatalf("ApplyMigrations() error = %v", err)
+	}
+
+	userID := h.insertUser(ctx, t, "usr_recent", "recent@example.com")
+	now := time.Now().UTC().Truncate(time.Second)
+	_, err = h.db.ExecContext(ctx, `
+		INSERT INTO login_attempts (identifier_hash, user_id, success, reason, created_at)
+		VALUES ($1, $2, false, $3, $4), ($1, $2, false, $3, $5), ($1, $2, true, $6, $7)
+	`, "ident_hash_recent", userID, "invalid_credentials", now.Add(-2*time.Minute), now.Add(-4*time.Minute), "success", now)
+	if err != nil {
+		t.Fatalf("insert login attempts error = %v", err)
+	}
+
+	repo := NewRepository(h.db)
+	recent, err := repo.ListRecentFailedAttemptTimes(ctx, FailedLoginAttemptFilter{UserID: ptrInt64(userID), Since: now.Add(-10 * time.Minute)})
+	if err != nil {
+		t.Fatalf("ListRecentFailedAttemptTimes() error = %v", err)
+	}
+	if len(recent) != 2 {
+		t.Fatalf("expected 2 recent failed attempts, got %#v", recent)
 	}
 }
 

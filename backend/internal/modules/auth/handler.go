@@ -60,7 +60,8 @@ func (h *Handler) Login(c *gin.Context) {
 		response.Fail(c, apperrors.New("INVALID_ARGUMENT", "invalid input", http.StatusBadRequest, err))
 		return
 	}
-	resp, cookie, err := h.service.Login(c.Request.Context(), &req)
+	ctx := WithClientMetadata(c.Request.Context(), c.ClientIP(), c.GetHeader("User-Agent"))
+	resp, cookie, err := h.service.Login(ctx, &req)
 	if err != nil {
 		response.Fail(c, toAppError(err))
 		return
@@ -76,7 +77,8 @@ func (h *Handler) Refresh(c *gin.Context) {
 	} else {
 		h.writeRefreshCookie(c, &RefreshCookie{Clear: true})
 	}
-	resp, cookie, err := h.service.Refresh(c.Request.Context(), &RefreshRequest{RefreshToken: refreshToken})
+	ctx := WithClientMetadata(c.Request.Context(), c.ClientIP(), c.GetHeader("User-Agent"))
+	resp, cookie, err := h.service.Refresh(ctx, &RefreshRequest{RefreshToken: refreshToken})
 	if cookie != nil {
 		h.writeRefreshCookie(c, cookie)
 	}
@@ -98,7 +100,8 @@ func (h *Handler) Logout(c *gin.Context) {
 		sessionID = principal.SessionID
 		publicID = principal.PublicID
 	}
-	if err := h.service.Logout(c.Request.Context(), &LogoutRequest{RefreshToken: refreshToken, SessionID: sessionID, PublicID: publicID}); err != nil {
+	ctx := WithClientMetadata(c.Request.Context(), c.ClientIP(), c.GetHeader("User-Agent"))
+	if err := h.service.Logout(ctx, &LogoutRequest{RefreshToken: refreshToken, SessionID: sessionID, PublicID: publicID}); err != nil {
 		response.Fail(c, toAppError(err))
 		return
 	}

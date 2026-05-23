@@ -20,6 +20,7 @@ type Repository interface {
 	MarkRefreshTokenUsed(ctx context.Context, tokenID int64, replacedByTokenID int64) (bool, error)
 	RevokeRefreshTokenFamily(ctx context.Context, familyID string) error
 	RevokeRefreshTokensBySessionID(ctx context.Context, sessionID string) error
+	ListRecentFailedAttemptTimes(ctx context.Context, filter FailedLoginAttemptFilter) ([]time.Time, error)
 	UpdateLastLoginAt(ctx context.Context, userID int64, at time.Time) error
 	CreateLoginAttempt(ctx context.Context, attempt *LoginAttempt) error
 	CreateAuditLog(ctx context.Context, log *AuditLog) error
@@ -172,6 +173,45 @@ func (r *repository) RevokeRefreshTokensBySessionID(ctx context.Context, session
 	return err
 }
 
+func (r *repository) ListRecentFailedAttemptTimes(ctx context.Context, filter FailedLoginAttemptFilter) ([]time.Time, error) {
+	query := `
+		SELECT created_at
+		FROM login_attempts
+		WHERE success = false AND created_at >= $1
+	`
+	args := []any{filter.Since}
+	if filter.UserID != nil {
+		query += ` AND user_id = $2`
+		args = append(args, *filter.UserID)
+	} else if filter.IPHash != "" {
+		query += ` AND ip_hash = $2`
+		args = append(args, filter.IPHash)
+	} else {
+		query += ` AND identifier_hash = $2`
+		args = append(args, filter.IdentifierHash)
+	}
+	query += ` ORDER BY created_at DESC`
+
+	rows, err := r.executor(ctx).QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	result := make([]time.Time, 0)
+	for rows.Next() {
+		var createdAt time.Time
+		if err := rows.Scan(&createdAt); err != nil {
+			return nil, err
+		}
+		result = append(result, createdAt)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func (r *repository) UpdateLastLoginAt(ctx context.Context, userID int64, at time.Time) error {
 	_, err := r.executor(ctx).ExecContext(ctx, `
 		UPDATE users
@@ -186,9 +226,9 @@ func (r *repository) CreateLoginAttempt(ctx context.Context, attempt *LoginAttem
 		return nil
 	}
 	_, err := r.executor(ctx).ExecContext(ctx, `
-		INSERT INTO login_attempts (identifier_hash, success, reason, ip_hash, user_agent_hash, request_id, trace_id, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`, attempt.IdentifierHash, attempt.Success, attempt.Reason, nullString(attempt.IPHash), nullString(attempt.UserAgentHash), nullString(attempt.RequestID), nullString(attempt.TraceID), attempt.CreatedAt)
+		INSERT INTO login_attempts (identifier_hash, user_id, success, reason, ip_hash, user_agent_hash, request_id, trace_id, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+	`, attempt.IdentifierHash, attempt.UserID, attempt.Success, attempt.Reason, nullString(attempt.IPHash), nullString(attempt.UserAgentHash), nullString(attempt.RequestID), nullString(attempt.TraceID), attempt.CreatedAt)
 	return err
 }
 

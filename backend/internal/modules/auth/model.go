@@ -29,6 +29,7 @@ type RefreshToken struct {
 
 type LoginAttempt struct {
 	IdentifierHash string
+	UserID         *int64
 	Success        bool
 	Reason         string
 	IPHash         string
@@ -60,4 +61,14 @@ type RefreshCookie struct {
 type ServiceConfig struct {
 	RefreshTokenTTL   time.Duration
 	RefreshCookieName string
+	MaxFailedAttempts int
+	FailedWindow      time.Duration
+	LockDuration      time.Duration
+}
+
+type FailedLoginAttemptFilter struct {
+	IdentifierHash string
+	UserID         *int64
+	IPHash         string
+	Since          time.Time
 }

@@ -52,9 +52,16 @@ type AuthConfig struct {
 	Audience        string             `yaml:"audience"`
 	AccessTokenTTL  time.Duration      `yaml:"access_token_ttl"`
 	RefreshTokenTTL time.Duration      `yaml:"refresh_token_ttl"`
+	Login           AuthLoginConfig    `yaml:"login"`
 	Password        AuthPasswordConfig `yaml:"password"`
 	Cookie          AuthCookieConfig   `yaml:"cookie"`
 	JWT             AuthJWTConfig      `yaml:"jwt"`
+}
+
+type AuthLoginConfig struct {
+	MaxFailedAttempts int           `yaml:"max_failed_attempts"`
+	FailedWindow      time.Duration `yaml:"failed_window"`
+	LockDuration      time.Duration `yaml:"lock_duration"`
 }
 
 type AuthPasswordConfig struct {
@@ -342,6 +349,15 @@ func (c Config) Validate() error {
 	if c.Auth.RefreshTokenTTL <= 0 {
 		return fmt.Errorf("auth.refresh_token_ttl must be > 0")
 	}
+	if c.Auth.Login.MaxFailedAttempts <= 0 {
+		return fmt.Errorf("auth.login.max_failed_attempts must be > 0")
+	}
+	if c.Auth.Login.FailedWindow <= 0 {
+		return fmt.Errorf("auth.login.failed_window must be > 0")
+	}
+	if c.Auth.Login.LockDuration <= 0 {
+		return fmt.Errorf("auth.login.lock_duration must be > 0")
+	}
 	if strings.TrimSpace(c.Auth.Cookie.Name) == "" {
 		return fmt.Errorf("auth.cookie.name is required")
 	}
@@ -359,47 +375,56 @@ func validateAuthSecrets(cfg *Config) error {
 		return fmt.Errorf("config is required")
 	}
 	secret := strings.TrimSpace(os.Getenv("JWT_HMAC_SECRET"))
-	if cfg.App.Env == "prod" && secret == "" {
-		return fmt.Errorf("jwt_hmac_secret is required in prod")
+	if secret == "" {
+		return fmt.Errorf("jwt_hmac_secret is required")
+	}
+	if len(secret) < 32 {
+		return fmt.Errorf("jwt_hmac_secret must be at least 32 bytes for HS256")
 	}
 	if strings.TrimSpace(cfg.Auth.JWT.Algorithm) != "HS256" {
 		return fmt.Errorf("auth.jwt.algorithm must be HS256 in p1")
+	}
+	if strings.TrimSpace(cfg.Auth.JWT.KeyID) == "" {
+		return fmt.Errorf("auth.jwt.key_id is required")
 	}
 	return nil
 }
 
 func (c Config) MaskedSummary() map[string]string {
 	return map[string]string{
-		"app_name":                  c.App.Name,
-		"app_env":                   c.App.Env,
-		"server":                    c.Server.Addr,
-		"log_level":                 c.Log.Level,
-		"db_driver":                 c.DB.Driver,
-		"db_dsn":                    maskSecret(c.DB.DSN),
-		"db_max_open_conns":         strconv.Itoa(c.DB.MaxOpenConns),
-		"db_max_idle_conns":         strconv.Itoa(c.DB.MaxIdleConns),
-		"db_conn_max_lifetime_secs": strconv.Itoa(c.DB.ConnMaxLifetimeSecs),
-		"auth_issuer":               c.Auth.Issuer,
-		"auth_audience":             c.Auth.Audience,
-		"auth_access_token_ttl":     c.Auth.AccessTokenTTL.String(),
-		"auth_refresh_token_ttl":    c.Auth.RefreshTokenTTL.String(),
-		"auth_cookie_name":          c.Auth.Cookie.Name,
-		"auth_cookie_path":          c.Auth.Cookie.Path,
-		"auth_cookie_same_site":     c.Auth.Cookie.SameSite,
-		"auth_jwt_algorithm":        c.Auth.JWT.Algorithm,
-		"auth_jwt_key_id":           c.Auth.JWT.KeyID,
-		"redis":                     maskSecret(c.Redis.Addr),
-		"mq_driver":                 c.MQ.Driver,
-		"mq_topic":                  c.MQ.TopicPrefix,
-		"otel_trace_exporter_type":  c.Observability.TraceExporterType,
-		"otel_exporter_endpoint":    maskSecret(c.Observability.TraceExporterEndpoint),
-		"otel_service_name":         c.Observability.ServiceName,
-		"otel_service_version":      c.Observability.ServiceVersion,
-		"otel_environment":          c.Observability.Environment,
-		"metrics_enabled":           strconv.FormatBool(c.Metrics.Enabled),
-		"cors_allowed_origins":      strings.Join(c.CORS.AllowedOrigins, ","),
-		"rate_limit_requests":       strconv.Itoa(c.RateLimit.Requests),
-		"rate_limit_window_secs":    strconv.Itoa(c.RateLimit.WindowSecs),
+		"app_name":                       c.App.Name,
+		"app_env":                        c.App.Env,
+		"server":                         c.Server.Addr,
+		"log_level":                      c.Log.Level,
+		"db_driver":                      c.DB.Driver,
+		"db_dsn":                         maskSecret(c.DB.DSN),
+		"db_max_open_conns":              strconv.Itoa(c.DB.MaxOpenConns),
+		"db_max_idle_conns":              strconv.Itoa(c.DB.MaxIdleConns),
+		"db_conn_max_lifetime_secs":      strconv.Itoa(c.DB.ConnMaxLifetimeSecs),
+		"auth_issuer":                    c.Auth.Issuer,
+		"auth_audience":                  c.Auth.Audience,
+		"auth_access_token_ttl":          c.Auth.AccessTokenTTL.String(),
+		"auth_refresh_token_ttl":         c.Auth.RefreshTokenTTL.String(),
+		"auth_login_max_failed_attempts": strconv.Itoa(c.Auth.Login.MaxFailedAttempts),
+		"auth_login_failed_window":       c.Auth.Login.FailedWindow.String(),
+		"auth_login_lock_duration":       c.Auth.Login.LockDuration.String(),
+		"auth_cookie_name":               c.Auth.Cookie.Name,
+		"auth_cookie_path":               c.Auth.Cookie.Path,
+		"auth_cookie_same_site":          c.Auth.Cookie.SameSite,
+		"auth_jwt_algorithm":             c.Auth.JWT.Algorithm,
+		"auth_jwt_key_id":                c.Auth.JWT.KeyID,
+		"redis":                          maskSecret(c.Redis.Addr),
+		"mq_driver":                      c.MQ.Driver,
+		"mq_topic":                       c.MQ.TopicPrefix,
+		"otel_trace_exporter_type":       c.Observability.TraceExporterType,
+		"otel_exporter_endpoint":         maskSecret(c.Observability.TraceExporterEndpoint),
+		"otel_service_name":              c.Observability.ServiceName,
+		"otel_service_version":           c.Observability.ServiceVersion,
+		"otel_environment":               c.Observability.Environment,
+		"metrics_enabled":                strconv.FormatBool(c.Metrics.Enabled),
+		"cors_allowed_origins":           strings.Join(c.CORS.AllowedOrigins, ","),
+		"rate_limit_requests":            strconv.Itoa(c.RateLimit.Requests),
+		"rate_limit_window_secs":         strconv.Itoa(c.RateLimit.WindowSecs),
 	}
 }
 

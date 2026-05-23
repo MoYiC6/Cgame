@@ -71,6 +71,7 @@ CREATE INDEX idx_refresh_tokens_session_id ON refresh_tokens (session_id);
 CREATE TABLE login_attempts (
     id BIGSERIAL PRIMARY KEY,
     identifier_hash VARCHAR(128) NOT NULL,
+    user_id BIGINT,
     success BOOLEAN NOT NULL,
     reason VARCHAR(64) NOT NULL,
     ip_hash VARCHAR(128),
@@ -81,6 +82,7 @@ CREATE TABLE login_attempts (
 );
 
 CREATE INDEX idx_login_attempts_identifier_created_at ON login_attempts (identifier_hash, created_at);
+CREATE INDEX idx_login_attempts_user_id_created_at ON login_attempts (user_id, created_at);
 CREATE INDEX idx_login_attempts_ip_created_at ON login_attempts (ip_hash, created_at);
 
 CREATE TABLE audit_logs (

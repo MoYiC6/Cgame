@@ -39,6 +39,34 @@ func TestLoadConfigRejectsProdWithoutJWTSecret(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsLocalWithoutJWTSecret(t *testing.T) {
+	t.Setenv("APP_ENV", "local")
+	t.Setenv("APP_CONFIG_PATH", filepath.Join("..", "..", "..", "configs", "config.local.yaml"))
+	t.Setenv("JWT_HMAC_SECRET", "")
+
+	_, err := LoadConfig("")
+	if err == nil {
+		t.Fatal("expected error when local jwt secret is missing")
+	}
+	if !strings.Contains(strings.ToLower(err.Error()), "jwt_hmac_secret") {
+		t.Fatalf("expected jwt_hmac_secret validation error, got %v", err)
+	}
+}
+
+func TestLoadConfigRejectsWeakJWTSecret(t *testing.T) {
+	t.Setenv("APP_ENV", "test")
+	t.Setenv("APP_CONFIG_PATH", filepath.Join("..", "..", "..", "configs", "config.test.yaml"))
+	t.Setenv("JWT_HMAC_SECRET", "too-short-secret")
+
+	_, err := LoadConfig("")
+	if err == nil {
+		t.Fatal("expected error when jwt secret is weak")
+	}
+	if !strings.Contains(strings.ToLower(err.Error()), "32") {
+		t.Fatalf("expected weak-secret length validation error, got %v", err)
+	}
+}
+
 func TestLoadFromFile(t *testing.T) {
 	cfg, err := Load(filepath.Join("..", "..", "..", "configs", "config.test.yaml"))
 	if err != nil {
@@ -179,6 +207,7 @@ func TestLoadConfigAppliesEnvironmentOverrides(t *testing.T) {
 	t.Setenv("OTEL_SERVICE_VERSION", "2.0.0")
 	t.Setenv("OTEL_ENVIRONMENT", "staging")
 	t.Setenv("REDIS_ADDR", "redis:6379")
+	t.Setenv("JWT_HMAC_SECRET", "01234567890123456789012345678901")
 
 	cfg, err := LoadConfig("test")
 	if err != nil {
@@ -257,6 +286,10 @@ auth:
   audience: admin-api
   access_token_ttl: 15m
   refresh_token_ttl: 168h
+  login:
+    max_failed_attempts: 5
+    failed_window: 15m
+    lock_duration: 30m
   cookie:
     name: refresh_token
     path: /api/v1/auth

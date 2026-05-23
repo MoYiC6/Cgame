@@ -84,7 +84,7 @@ func main() {
 			passwordHasher,
 			tokenManager,
 			security.CryptoRandomTokenGenerator{},
-			auth.ServiceConfig{RefreshTokenTTL: cfg.Auth.RefreshTokenTTL, RefreshCookieName: cfg.Auth.Cookie.Name},
+			auth.ServiceConfig{RefreshTokenTTL: cfg.Auth.RefreshTokenTTL, RefreshCookieName: cfg.Auth.Cookie.Name, MaxFailedAttempts: cfg.Auth.Login.MaxFailedAttempts, FailedWindow: cfg.Auth.Login.FailedWindow, LockDuration: cfg.Auth.Login.LockDuration},
 		),
 		auth.NewHandlerConfigFromAuth(cfg.Auth),
 		auth.AuthMiddleware(tokenManager),

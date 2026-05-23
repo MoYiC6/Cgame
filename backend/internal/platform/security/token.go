@@ -3,6 +3,8 @@ package security
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -12,6 +14,8 @@ var (
 	ErrTokenInvalid = errors.New("token invalid")
 	ErrTokenExpired = errors.New("token expired")
 )
+
+const minHS256SecretBytes = 32
 
 type AccessToken struct {
 	Token     string
@@ -60,6 +64,12 @@ type HMACTokenManager struct {
 }
 
 func NewHMACTokenManager(cfg HMACTokenConfig) *HMACTokenManager {
+	if len(cfg.Secret) < minHS256SecretBytes {
+		panic("jwt hmac secret must be at least 32 bytes")
+	}
+	if strings.TrimSpace(cfg.KeyID) == "" {
+		panic("jwt key id is required")
+	}
 	return &HMACTokenManager{config: cfg, random: CryptoRandomTokenGenerator{}}
 }
 
@@ -99,9 +109,15 @@ func (m *HMACTokenManager) VerifyAccessToken(ctx context.Context, raw string) (*
 		jwt.WithIssuer(m.config.Issuer),
 		jwt.WithAudience(m.config.Audience),
 		jwt.WithLeeway(m.config.ClockSkew),
+		jwt.WithIssuedAt(),
+		jwt.WithExpirationRequired(),
+		jwt.WithNotBeforeRequired(),
 	)
 	token, err := parser.ParseWithClaims(raw, claims, func(token *jwt.Token) (any, error) {
 		if token.Method != jwt.SigningMethodHS256 {
+			return nil, ErrTokenInvalid
+		}
+		if strings.TrimSpace(fmt.Sprint(token.Header["kid"])) != m.config.KeyID {
 			return nil, ErrTokenInvalid
 		}
 		return m.config.Secret, nil
@@ -113,6 +129,9 @@ func (m *HMACTokenManager) VerifyAccessToken(ctx context.Context, raw string) (*
 		return nil, nil, ErrTokenInvalid
 	}
 	if !token.Valid {
+		return nil, nil, ErrTokenInvalid
+	}
+	if claims.IssuedAt == nil || claims.NotBefore == nil || claims.ExpiresAt == nil {
 		return nil, nil, ErrTokenInvalid
 	}
 	principal := &Principal{
