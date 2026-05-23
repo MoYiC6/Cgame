@@ -1,6 +1,8 @@
 package integration
 
 import (
+	"context"
+	"database/sql"
 	"io"
 	"time"
 
@@ -19,8 +21,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type noopDBTX struct{}
+
+func (noopDBTX) Exec(query string, args ...any) (sql.Result, error) { return nil, nil }
+func (noopDBTX) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	return nil, nil
+}
+func (noopDBTX) Query(query string, args ...any) (*sql.Rows, error) { return nil, nil }
+func (noopDBTX) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	return nil, nil
+}
+func (noopDBTX) QueryRow(query string, args ...any) *sql.Row { return &sql.Row{} }
+func (noopDBTX) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+	return &sql.Row{}
+}
+
 func newIntegrationEngine(db database.DB) *gin.Engine {
 	gin.SetMode(gin.TestMode)
+	repoDB := database.DBTX(noopDBTX{})
+	if actual, ok := db.(database.DBTX); ok && actual != nil {
+		repoDB = actual
+	}
 	deps := bootstrap.Dependencies{
 		Config: config.Config{
 			App:    config.AppConfig{Name: "backend-test", Env: "test"},
@@ -72,8 +93,8 @@ func newIntegrationEngine(db database.DB) *gin.Engine {
 	})
 	authHandler := auth.NewHandler(
 		auth.NewService(
-			user.NewRepository(),
-			auth.NewRepository(),
+			user.NewRepository(repoDB),
+			auth.NewRepository(repoDB),
 			database.NoopTxManager{},
 			passwordHasher,
 			tokenManager,
@@ -81,6 +102,7 @@ func newIntegrationEngine(db database.DB) *gin.Engine {
 			auth.ServiceConfig{RefreshTokenTTL: deps.Config.Auth.RefreshTokenTTL, RefreshCookieName: deps.Config.Auth.Cookie.Name},
 		),
 		auth.NewHandlerConfigFromAuth(deps.Config.Auth),
+		auth.AuthMiddleware(tokenManager),
 	)
 
 	return bootstrap.NewAPIEngine(

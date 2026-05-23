@@ -36,7 +36,7 @@ func TestAuthMeWithoutBearerReturnsUnauthorized(t *testing.T) {
 	if err := json.Unmarshal(resp.Body.Bytes(), &body); err != nil {
 		t.Fatalf("json.Unmarshal returned error: %v", err)
 	}
-	if body.Code != "AUTH_UNAUTHORIZED" {
-		t.Fatalf("expected AUTH_UNAUTHORIZED, got %q", body.Code)
+	if body.Code != "AUTH_TOKEN_MISSING" {
+		t.Fatalf("expected AUTH_TOKEN_MISSING, got %q", body.Code)
 	}
 }

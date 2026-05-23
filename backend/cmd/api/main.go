@@ -47,6 +47,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	sqlDB, err := database.NewSQLDB(cfg.DB)
+	if err != nil {
+		appLogger.Error("init sql db failed", "error", err)
+		os.Exit(1)
+	}
+	txManager := database.NewSQLTxManager(sqlDB)
+
 	deps := bootstrap.Dependencies{
 		Config:     *cfg,
 		Logger:     appLogger,
@@ -71,15 +78,16 @@ func main() {
 	})
 	authHandler := auth.NewHandler(
 		auth.NewService(
-			user.NewRepository(),
-			auth.NewRepository(),
-			database.NoopTxManager{},
+			user.NewRepository(sqlDB),
+			auth.NewRepository(sqlDB),
+			txManager,
 			passwordHasher,
 			tokenManager,
 			security.CryptoRandomTokenGenerator{},
 			auth.ServiceConfig{RefreshTokenTTL: cfg.Auth.RefreshTokenTTL, RefreshCookieName: cfg.Auth.Cookie.Name},
 		),
 		auth.NewHandlerConfigFromAuth(cfg.Auth),
+		auth.AuthMiddleware(tokenManager),
 	)
 
 	engine := bootstrap.NewAPIEngine(
@@ -92,7 +100,7 @@ func main() {
 	)
 
 	httpServer := bootstrap.NewHTTPServer(cfg.Server.Addr, engine)
-	app := bootstrap.NewApp(httpServer, dbPool, provider)
+	app := bootstrap.NewApp(httpServer, dbPool, sqlDB, provider)
 
 	go func() {
 		<-ctx.Done()

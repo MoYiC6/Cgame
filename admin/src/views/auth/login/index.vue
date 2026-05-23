@@ -133,7 +133,7 @@
   export interface Account {
     key: AccountKey
     label: string
-    userName: string
+    identifier: string
     password: string
     roles: string[]
   }
@@ -142,21 +142,21 @@
     {
       key: 'super',
       label: t('login.roles.super'),
-      userName: 'Super',
+      identifier: 'super@example.com',
       password: '123456',
       roles: ['R_SUPER']
     },
     {
       key: 'admin',
       label: t('login.roles.admin'),
-      userName: 'Admin',
+      identifier: 'admin@example.com',
       password: '123456',
       roles: ['R_ADMIN']
     },
     {
       key: 'user',
       label: t('login.roles.user'),
-      userName: 'User',
+      identifier: 'user@example.com',
       password: '123456',
       roles: ['R_USER']
     }
@@ -195,7 +195,7 @@
   const setupAccount = (key: AccountKey) => {
     const selectedAccount = accounts.value.find((account: Account) => account.key === key)
     formData.account = key
-    formData.username = selectedAccount?.userName ?? ''
+    formData.username = selectedAccount?.identifier ?? ''
     formData.password = selectedAccount?.password ?? ''
   }
 
@@ -219,18 +219,19 @@
       // 登录请求
       const { username, password } = formData
 
-      const { token, refreshToken } = await fetchLogin({
-        userName: username,
+      const response = await fetchLogin({
+        identifier: username,
         password
       })
 
       // 验证token
-      if (!token) {
+      if (!response.access_token) {
         throw new Error('Login failed - no token received')
       }
 
       // 存储 token 和登录状态
-      userStore.setToken(token, refreshToken)
+      userStore.setToken(response.access_token)
+      userStore.setUserInfo({ user: response.user, session_id: '' })
       userStore.setLoginStatus(true)
 
       // 登录成功处理

@@ -232,6 +232,111 @@ func TestLoadConfigAppliesEnvironmentOverrides(t *testing.T) {
 	}
 }
 
+func TestLoadConfigReadsDotEnvBeforeResolvingConfigPath(t *testing.T) {
+	dir := t.TempDir()
+	configDir := filepath.Join(dir, "configs")
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	configPath := filepath.Join(configDir, "config.local.yaml")
+	if err := os.WriteFile(configPath, []byte(`app:
+  name: backend-dotenv
+  env: local
+server:
+  addr: ":18080"
+log:
+  level: debug
+db:
+  driver: postgres
+  dsn: "postgres://from-config"
+observability:
+  trace_exporter_type: none
+  service_name: backend-dotenv
+auth:
+  issuer: backend
+  audience: admin-api
+  access_token_ttl: 15m
+  refresh_token_ttl: 168h
+  cookie:
+    name: refresh_token
+    path: /api/v1/auth
+  jwt:
+    algorithm: HS256
+    key_id: local-dev-key
+redis:
+  addr: "redis-from-config:6379"
+`), 0o644); err != nil {
+		t.Fatalf("WriteFile config returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, ".env"), []byte(`APP_CONFIG_PATH=configs/config.local.yaml
+DB_DSN=postgres://from-dotenv
+REDIS_ADDR=redis-from-dotenv:6379
+JWT_HMAC_SECRET=01234567890123456789012345678901
+`), 0o600); err != nil {
+		t.Fatalf("WriteFile .env returned error: %v", err)
+	}
+
+	t.Setenv("APP_CONFIG_PATH", "")
+	t.Setenv("DB_DSN", "")
+	t.Setenv("REDIS_ADDR", "")
+	t.Setenv("JWT_HMAC_SECRET", "")
+
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd returned error: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("Chdir returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(wd); err != nil {
+			t.Fatalf("restore working directory: %v", err)
+		}
+	})
+
+	cfg, err := LoadConfig("")
+	if err != nil {
+		t.Fatalf("LoadConfig returned error: %v", err)
+	}
+	if cfg.App.Name != "backend-dotenv" {
+		t.Fatalf("expected config loaded from .env APP_CONFIG_PATH, got app name %q", cfg.App.Name)
+	}
+	if cfg.DB.DSN != "postgres://from-dotenv" {
+		t.Fatalf("expected DB_DSN from .env, got %q", cfg.DB.DSN)
+	}
+	if cfg.Redis.Addr != "redis-from-dotenv:6379" {
+		t.Fatalf("expected REDIS_ADDR from .env, got %q", cfg.Redis.Addr)
+	}
+}
+
+func TestDotEnvDoesNotOverrideExistingEnvironment(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, ".env"), []byte("DB_DSN=postgres://from-dotenv\n"), 0o600); err != nil {
+		t.Fatalf("WriteFile .env returned error: %v", err)
+	}
+	t.Setenv("DB_DSN", "postgres://from-shell")
+
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd returned error: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("Chdir returned error: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(wd); err != nil {
+			t.Fatalf("restore working directory: %v", err)
+		}
+	})
+
+	if err := loadEnvFileIfExists(".env"); err != nil {
+		t.Fatalf("loadEnvFileIfExists returned error: %v", err)
+	}
+	if got := os.Getenv("DB_DSN"); got != "postgres://from-shell" {
+		t.Fatalf("expected shell env to win, got %q", got)
+	}
+}
+
 func TestLoadConfigUsesAPPENVWhenArgumentEmpty(t *testing.T) {
 	t.Setenv("APP_CONFIG_PATH", "")
 	t.Setenv("APP_ENV", "test")

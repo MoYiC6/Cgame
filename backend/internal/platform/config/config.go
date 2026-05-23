@@ -125,6 +125,18 @@ func Load(path string) (Config, error) {
 }
 
 func LoadConfig(env string) (*Config, error) {
+	explicitEnv := strings.TrimSpace(env)
+	if explicitEnv == "" {
+		explicitEnv = strings.TrimSpace(os.Getenv("APP_ENV"))
+	}
+	skipEnvFileKeys := []string(nil)
+	if explicitEnv != "" && strings.TrimSpace(os.Getenv("APP_CONFIG_PATH")) == "" {
+		skipEnvFileKeys = append(skipEnvFileKeys, "APP_CONFIG_PATH")
+	}
+	if err := loadEnvFileIfExists(".env", skipEnvFileKeys...); err != nil {
+		return nil, err
+	}
+
 	env = normalizeEnv(env)
 	path := os.Getenv("APP_CONFIG_PATH")
 	if strings.TrimSpace(path) == "" {
@@ -168,6 +180,51 @@ func loadFromPath(path string) (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func loadEnvFileIfExists(path string, skipKeys ...string) error {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("read env file: %w", err)
+	}
+
+	lines := strings.Split(string(content), "\n")
+	for index, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		line = strings.TrimPrefix(line, "export ")
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			return fmt.Errorf("invalid env file line %d", index+1)
+		}
+		key = strings.TrimSpace(key)
+		value = strings.TrimSpace(value)
+		if key == "" {
+			return fmt.Errorf("invalid env file line %d", index+1)
+		}
+		value = strings.Trim(value, "\"'")
+		if shouldSkipEnvKey(key, skipKeys) || strings.TrimSpace(os.Getenv(key)) != "" {
+			continue
+		}
+		if err := os.Setenv(key, value); err != nil {
+			return fmt.Errorf("set env %s: %w", key, err)
+		}
+	}
+	return nil
+}
+
+func shouldSkipEnvKey(key string, skipKeys []string) bool {
+	for _, skipKey := range skipKeys {
+		if key == skipKey {
+			return true
+		}
+	}
+	return false
 }
 
 func normalizeEnv(env string) string {

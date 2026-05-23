@@ -3,3 +3,4 @@
 backend/.idea/
 .omo/
 .playwright-mcp/
+backend/.env

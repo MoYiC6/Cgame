@@ -27,10 +27,15 @@ type HandlerConfig struct {
 type Handler struct {
 	service Service
 	config  HandlerConfig
+	authz   gin.HandlerFunc
 }
 
-func NewHandler(service Service, cfg HandlerConfig) *Handler {
-	return &Handler{service: service, config: cfg}
+func NewHandler(service Service, cfg HandlerConfig, middleware ...gin.HandlerFunc) *Handler {
+	h := &Handler{service: service, config: cfg}
+	if len(middleware) > 0 {
+		h.authz = middleware[0]
+	}
+	return h
 }
 
 func NewHandlerConfigFromAuth(cfg config.AuthConfig) HandlerConfig {
@@ -42,6 +47,10 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 	authGroup.POST("/login", h.Login)
 	authGroup.POST("/refresh", h.Refresh)
 	authGroup.POST("/logout", h.Logout)
+	if h.authz != nil {
+		authGroup.GET("/me", h.authz, h.Me)
+		return
+	}
 	authGroup.GET("/me", h.Me)
 }
 

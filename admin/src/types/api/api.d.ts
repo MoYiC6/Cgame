@@ -24,8 +24,8 @@
  * ## 使用方式
  *
  * ```typescript
- * const params: Api.Auth.LoginParams = { userName: 'admin', password: '123456' }
- * const response: Api.Auth.UserInfo = await fetchUserInfo()
+ * const params: Api.Auth.LoginParams = { identifier: 'admin@example.com', password: '123456' }
+ * const response: Api.Auth.MeResponse = await fetchUserInfo()
  * ```
  *
  * @module types/api/api
@@ -64,23 +64,39 @@ declare namespace Api {
   namespace Auth {
     /** 登录参数 */
     interface LoginParams {
-      userName: string
+      identifier: string
       password: string
+    }
+
+    interface AuthUser {
+      id: string
+      roles: string[]
+      permissions?: string[]
     }
 
     /** 登录响应 */
     interface LoginResponse {
-      token: string
-      refreshToken: string
+      access_token: string
+      token_type: string
+      expires_in: number
+      user: AuthUser
     }
 
-    /** 用户信息 */
+    interface MeResponse {
+      user: AuthUser
+      session_id: string
+    }
+
+    /** 前端归一化后的用户信息 */
     interface UserInfo {
-      buttons: string[]
-      roles: string[]
-      userId: number
+      id: string
+      userId: string
       userName: string
       email: string
+      roles: string[]
+      permissions: string[]
+      buttons: string[]
+      sessionId: string
       avatar?: string
     }
   }
