@@ -1,0 +1,109 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-start-reminder.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scale context inject --session-id $CLAUDE_SESSION_ID"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scale gate pre-tool Bash --args-json $TOOL_INPUT_JSON --session-id $CLAUDE_SESSION_ID"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scale gate pre-tool Edit --args-json $TOOL_INPUT_JSON --session-id $CLAUDE_SESSION_ID"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scale gate post-tool Edit --args-json $TOOL_INPUT_JSON --output-json $TOOL_OUTPUT_JSON --session-id $CLAUDE_SESSION_ID"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scale gate post-tool Bash --args-json $TOOL_INPUT_JSON --exit-code $TOOL_EXIT_CODE --session-id $CLAUDE_SESSION_ID"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'cd \"${CLAUDE_PROJECT_DIR:-.}\" 2>/dev/null; if [ -f scripts/gates/all.sh ]; then bash scripts/gates/all.sh || { echo \"[SCALE] 门控未通过，不可声称完成\"; exit 1; }; else echo \"[SCALE] 缺少 scripts/gates/all.sh，不可声称完成\"; exit 1; fi'"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scale gate before-stop --session-id $CLAUDE_SESSION_ID"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/session-end-gate.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "scale session end --session-id $CLAUDE_SESSION_ID"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(scale:*)"
+    ]
+  }
+}

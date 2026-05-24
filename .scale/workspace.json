@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "topology": "monorepo",
+  "repositories": [
+    {
+      "name": "root",
+      "path": ".",
+      "role": "root",
+      "required": true
+    },
+    {
+      "name": "backend",
+      "path": "backend",
+      "role": "service",
+      "required": true,
+      "services": [
+        "backend"
+      ]
+    },
+    {
+      "name": "admin",
+      "path": "admin",
+      "role": "package",
+      "required": true,
+      "services": [
+        "admin"
+      ],
+      "dependsOn": [
+        "backend"
+      ]
+    }
+  ],
+  "branchPolicy": {
+    "mode": "gitlab-flow",
+    "integrationBranch": "main",
+    "productionBranch": "main",
+    "protectedBranches": [
+      "main",
+      "master",
+      "dev"
+    ],
+    "featurePrefixes": [
+      "feature/",
+      "feat/",
+      "fix/",
+      "chore/",
+      "docs/",
+      "codex/"
+    ],
+    "releasePrefixes": [
+      "release/"
+    ],
+    "hotfixPrefixes": [
+      "hotfix/"
+    ],
+    "requireAuthorScopeDate": true
+  },
+  "finishPolicy": {
+    "requireCleanRepositories": true,
+    "requirePushedBranches": true,
+    "requireRootPointerUpdate": false,
+    "requireReviewArtifacts": false
+  }
+}

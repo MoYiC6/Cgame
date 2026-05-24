@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "mode": "warn",
+  "sourceDirectories": [
+    "src",
+    "app",
+    "packages",
+    "services",
+    "cmd",
+    "internal",
+    "pkg"
+  ],
+  "ignoredDirectories": [
+    ".git",
+    ".scale",
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "test-results",
+    "playwright-report",
+    "tmp",
+    "temp",
+    "docs",
+    "tests",
+    "__tests__",
+    "e2e"
+  ],
+  "allowedConsoleDirectories": [
+    "src/api",
+    "src/cli",
+    "scripts"
+  ],
+  "allowedConsoleFiles": [
+    "src/dashboard/DashboardServer.ts"
+  ],
+  "maxFileLines": 500,
+  "logging": {
+    "approvedLoggers": [
+      "pino",
+      "winston",
+      "zap",
+      "zerolog",
+      "logrus",
+      "slog"
+    ],
+    "sensitiveFields": [
+      "password",
+      "passwd",
+      "token",
+      "accessToken",
+      "refreshToken",
+      "secret",
+      "authorization",
+      "cookie",
+      "apiKey",
+      "credential",
+      "privateKey"
+    ]
+  },
+  "architecture": {
+    "enforceLayering": true
+  },
+  "blockingRules": [],
+  "allowedFindingPatterns": [],
+  "baselineFindings": []
+}

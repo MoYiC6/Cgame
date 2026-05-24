@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "lastReviewedAt": "",
+  "reviewIntervalDays": 90,
+  "frameworks": [],
+  "orm": [],
+  "ui": {
+    "designSystem": "",
+    "componentLibrary": "",
+    "visualReviewRequired": true
+  },
+  "architecture": {
+    "layers": [
+      "api",
+      "service",
+      "domain",
+      "repository",
+      "infrastructure"
+    ],
+    "dependencyRule": "outer layers depend inward through explicit interfaces"
+  },
+  "bannedImports": []
+}

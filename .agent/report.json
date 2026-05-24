@@ -1,0 +1,38 @@
+{
+  "project": "zuhao",
+  "agent": "claude-code",
+  "supportLevel": "full",
+  "stack": "polyglot",
+  "generatedAt": "2026-05-25",
+  "services": [
+    {
+      "id": "backend",
+      "path": "backend",
+      "stack": "go",
+      "status": "verified"
+    },
+    {
+      "id": "admin",
+      "path": "admin",
+      "stack": "node",
+      "status": "partially-verified"
+    }
+  ],
+  "mustRun": [
+    "bash scripts/validate-config.sh",
+    "bash scripts/tests/run.sh",
+    "bash scripts/gates/all.sh --dry-run",
+    "bash scripts/workflow/verify.sh default"
+  ],
+  "degraded": [
+    {
+      "area": "frontend-tests",
+      "reason": "admin package has no dedicated automated test script; frontend verification currently treats test as optional."
+    }
+  ],
+  "notes": [
+    "Backend verification is wired to go build, go vet, go test, and coverage commands.",
+    "Frontend verification is wired to pnpm lint, pnpm build, and vue-tsc checks.",
+    "Repository-wide security scans are handled by scripts/gates/G7-verify.sh."
+  ]
+}

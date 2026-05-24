@@ -1,0 +1,200 @@
+{
+  "version": 1,
+  "scalePackage": "@hongmaple0820/scale-engine",
+  "scaleVersion": "0.0.0-dev",
+  "pack": "standard",
+  "packVersion": 1,
+  "generatedAt": "2026-05-24T20:44:33.443Z",
+  "files": [
+    {
+      "path": "docs/workflow/README.md",
+      "sha256": "2e91f83b67e4fb8b599c989e95edb1b56064c75f515e988efc33440ee442752f",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/explore.md",
+      "sha256": "e3845d0ecc4d85d11cbd2ac49de2a6fc3fad4debf071c31a4567c76fc44bceea",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/mini-prd.md",
+      "sha256": "276bec99769152ed90c4ab56e789c4fd8756de4fb1794db260a70a6a5ef032b8",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/skill-plan.md",
+      "sha256": "9ba2610886581ddd064885430b2ceff130e53067e402fd8e7c459d9bff8c75d5",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/skill-evidence.md",
+      "sha256": "fa697a67437bae8b3372d620cfab4e64daff7a693a0603327389da362cf805d7",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/runtime.md",
+      "sha256": "e1f4c575dec24c95e9b9f72d52d47badbd1bd0e8fb207193b671803a0c59fa9c",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/reality-check.md",
+      "sha256": "11a9102b87b6f08b118a21edc5fcdda49f27741078e463a44a6e4dd904513d0b",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/resource-cleanup.md",
+      "sha256": "ba2b343cbee04d3037638f3751f64cb14ad63c528529be364967bb49619cfa25",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/ui-spec.md",
+      "sha256": "328022424df35d7a221ff18fb5c04840c74f327deabf1d49f7a7e739fe06290c",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/visual-review.md",
+      "sha256": "7ebf7765969a7cf36b46aeb4d9f1c04f5513cefdd2e57256c1badc83722b00cc",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/api-contract.md",
+      "sha256": "a9091cc5f6d7b8178589dcff2253afa366d188903b175dd5c69dbc6c955bace0",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/docs-impact.md",
+      "sha256": "a4ff6c98539b71ff7f6df2cce8253b9073c6c134ee2ee9d1e1fc34b819b961a0",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/resource-impact.md",
+      "sha256": "af37cb2d4d97cfe46243269225732dfc10180dd6eb1e58b3085abb6ee0e3cc5f",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/standards-impact.md",
+      "sha256": "eed804359ca45b0b7d4436b305ea44f9872bccaa3c6e4fcf3dfbf0b1f422545f",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/architecture-review.md",
+      "sha256": "819390550452c3bb65e5eff2fee44d3d5767a3f4e164fd64cdb10420fd3f40aa",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/security-review.md",
+      "sha256": "542bb035a0e45dc954056d95652952717ec34765debe0de3649246fb6e1290a8",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/db-change-plan.md",
+      "sha256": "9e76ec7d3efae5374373bc1ad11c94da74ff59927b3778a1fed557dba0c51458",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/e2e-plan.md",
+      "sha256": "e77779e7f0f61610c9d1ef594a53565599d0777f2c6c12a9c6507f82b6fbfb26",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/product-smoke.md",
+      "sha256": "5b4be8ecddc47d1b4f890bd83532ed5652a1444a0ab2d30c0c91015a46f648d4",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/plan.md",
+      "sha256": "08100fe1bb88e801e11c13cd1ad6d26dbebe6117027b93b26c44ad3ef907ff81",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/verification.md",
+      "sha256": "b9cbe1f287115a15b18b201e8e25e2c40a2dc3aa4b347098c21414c66ea0fb49",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/review.md",
+      "sha256": "62e3bee211f9e4381bfb3fb7463edb78e74da708bc804c35f4acab9c5f65d010",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/summary.md",
+      "sha256": "00c99d6236ca749e330eb3769c1c0a55082f64db58362b73944419e7ec7753cf",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/github-actions-scale-preflight.yml",
+      "sha256": "a218c4a23251e6da42b807ebc490d363d17490abd5e8ec7bcb11377444571f33",
+      "owned": true
+    },
+    {
+      "path": "docs/workflow/templates/pre-push-scale-preflight.sh",
+      "sha256": "3b3a8e45ab3ac8774e54fbcbd5b44cddbf1df06a74aa671f535289b9629a3f7c",
+      "owned": true
+    },
+    {
+      "path": "docs/worklog/metrics.md",
+      "sha256": "66ced9a1d893b142e01d2e4aaf0e3d6509a8166d6274fbacfc4abee52874359b",
+      "owned": true
+    },
+    {
+      "path": "scripts/qa/product-smoke.ps1",
+      "sha256": "e5b0694cbb83dd3e722435b6133c45ea43eab576a3f013dc30e6bc5492f8d6fb",
+      "owned": true
+    },
+    {
+      "path": "scripts/qa/product-smoke.sh",
+      "sha256": "633ec087cc54081ca9aa52f4915274b427b0e2148cf1510a8dac56ce47a71c7e",
+      "owned": true
+    },
+    {
+      "path": ".scale/verification.json",
+      "sha256": "483e73923114628149c7f31a984526cb07bf60a4c237273beb68697078dc1941",
+      "owned": true
+    },
+    {
+      "path": ".scale/skills.json",
+      "sha256": "adc51509f8595437c7d52465bd85f94644c1e5b0abdd950b0ec34768f16d873e",
+      "owned": true
+    },
+    {
+      "path": ".scale/tools.json",
+      "sha256": "64463715b5fb0609ffb0ad7f9d788a4701f01756e34890f6ca523c5f20b6c346",
+      "owned": true
+    },
+    {
+      "path": ".scale/resource-policy.json",
+      "sha256": "67d1e469d6cef5d68508ac3cc8bb5c9fd1eea33826f9c3f2fdf8e19cff10f6b9",
+      "owned": true
+    },
+    {
+      "path": ".scale/assets.json",
+      "sha256": "a8174f5941573d1acd5d5df5dee4bca235701e21c29685694d143512d3247acf",
+      "owned": true
+    },
+    {
+      "path": ".scale/output-policy.json",
+      "sha256": "c51b6f0b4ecc570f0b8a7738a1a3b0013cc76fb99dfb121c8ee9f51e7fa7c3bb",
+      "owned": true
+    },
+    {
+      "path": ".scale/product-smoke.json",
+      "sha256": "9b07dd0d9dd0d3a1689c497cd1f79b1f72b8324d4059b5172c1b503a9d82585f",
+      "owned": true
+    },
+    {
+      "path": ".scale/engineering-standards.json",
+      "sha256": "dd8a8bc0f0594f31ba9fd71120e73d4c78db84b7603aab50bdaf875401d78ad9",
+      "owned": true
+    },
+    {
+      "path": ".scale/engineering-standards-baseline.json",
+      "sha256": "14b1ebdb505038b5eba18297b4e76ae1185cd60c98a6f131001633498bed2cf7",
+      "owned": true
+    },
+    {
+      "path": ".scale/frameworks.json",
+      "sha256": "78158a49e9c1331e0222e6efa1bb3744c5fe2bdb043da66a5238855f433756cc",
+      "owned": true
+    }
+  ]
+}

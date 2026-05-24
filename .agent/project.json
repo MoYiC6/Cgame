@@ -1,0 +1,209 @@
+{
+  "version": "1.0",
+  "stack": "polyglot",
+  "coverage_threshold": 80,
+  "commands": {
+    "dev": "echo 'backend: cd backend && make run-api | worker: cd backend && make run-worker | admin: cd admin && pnpm dev'",
+    "build": "(cd backend && go build ./...) && (cd admin && pnpm build)",
+    "test": "cd backend && go test ./...",
+    "lint": "(cd backend && go vet ./...) && (cd admin && pnpm lint)",
+    "typecheck": "(cd backend && go build ./...) && (cd admin && pnpm exec vue-tsc --noEmit)",
+    "coverage": "cd backend && go test ./... -cover",
+    "security": "echo '[SECURITY] use bash scripts/gates/G7-verify.sh for repository-wide checks'"
+  },
+  "required_tools": {
+    "build": [
+      "go",
+      "pnpm"
+    ],
+    "lint": [
+      "go",
+      "pnpm"
+    ],
+    "test": [
+      "go"
+    ],
+    "typecheck": [
+      "go",
+      "pnpm"
+    ],
+    "coverage": [
+      "go"
+    ],
+    "security": [
+      "grep",
+      "git"
+    ]
+  },
+  "service_matrix": [
+    {
+      "id": "backend",
+      "directory": "backend",
+      "stack": "go",
+      "role": "service",
+      "default": true,
+      "commands": {
+        "dev": "make run-api",
+        "build": "go build ./...",
+        "test": "go test ./...",
+        "lint": "go vet ./...",
+        "typecheck": "go build ./...",
+        "coverage": "go test ./... -cover",
+        "security": "echo '[SECURITY] backend uses repository-wide G7 checks'"
+      }
+    },
+    {
+      "id": "admin",
+      "directory": "admin",
+      "stack": "node",
+      "role": "package",
+      "default": false,
+      "commands": {
+        "dev": "pnpm dev",
+        "build": "pnpm build",
+        "lint": "pnpm lint",
+        "typecheck": "pnpm exec vue-tsc --noEmit"
+      }
+    }
+  ],
+  "verification_profiles": {
+    "fast": {
+      "id": "fast",
+      "description": "Small change profile for the Go backend.",
+      "services": [
+        "backend"
+      ],
+      "required": [
+        "test"
+      ],
+      "optional": [
+        "lint"
+      ]
+    },
+    "default": {
+      "id": "default",
+      "description": "Default backend profile used before claiming implementation complete.",
+      "services": [
+        "backend"
+      ],
+      "required": [
+        "lint",
+        "test",
+        "typecheck"
+      ],
+      "optional": [
+        "build",
+        "coverage",
+        "security"
+      ]
+    },
+    "frontend": {
+      "id": "frontend",
+      "description": "Frontend profile for admin build, lint, and TypeScript checks.",
+      "services": [
+        "admin"
+      ],
+      "required": [
+        "lint",
+        "build",
+        "typecheck"
+      ],
+      "optional": [
+        "test"
+      ]
+    },
+    "fullstack": {
+      "id": "fullstack",
+      "description": "Cross-service profile for backend plus admin integration work.",
+      "services": [
+        "backend",
+        "admin"
+      ],
+      "required": [
+        "lint",
+        "build",
+        "typecheck"
+      ],
+      "optional": [
+        "test",
+        "coverage",
+        "security"
+      ]
+    },
+    "release": {
+      "id": "release",
+      "description": "Release profile that checks both services and records optional hardening checks.",
+      "services": [
+        "backend",
+        "admin"
+      ],
+      "required": [
+        "lint",
+        "build",
+        "typecheck"
+      ],
+      "optional": [
+        "test",
+        "coverage",
+        "security"
+      ]
+    }
+  },
+  "stacks": {
+    "go": {
+      "detect": [
+        "go.mod"
+      ],
+      "implementation_glob": "*.go",
+      "test_suffix": "_test.go",
+      "exclude_dirs": [
+        "vendor",
+        ".git",
+        ".agent",
+        "node_modules"
+      ],
+      "commands": {
+        "lint": "go vet ./...",
+        "test": "go test ./...",
+        "typecheck": "go build ./...",
+        "coverage": "go test ./... -cover"
+      },
+      "required_tools": {
+        "lint": [
+          "go"
+        ],
+        "test": [
+          "go"
+        ],
+        "typecheck": [
+          "go"
+        ],
+        "coverage": [
+          "go"
+        ]
+      }
+    },
+    "node": {
+      "detect": [
+        "package.json"
+      ],
+      "commands": {
+        "lint": "pnpm lint",
+        "build": "pnpm build",
+        "typecheck": "pnpm exec vue-tsc --noEmit",
+        "coverage": "echo '[COVERAGE] not configured for admin yet'"
+      },
+      "required_tools": {
+        "lint": [
+          "pnpm"
+        ],
+        "build": [
+          "pnpm"
+        ],
+        "typecheck": [
+          "pnpm"
+        ]
+      }
+    }
+  }
+}

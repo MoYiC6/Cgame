@@ -4,3 +4,11 @@ backend/.idea/
 .omo/
 .playwright-mcp/
 backend/.env
+.claude/settings.local.json
+.claude/worktrees/
+.scale/evidence/
+.scale/events/
+.scale/scale.db
+.scale/state/
+scripts/.DS_Store
+.claude/.DS_Store

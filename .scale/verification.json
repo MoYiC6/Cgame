@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "defaultProfile": "backend",
+  "profiles": {
+    "backend": {
+      "services": [
+        "backend"
+      ]
+    },
+    "frontend": {
+      "services": [
+        "admin"
+      ]
+    },
+    "full": {
+      "services": [
+        "backend",
+        "admin"
+      ]
+    },
+    "productSmoke": {
+      "commands": {
+        "smoke": "powershell -ExecutionPolicy Bypass -File scripts/qa/product-smoke.ps1"
+      },
+      "services": [
+        "backend"
+      ]
+    }
+  },
+  "services": [
+    {
+      "name": "backend",
+      "path": "backend",
+      "type": "go",
+      "required": true,
+      "commands": {
+        "build": "go build ./...",
+        "lint": "go vet ./...",
+        "test": "go test ./...",
+        "coverage": "go test ./... -cover"
+      }
+    },
+    {
+      "name": "admin",
+      "path": "admin",
+      "type": "node",
+      "required": false,
+      "commands": {
+        "build": "pnpm build",
+        "lint": "pnpm lint"
+      }
+    }
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tmp",
+    "vendor",
+    "admin/node_modules",
+    "backend/vendor"
+  ],
+  "policy": {
+    "mode": "standard",
+    "optionalToolsWarnOnly": true,
+    "artifactGate": "warn",
+    "artifactGateLevels": [
+      "M",
+      "L",
+      "CRITICAL"
+    ],
+    "engineeringStandardsGate": "block",
+    "productSmokeGate": "warn"
+  }
+}
