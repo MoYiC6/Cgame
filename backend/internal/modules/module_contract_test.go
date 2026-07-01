@@ -53,9 +53,9 @@ func TestModulePingHandlersReturnTopLevelTraceIDWithoutPayloadTrace(t *testing.T
 			name:          "inventory",
 			path:          "/api/v1/inventory/ping",
 			module:        "inventory",
-			newRepository: func() any { return inventory.NewRepository() },
+			newRepository: func() any { return inventory.NewRepository(nil) },
 			newService:    func(repo any) any { return inventory.NewService(repo.(inventory.Repository), database.NoopTxManager{}) },
-			newHandler:    func(service any) routeRegistrar { return inventory.NewHandler(service.(inventory.Service)) },
+			newHandler:    func(service any) routeRegistrar { return inventory.NewHandler(service.(*inventory.Service), nil) },
 		},
 		{
 			name:          "notification",
@@ -138,9 +138,9 @@ func TestModuleConstructorsExposeSymmetricServiceAndRepositorySeams(t *testing.T
 		},
 		{
 			name:           "inventory",
-			service:        inventory.NewService(inventory.NewRepository(), database.NoopTxManager{}),
-			nilTxService:   inventory.NewService(inventory.NewRepository(), nil),
-			repository:     inventory.NewRepository(),
+			service:        inventory.NewService(inventory.NewRepository(nil), database.NoopTxManager{}),
+			nilTxService:   inventory.NewService(inventory.NewRepository(nil), nil),
+			repository:     inventory.NewRepository(nil),
 			repositoryType: reflect.TypeFor[inventory.Repository](),
 		},
 		{

@@ -106,7 +106,7 @@ func main() {
 		notification.NewHandler(notification.NewService(notification.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
 		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
-		inventory.NewHandler(inventory.NewService(inventory.NewRepository(), database.NoopTxManager{})),
+		inventory.NewHandler(inventory.NewService(inventory.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 	)
 
 	httpServer := bootstrap.NewHTTPServer(cfg.Server.Addr, engine)
