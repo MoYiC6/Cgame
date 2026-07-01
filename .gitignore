@@ -12,3 +12,5 @@ backend/.env
 .scale/state/
 scripts/.DS_Store
 .claude/.DS_Store
+backend/.omc/
+backend/.scale/
