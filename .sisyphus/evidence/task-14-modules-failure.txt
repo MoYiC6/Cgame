@@ -1,5 +1,0 @@
-ok  	backend/internal/modules	0.383s
-?   	backend/internal/modules/inventory	[no test files]
-?   	backend/internal/modules/notification	[no test files]
-?   	backend/internal/modules/order	[no test files]
-?   	backend/internal/modules/payment	[no test files]

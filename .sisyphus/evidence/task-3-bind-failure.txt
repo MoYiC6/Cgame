@@ -1,4 +1,0 @@
-Task 3 failure path: missing X-Tenant-ID header causes INVALID_ARGUMENT 400
-Test: TestBindAndValidateMapsValidationErrorsToAppError
-Result: header binding skipped causes validator to reject missing required TenantID
-Evidence: all 3 tests pass including both error paths

@@ -1,4 +1,0 @@
-Task 2 failure path: TraceID field absent from old APIResponse struct (pre-change verification)
-Before: APIResponse had no TraceID field - TestSuccessWritesRequestIDAndTraceID would FAIL
-After: TraceID added to struct - all 4 tests pass
-Evidence: go test ./internal/platform/response -count=1 -> ok (4 passed)

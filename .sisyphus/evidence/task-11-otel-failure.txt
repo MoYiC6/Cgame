@@ -1,2 +1,0 @@
-$ cd backend && go test ./internal/platform/observability -run TestObservabilityProviderDegradesGracefully -count=1
-ok  	backend/internal/platform/observability	0.299s

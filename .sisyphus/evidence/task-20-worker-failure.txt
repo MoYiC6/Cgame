@@ -1,2 +1,0 @@
-ok  	backend/internal/bootstrap	0.366s
-Exit code: 0

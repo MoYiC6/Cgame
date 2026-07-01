@@ -1,8 +1,0 @@
-# SCALE Engine runtime data
-*.db
-*.db-journal
-events/
-checkpoints/
-evidence/
-state/
-hooks/*.sh

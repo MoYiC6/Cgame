@@ -1,5 +1,0 @@
-Verdict: APPROVE
-
-Failure Evidence
-- 未发现需要判定为 REJECT 的越界实现。
-- 本文件保留为 F4 failure evidence 占位，当前无失败证据。

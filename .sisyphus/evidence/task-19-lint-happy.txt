@@ -1,3 +1,0 @@
-0 issues.
-Exit code: 
-Exit code: 0

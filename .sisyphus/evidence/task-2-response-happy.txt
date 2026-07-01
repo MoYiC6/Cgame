@@ -1,8 +1,0 @@
-=== RUN   TestSuccessWritesRequestIDAndTraceID
---- PASS: TestSuccessWritesRequestIDAndTraceID (0.00s)
-=== RUN   TestFailUsesAppErrorMetadata
---- PASS: TestFailUsesAppErrorMetadata (0.00s)
-=== RUN   TestSuccessWithMissingTraceIDIsEmpty
---- PASS: TestSuccessWithMissingTraceIDIsEmpty (0.00s)
-PASS
-ok  	backend/internal/platform/response	0.273s
