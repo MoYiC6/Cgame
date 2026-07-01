@@ -13,6 +13,7 @@ import (
 	"backend/internal/modules/auth"
 	"backend/internal/modules/chat"
 	"backend/internal/modules/external"
+	"backend/internal/modules/finance"
 	"backend/internal/modules/file"
 	"backend/internal/modules/game"
 	"backend/internal/modules/inventory"
@@ -112,6 +113,7 @@ func main() {
 		payment.NewHandler(payment.NewService(payment.NewRepository(sqlDB), txManager)),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 		external.NewHandler(external.NewService(external.NewRepository(sqlDB)), authMiddleware),
+		finance.NewHandler(finance.NewService(finance.NewRepository(sqlDB))),
 	)
 
 	gameHandler.RegisterWebSocket(engine, authMiddleware)
