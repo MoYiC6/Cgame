@@ -32,7 +32,7 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
-	appLogger := logger.New(cfg.Log.Level, os.Stdout)
+	appLogger := logger.New(cfg.Log)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 

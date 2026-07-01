@@ -195,7 +195,7 @@ func TestRateLimiterEvictsExpiredEntries(t *testing.T) {
 func TestRecoveryMiddlewareConvertsPanicToJSONError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
-	engine.Use(RequestIDMiddleware(), RecoveryMiddleware(logger.New("debug", io.Discard)))
+	engine.Use(RequestIDMiddleware(), RecoveryMiddleware(logger.NewText("debug", io.Discard)))
 	engine.GET("/panic", func(c *gin.Context) {
 		panic("boom")
 	})

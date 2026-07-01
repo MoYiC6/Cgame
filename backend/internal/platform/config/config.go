@@ -36,7 +36,8 @@ type ServerConfig struct {
 }
 
 type LogConfig struct {
-	Level string `yaml:"level"`
+	Level  string `yaml:"level"`
+	Format string `yaml:"format"`
 }
 
 type DBConfig struct {

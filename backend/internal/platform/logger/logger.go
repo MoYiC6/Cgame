@@ -7,12 +7,14 @@ import (
 	"os"
 	"strings"
 
+	"backend/internal/platform/config"
 	"backend/internal/platform/observability"
 )
 
 type Field = any
 
 type Logger interface {
+	Debug(msg string, fields ...Field)
 	Info(msg string, fields ...Field)
 	Warn(msg string, fields ...Field)
 	Error(msg string, fields ...Field)
@@ -30,7 +32,18 @@ func Any(key string, value any) Field {
 	return slog.Any(key, value)
 }
 
-func New(level string, writer io.Writer) Logger {
+func New(cfg config.LogConfig) Logger {
+	return newLogger(cfg.Level, cfg.Format, os.Stdout)
+}
+
+func NewText(level string, writer io.Writer) Logger {
+	if writer == nil {
+		writer = os.Stdout
+	}
+	return newLogger(level, "text", writer)
+}
+
+func newLogger(level, format string, writer io.Writer) Logger {
 	if writer == nil {
 		writer = os.Stdout
 	}
@@ -47,8 +60,23 @@ func New(level string, writer io.Writer) Logger {
 		slogLevel = slog.LevelInfo
 	}
 
-	handler := slog.NewTextHandler(writer, &slog.HandlerOptions{Level: slogLevel})
+	opts := &slog.HandlerOptions{Level: slogLevel}
+	if slogLevel == slog.LevelDebug {
+		opts.AddSource = true
+	}
+
+	var handler slog.Handler
+	if strings.ToLower(format) == "json" {
+		handler = slog.NewJSONHandler(writer, opts)
+	} else {
+		handler = slog.NewTextHandler(writer, opts)
+	}
+
 	return &structuredLogger{inner: slog.New(handler)}
+}
+
+func (l *structuredLogger) Debug(msg string, fields ...Field) {
+	l.inner.Debug(msg, fields...)
 }
 
 func (l *structuredLogger) Info(msg string, fields ...Field) {
@@ -69,7 +97,7 @@ func (l *structuredLogger) with(fields ...any) Logger {
 
 func WithContext(ctx context.Context, base Logger) Logger {
 	if base == nil {
-		base = New("info", nil)
+		base = New(config.LogConfig{Level: "info"})
 	}
 
 	fields := make([]any, 0, 4)
@@ -88,3 +116,5 @@ func WithContext(ctx context.Context, base Logger) Logger {
 	}
 	return contextual.with(fields...)
 }
+
+

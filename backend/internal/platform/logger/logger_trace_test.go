@@ -12,7 +12,7 @@ import (
 
 func TestLoggerWithContextIncludesTraceID(t *testing.T) {
 	var buffer bytes.Buffer
-	base := New("info", &buffer)
+	base := NewText("info", &buffer)
 
 	traceID, err := oteltrace.TraceIDFromHex("1234567890abcdef1234567890abcdef")
 	if err != nil {
@@ -39,7 +39,7 @@ func TestLoggerWithContextIncludesTraceID(t *testing.T) {
 
 func TestLoggerWithContextFallsBackToCustomTraceID(t *testing.T) {
 	var buffer bytes.Buffer
-	base := New("info", &buffer)
+	base := NewText("info", &buffer)
 
 	ctx := observability.WithTraceID(context.Background(), "custom-id")
 

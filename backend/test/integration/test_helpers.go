@@ -76,7 +76,7 @@ func newIntegrationEngine(db database.DB) *gin.Engine {
 				},
 			},
 		},
-		Logger:     logger.New("debug", io.Discard),
+		Logger:     logger.NewText("debug", io.Discard),
 		Tracer:     observability.NewNoopTracer(),
 		Propagator: observability.NewNoopPropagator(),
 		DB:         db,

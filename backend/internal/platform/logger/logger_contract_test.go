@@ -8,7 +8,7 @@ import (
 
 func TestLoggerInfoWritesStructuredFields(t *testing.T) {
 	var buffer bytes.Buffer
-	log := New("debug", &buffer)
+	log := NewText("debug", &buffer)
 
 	log.Info("api starting", String("addr", ":8080"), Any("component", "api"))
 

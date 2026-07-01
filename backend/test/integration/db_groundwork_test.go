@@ -217,7 +217,7 @@ func assertReadinessUsesRealDBPing(db database.DB) error {
 			Server: config.ServerConfig{Addr: ":18080"},
 			Log:    config.LogConfig{Level: "debug"},
 		},
-		Logger:     logger.New("debug", io.Discard),
+		Logger:     logger.NewText("debug", io.Discard),
 		Tracer:     observability.NewNoopTracer(),
 		Propagator: observability.NewNoopPropagator(),
 		DB:         recording,

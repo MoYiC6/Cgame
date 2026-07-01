@@ -11,7 +11,7 @@ import (
 
 func TestWithContextAddsRequestAndTraceIDs(t *testing.T) {
 	var buffer bytes.Buffer
-	base := New("debug", &buffer)
+	base := NewText("debug", &buffer)
 	ctx := context.Background()
 	ctx = observability.WithRequestID(ctx, "req-log")
 	ctx = observability.WithTraceID(ctx, "trace-log")

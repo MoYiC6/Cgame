@@ -40,7 +40,7 @@ func (t *contextCaptureTask) Run(ctx context.Context) error {
 }
 
 func TestWorkerRunStopsOnContextCancel(t *testing.T) {
-	worker := NewWorker(logger.New("debug", io.Discard))
+	worker := NewWorker(logger.NewText("debug", io.Discard))
 	worker.RegisterTask("placeholder", func(ctx context.Context) error {
 		<-ctx.Done()
 		return nil
@@ -66,7 +66,7 @@ func TestWorkerRunStopsOnContextCancel(t *testing.T) {
 }
 
 func TestWorkerProbeRecognizesOptionalTaskProbe(t *testing.T) {
-	worker := NewWorker(logger.New("debug", io.Discard))
+	worker := NewWorker(logger.NewText("debug", io.Discard))
 	worker.RegisterRunnable("probeable", stubTask{})
 
 	if err := worker.Probe(context.Background()); err != nil {
@@ -75,7 +75,7 @@ func TestWorkerProbeRecognizesOptionalTaskProbe(t *testing.T) {
 }
 
 func TestWorkerShutdownHandlesFailures(t *testing.T) {
-	worker := NewWorker(logger.New("debug", io.Discard))
+	worker := NewWorker(logger.NewText("debug", io.Discard))
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
@@ -85,7 +85,7 @@ func TestWorkerShutdownHandlesFailures(t *testing.T) {
 }
 
 func TestRegisterRunnableWithSystemPrincipalInjectsWorkerIdentity(t *testing.T) {
-	worker := NewWorker(logger.New("debug", io.Discard))
+	worker := NewWorker(logger.NewText("debug", io.Discard))
 	ctx, cancel := context.WithCancel(context.Background())
 	task := &contextCaptureTask{afterRun: cancel}
 
