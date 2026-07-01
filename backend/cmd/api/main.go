@@ -12,6 +12,7 @@ import (
 	"backend/internal/bootstrap"
 	"backend/internal/modules/auth"
 	"backend/internal/modules/chat"
+	"backend/internal/modules/external"
 	"backend/internal/modules/file"
 	"backend/internal/modules/game"
 	"backend/internal/modules/inventory"
@@ -110,6 +111,7 @@ func main() {
 		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
 		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
+		external.NewHandler(external.NewService(external.NewRepository(sqlDB)), authMiddleware),
 	)
 
 	gameHandler.RegisterWebSocket(engine, authMiddleware)
