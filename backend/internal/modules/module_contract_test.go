@@ -37,7 +37,7 @@ func TestModulePingHandlersReturnTopLevelTraceIDWithoutPayloadTrace(t *testing.T
 			name:          "order",
 			path:          "/api/v1/order/ping",
 			module:        "order",
-			newRepository: func() any { return order.NewRepository() },
+			newRepository: func() any { return order.NewRepository(nil) },
 			newService:    func(repo any) any { return order.NewService(repo.(order.Repository), database.NoopTxManager{}) },
 			newHandler:    func(service any) routeRegistrar { return order.NewHandler(service.(order.Service)) },
 		},
@@ -124,9 +124,9 @@ func TestModuleConstructorsExposeSymmetricServiceAndRepositorySeams(t *testing.T
 	}{
 		{
 			name:           "order",
-			service:        order.NewService(order.NewRepository(), database.NoopTxManager{}),
-			nilTxService:   order.NewService(order.NewRepository(), nil),
-			repository:     order.NewRepository(),
+			service:        order.NewService(order.NewRepository(nil), database.NoopTxManager{}),
+			nilTxService:   order.NewService(order.NewRepository(nil), nil),
+			repository:     order.NewRepository(nil),
 			repositoryType: reflect.TypeFor[order.Repository](),
 		},
 		{

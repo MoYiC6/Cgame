@@ -108,7 +108,7 @@ func main() {
 		user.NewHandler(user.NewService(user.NewRepository(sqlDB)), authMiddleware),
 		system.NewHandler(system.NewService(system.NewRepository(sqlDB)), authMiddleware),
 		notification.NewHandler(notification.NewService(notification.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
-		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
+		order.NewHandler(order.NewService(order.NewRepository(sqlDB), txManager)),
 		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 		external.NewHandler(external.NewService(external.NewRepository(sqlDB)), authMiddleware),

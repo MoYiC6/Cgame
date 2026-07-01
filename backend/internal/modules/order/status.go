@@ -1,7 +1,10 @@
 package order
 
+type OrderStatus string
+
 const (
-	OrderPending   = "pending"
-	OrderPaid      = "paid"
-	OrderCancelled = "cancelled"
+	OrderStatusPending   = "pending"
+	OrderStatusPaid      = "paid"
+	OrderStatusCompleted = "completed"
+	OrderStatusCancelled = "cancelled"
 )
