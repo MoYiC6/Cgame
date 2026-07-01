@@ -11,6 +11,7 @@ import (
 
 	"backend/internal/bootstrap"
 	"backend/internal/modules/auth"
+	"backend/internal/modules/chat"
 	"backend/internal/modules/file"
 	"backend/internal/modules/inventory"
 	"backend/internal/modules/notification"
@@ -97,6 +98,7 @@ func main() {
 		authHandler,
 		visitor.NewHandler(visitor.NewService(visitor.NewRepository(sqlDB)), authMiddleware),
 		file.NewHandler(file.NewService(file.NewRepository(sqlDB)), authMiddleware),
+		chat.NewHandler(chat.NewService(chat.NewRepository(sqlDB)), authMiddleware),
 		system.NewHandler(system.NewService(system.NewRepository(sqlDB)), authMiddleware),
 		notification.NewHandler(notification.NewService(notification.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
