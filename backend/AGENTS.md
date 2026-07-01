@@ -1,7 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-05-13 Asia/Shanghai
-**Commit:** cdd0e0e
+**Generated:** 2026-07-01 Asia/Shanghai
 **Branch:** main
 
 ## OVERVIEW
@@ -44,8 +43,11 @@ backend/
 | `Dependencies` | struct | `internal/bootstrap/app.go` | 启动层共享依赖容器 |
 | `Config` | struct | `internal/platform/config/config.go` | 强类型配置模型 |
 | `LoadConfig` | function | `internal/platform/config/config.go` | 读取配置、环境变量覆盖、校验 |
-| `AppError` | struct | `internal/platform/errors/errors.go` | 统一业务错误模型 |
+| `AppError` | struct | `internal/platform/errors/errors.go` | 统一业务错误模型（stack + WithCause + HTTP status） |
+| `Code` | const | `internal/platform/errors/codes.go` | 9 个全局错误码，启动时唯一性校验 |
 | `Handler.RegisterRoutes` | method | `internal/modules/*/handler.go` | 模块向 `/api/v1` 挂路由 |
+| `AccessLogMiddleware` | func | `internal/bootstrap/middleware.go` | 记录每个请求的方法/路径/状态/耗时 |
+| `TxOption` | struct | `internal/platform/database/tx.go` | 事务选项（ReadOnly / Timeout） |
 
 ## CONVENTIONS
 - 只在 `cmd/*/main.go` 做装配：读配置、构造依赖、注册 handler、启动进程。
@@ -84,3 +86,6 @@ docker compose up api worker
 - 当前仓库仍处于 bootstrap 阶段：`migrations/`、`sql/queries/`、`test/fixtures/` 以占位为主。
 - 未发现仓库内 CI 工作流文件；`Makefile` 是主要本地命令入口，`docker-compose.yml` 提供容器化启动入口。
 - 进入子目录工作前，继续读取对应子层级的 AGENTS.md。
+- 三地基层已完成改造：**错误处理**（stack + codes + auto-map）、**日志**（Debug + JSON/Text + cfg 驱动）、**数据库**（单池 + TxOption）。
+- 新增代码文件：`internal/platform/errors/codes.go`（全局错误码）、`internal/platform/redis/`（Redis 客户端/锁/缓存）。
+- `response.Fail` 签名改为 `(c, err error)` 自动 `errors.As` 映射，不再要求调用方传 `AppError`。

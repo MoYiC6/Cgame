@@ -17,9 +17,9 @@ internal/bootstrap/
 | Task | Location | Notes |
 |------|----------|-------|
 | 共享依赖容器 | `app.go` | `Dependencies`、`Shutdowner`、`App.Shutdown` |
-| 路由装配 | `server.go` | `/healthz`、`/readyz`、`/api/v1` group |
+| 路由装配 | `server.go` | `/healthz`、`/readyz`、`/api/v1` group；顺序：RequestID → Trace → **AccessLog** → CORS → Security → RateLimit → Recovery |
 | HTTP 服务封装 | `http_server.go` | server 启停包装 |
-| 中间件 | `middleware.go` | request id、trace context、recovery |
+| 中间件 | `middleware.go` | request id、trace context、**access log**、recovery、rate limit、CORS、security headers |
 | Worker 装配 | `worker.go` | task 注册、probe、run/shutdown |
 
 ## CONVENTIONS
