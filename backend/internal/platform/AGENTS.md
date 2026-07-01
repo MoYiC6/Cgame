@@ -14,6 +14,7 @@ internal/platform/
 ├── queue/
 ├── redis/
 ├── response/
+├── scheduler/
 └── security/
 ```
 
@@ -28,6 +29,7 @@ internal/platform/
 | 数据库抽象 | `database/db.go` | `PgxPool` 唯一池 + `SQLDB` 派生、`TxOption{ReadOnly,Timeout}`、`WithinTx` 事务 |
 | Redis | `redis/client.go` | go-redis v9 封装、分布式锁（`lock.go`）、泛型缓存模板（`cache.go`） |
 | 消息队列 | `queue/queue.go` | `Producer`/`Consumer` 接口；in-memory + Redis Stream 驱动；延迟/优先级/死信增强 |
+| 定时任务 | `scheduler/scheduler.go` | `Scheduler` 接口 + `memoryScheduler` 实现；JobMiddleware 链（Logging/Recovery/Timeout/Retry）；内置 cron 解析（5/6 字段） |
 
 ## CONVENTIONS
 - 平台组件不得在内部隐式读取环境变量；需要运行时配置的组件应由调用方显式传入所需参数或配置，`config` 包除外。
@@ -54,6 +56,7 @@ internal/platform/
 - 日志测试验证 JSON/Text 两种输出格式正确。
 - 数据库测试验证 `TxOption.ReadOnly` 和 `TxOption.Timeout` 生效。
 - Queue 测试覆盖：in-memory 基本 Pub/Sub + 多订阅者；Redis Stream XADD/XREADGROUP 完整流程；delayed 短延迟投递；priority 按序 Pop；DLQ 失败 N 次后进死信。
+- Scheduler 测试覆盖：Register/Start/Remove/重复注册；duration 和 cron（6 字段）两种调度；middleware 链通过 RunWith 透传。
 
 ## NOTES
 - 目前 `config/config.go` 是符号最密集的共享组件之一；改动它通常会影响 API、worker、测试和启动日志。
