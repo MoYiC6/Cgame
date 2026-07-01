@@ -11,6 +11,7 @@ import (
 
 	"backend/internal/bootstrap"
 	"backend/internal/modules/auth"
+	"backend/internal/modules/file"
 	"backend/internal/modules/inventory"
 	"backend/internal/modules/notification"
 	"backend/internal/modules/order"
@@ -94,6 +95,7 @@ func main() {
 		deps,
 		authHandler,
 		visitor.NewHandler(visitor.NewService(visitor.NewRepository(sqlDB)), authMiddleware),
+		file.NewHandler(file.NewService(file.NewRepository(sqlDB)), authMiddleware),
 		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
 		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(), database.NoopTxManager{})),
