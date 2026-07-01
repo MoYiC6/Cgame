@@ -13,6 +13,7 @@ import (
 	"backend/internal/modules/auth"
 	"backend/internal/modules/chat"
 	"backend/internal/modules/file"
+	"backend/internal/modules/game"
 	"backend/internal/modules/inventory"
 	"backend/internal/modules/notification"
 	"backend/internal/modules/order"
@@ -94,11 +95,13 @@ func main() {
 		authMiddleware,
 	)
 
+	gameHandler := game.NewHandler(game.NewService(game.NewRepository(sqlDB), txManager), authMiddleware)
 	engine := bootstrap.NewAPIEngine(
 		deps,
 		authHandler,
 		visitor.NewHandler(visitor.NewService(visitor.NewRepository(sqlDB)), authMiddleware),
 		file.NewHandler(file.NewService(file.NewRepository(sqlDB)), authMiddleware),
+		gameHandler,
 		chat.NewHandler(chat.NewService(chat.NewRepository(sqlDB)), authMiddleware),
 		teacher.NewHandler(teacher.NewService(teacher.NewRepository(sqlDB)), authMiddleware),
 		user.NewHandler(user.NewService(user.NewRepository(sqlDB)), authMiddleware),
@@ -108,6 +111,8 @@ func main() {
 		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 	)
+
+	gameHandler.RegisterWebSocket(engine, authMiddleware)
 
 	httpServer := bootstrap.NewHTTPServer(cfg.Server.Addr, engine)
 	app := bootstrap.NewApp(httpServer, dbPool, sqlDB, provider)
