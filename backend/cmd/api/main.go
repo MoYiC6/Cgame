@@ -16,6 +16,7 @@ import (
 	"backend/internal/modules/order"
 	"backend/internal/modules/payment"
 	"backend/internal/modules/user"
+	"backend/internal/modules/visitor"
 	"backend/internal/platform/config"
 	"backend/internal/platform/database"
 	"backend/internal/platform/logger"
@@ -74,6 +75,7 @@ func main() {
 		appLogger.Error("init token manager failed", "error", err)
 		os.Exit(1)
 	}
+	authMiddleware := auth.AuthMiddleware(tokenManager)
 	authHandler := auth.NewHandler(
 		auth.NewService(
 			user.NewRepository(sqlDB),
@@ -85,12 +87,13 @@ func main() {
 			auth.ServiceConfig{RefreshTokenTTL: cfg.Auth.RefreshTokenTTL, RefreshCookieName: cfg.Auth.Cookie.Name, MaxFailedAttempts: cfg.Auth.Login.MaxFailedAttempts, FailedWindow: cfg.Auth.Login.FailedWindow, LockDuration: cfg.Auth.Login.LockDuration},
 		),
 		auth.NewHandlerConfigFromAuth(cfg.Auth),
-		auth.AuthMiddleware(tokenManager),
+		authMiddleware,
 	)
 
 	engine := bootstrap.NewAPIEngine(
 		deps,
 		authHandler,
+		visitor.NewHandler(visitor.NewService(visitor.NewRepository(sqlDB)), authMiddleware),
 		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
 		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(), database.NoopTxManager{})),

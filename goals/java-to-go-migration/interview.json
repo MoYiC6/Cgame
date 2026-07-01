@@ -1,0 +1,112 @@
+{
+  "stage": "interview",
+  "title": "Java → Go 后端逐步迁移计划",
+  "goalSlug": "java-to-go-migration",
+  "questions": [
+    {
+      "id": "migration_order",
+      "prompt": "迁移顺序按什么优先级？",
+      "description": "决定第一个迁移的业务域和后续节奏",
+      "answerMode": "single",
+      "recommendedAnswer": "从最简单的独立域开始（访客分析/文件存储/系统配置），再逐步到核心域（订单/支付/财务）",
+      "options": [
+        { "id": "independent_first", "label": "独立域先行（访客/文件/配置）" },
+        { "id": "core_first", "label": "核心域先行（订单/支付）" },
+        { "id": "user_first", "label": "用户相关先行（用户/选手）" },
+        { "id": "custom", "label": "自定义" }
+      ],
+      "required": true
+    },
+    {
+      "id": "database_strategy",
+      "prompt": "迁移期间数据库怎么处理？",
+      "description": "Go 和 Java 是否共用同一个 PostgreSQL 实例",
+      "answerMode": "single",
+      "recommendedAnswer": "共用同一个 PostgreSQL 实例，Go 端新增表，Java 端旧表逐步弃用",
+      "options": [
+        { "id": "shared_db", "label": "共用 PostgreSQL（推荐）" },
+        { "id": "separate_db", "label": "分离数据库" },
+        { "id": "custom", "label": "自定义" }
+      ],
+      "required": true
+    },
+    {
+      "id": "api_compatibility",
+      "prompt": "Go 端 API 是否需要 100% 兼容 Java 端？",
+      "description": "包括路由路径、请求/响应格式、错误码",
+      "answerMode": "single",
+      "recommendedAnswer": "是，保持完全兼容，前端和客户端无需修改",
+      "options": [
+        { "id": "full_compat", "label": "100% 兼容（推荐）" },
+        { "id": "mostly_compat", "label": "大致兼容，允许小调整" },
+        { "id": "redesign", "label": "借机重构 API" }
+      ],
+      "required": true
+    },
+    {
+      "id": "dual_write_strategy",
+      "prompt": "迁移期间双写策略是什么？",
+      "description": "Java 和 Go 同时运行时的数据写入方式",
+      "answerMode": "single",
+      "recommendedAnswer": "Java 主写，Go 异步同步数据；校验通过后切 Go 主写，Java 降级只读",
+      "options": [
+        { "id": "java_primary", "label": "Java 主写，Go 同步（推荐）" },
+        { "id": "go_primary", "label": "Go 主写，Java 同步" },
+        { "id": "read_based", "label": "按流量比例分片" }
+      ],
+      "required": true
+    },
+    {
+      "id": "verification",
+      "prompt": "每个域迁移完如何验证？",
+      "description": "数据一致性、接口兼容性、功能正确性的验证方式",
+      "answerMode": "multi-custom",
+      "recommendedAnswer": "数据校验脚本（行数/checksum）+ 接口对比测试 + 灰度放量",
+      "options": [
+        { "id": "data_script", "label": "数据校验脚本" },
+        { "id": "api_compare", "label": "接口对比测试" },
+        { "id": "gray_release", "label": "灰度放量" },
+        { "id": "custom", "label": "自定义" }
+      ],
+      "required": true
+    },
+    {
+      "id": "timeline",
+      "prompt": "整体时间预期？",
+      "description": "从开始到完全替换 Java 的预计时间",
+      "answerMode": "text",
+      "recommendedAnswer": "4-6 个月（15 个域，每域 1-2 周）",
+      "required": false
+    },
+    {
+      "id": "infrastructure",
+      "prompt": "需要补充什么基础设施？",
+      "description": "服务发现、API 网关、分布式追踪、监控等",
+      "answerMode": "multi-custom",
+      "recommendedAnswer": "暂不需要微服务基础设施，保持单体部署；后续如需拆分再补充",
+      "options": [
+        { "id": "none", "label": "暂不需要，保持单体" },
+        { "id": "api_gateway", "label": "API 网关" },
+        { "id": "service_mesh", "label": "服务网格" },
+        { "id": "observability", "label": "分布式追踪+监控" },
+        { "id": "custom", "label": "自定义" }
+      ],
+      "required": true
+    },
+    {
+      "id": "out_of_scope",
+      "prompt": "哪些明确不在本次迁移范围内？",
+      "description": "避免范围蔓延",
+      "answerMode": "multi-custom",
+      "recommendedAnswer": "前端管理端（admin/）、小程序、官网、移动端 App 均不迁移，只迁移后端 API",
+      "options": [
+        { "id": "frontend", "label": "前端代码" },
+        { "id": "mobile", "label": "移动端 App" },
+        { "id": "miniapp", "label": "小程序" },
+        { "id": "website", "label": "官网" },
+        { "id": "custom", "label": "自定义" }
+      ],
+      "required": true
+    }
+  ]
+}
