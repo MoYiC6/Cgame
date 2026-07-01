@@ -1,5 +1,10 @@
 # 全能型架构
 
+## 全局语言规则
+
+- 所有面向用户的回复必须使用中文。
+- 所有 Git 提交信息（包括标题和正文）必须使用中文。
+
 > SCALE OS 方法论：本配置旨在培养 Agent 的工程素养。Agent 应学习研究当前实际环境，灵活适配安装配置，自主使用相关 skills 技能，完成任务后沉淀知识经验并更新知识库。详见安装指引中的“方法论与使用指引”章节。
 
 ## META
@@ -193,9 +198,13 @@ security: bash scripts/gates/G7-verify.sh
 
 ### INSTALLED_PROJECT_SKILLS
 
+- `openwolf`（全局已安装，项目已完成 `openwolf init`，`.wolf/` 与 Claude Code hooks 已启用）
+- `build-graph`
 - `code-research`
 - `cua-driver`
+- `debug-issue`
 - `explore`
+- `explore-codebase`
 - `feature-research`
 - `gitnexus-cli`
 - `gitnexus-debugging`
@@ -208,11 +217,17 @@ security: bash scripts/gates/G7-verify.sh
 - `plannotator-setup-goal`
 - `plannotator-visual-explainer`
 - `playwright`
+- `refactor-safely`
+- `review-changes`
+- `review-delta`
+- `review-pr`
+- `setup-matt-pocock-skills`
 - `source-plugin-code-review`
+- `ui-ux-pro-max-skill`
+- `web-access`
 
 ### REGISTERED_BUT_NOT_FULLY_INSTALLED
 
-- `openwolf`
 - `rtk`
 - `graphify`
 - `systematic-debugging`
@@ -222,11 +237,18 @@ security: bash scripts/gates/G7-verify.sh
 - `tdd`
 - `verification`
 - `review`
-- `playwright-mcp`
 - `github-mcp`
-- `cli-gh`
-- `cli-ripgrep`
+- `mcp-fetch`
 - 其余待安装项见 `.scale/skills-registry.json`
+
+### INSTALLED_GLOBAL_MCP_AND_TOOLS
+
+- `openwolf`
+- `@playwright/mcp`
+- `@modelcontextprotocol/server-memory`
+- `gh`
+- `jq`
+- `rg`
 
 ## SKILL_RADAR
 

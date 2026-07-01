@@ -1,5 +1,10 @@
 # PROJECT KNOWLEDGE BASE
 
+## 全局语言规则
+
+- 所有面向用户的回复必须使用中文。
+- 所有 Git 提交信息（包括标题和正文）必须使用中文。
+
 **Generated:** 2026-05-13 Asia/Shanghai
 **Commit:** cdd0e0e
 **Branch:** main
