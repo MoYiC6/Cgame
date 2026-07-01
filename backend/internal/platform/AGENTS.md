@@ -11,6 +11,7 @@ internal/platform/
 ├── errors/
 ├── logger/
 ├── observability/
+├── queue/
 ├── redis/
 ├── response/
 └── security/
@@ -26,6 +27,7 @@ internal/platform/
 | 追踪上下文 | `observability/*.go` | request_id、trace_id、propagator、tracer |
 | 数据库抽象 | `database/db.go` | `PgxPool` 唯一池 + `SQLDB` 派生、`TxOption{ReadOnly,Timeout}`、`WithinTx` 事务 |
 | Redis | `redis/client.go` | go-redis v9 封装、分布式锁（`lock.go`）、泛型缓存模板（`cache.go`） |
+| 消息队列 | `queue/queue.go` | `Producer`/`Consumer` 接口；in-memory + Redis Stream 驱动；延迟/优先级/死信增强 |
 
 ## CONVENTIONS
 - 平台组件不得在内部隐式读取环境变量；需要运行时配置的组件应由调用方显式传入所需参数或配置，`config` 包除外。
@@ -51,6 +53,7 @@ internal/platform/
 - 错误/响应测试要覆盖：稳定错误码、HTTP 状态、safe message、stack trace 格式。
 - 日志测试验证 JSON/Text 两种输出格式正确。
 - 数据库测试验证 `TxOption.ReadOnly` 和 `TxOption.Timeout` 生效。
+- Queue 测试覆盖：in-memory 基本 Pub/Sub + 多订阅者；Redis Stream XADD/XREADGROUP 完整流程；delayed 短延迟投递；priority 按序 Pop；DLQ 失败 N 次后进死信。
 
 ## NOTES
 - 目前 `config/config.go` 是符号最密集的共享组件之一；改动它通常会影响 API、worker、测试和启动日志。

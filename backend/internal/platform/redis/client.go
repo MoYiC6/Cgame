@@ -57,3 +57,7 @@ func (c *Client) Incr(ctx context.Context, key string) (int64, error) {
 func (c *Client) Decr(ctx context.Context, key string) (int64, error) {
 	return c.rdb.Decr(ctx, key).Result()
 }
+
+func (c *Client) Pool() goredis.UniversalClient {
+	return c.rdb
+}

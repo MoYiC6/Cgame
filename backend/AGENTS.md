@@ -13,7 +13,7 @@ backend/
 ├── internal/
 │   ├── bootstrap/      # 启动装配、路由、中间件、生命周期
 │   ├── modules/        # order / payment / inventory / notification
-│   ├── platform/       # config / logger / errors / response / observability / database
+│   ├── platform/       # config / logger / errors / response / observability / database / queue / redis
 │   └── clients/        # 第三方服务适配器
 ├── configs/            # config.local/dev/test/prod.yaml
 ├── api/                # OpenAPI 契约
@@ -48,6 +48,7 @@ backend/
 | `Handler.RegisterRoutes` | method | `internal/modules/*/handler.go` | 模块向 `/api/v1` 挂路由 |
 | `AccessLogMiddleware` | func | `internal/bootstrap/middleware.go` | 记录每个请求的方法/路径/状态/耗时 |
 | `TxOption` | struct | `internal/platform/database/tx.go` | 事务选项（ReadOnly / Timeout） |
+| `Producer`/`Consumer` | interface | `internal/platform/queue/queue.go` | 消息队列接口；in-memory + Redis Stream 驱动；含延迟/优先级/死信增强 |
 
 ## CONVENTIONS
 - 只在 `cmd/*/main.go` 做装配：读配置、构造依赖、注册 handler、启动进程。
@@ -86,6 +87,6 @@ docker compose up api worker
 - 当前仓库仍处于 bootstrap 阶段：`migrations/`、`sql/queries/`、`test/fixtures/` 以占位为主。
 - 未发现仓库内 CI 工作流文件；`Makefile` 是主要本地命令入口，`docker-compose.yml` 提供容器化启动入口。
 - 进入子目录工作前，继续读取对应子层级的 AGENTS.md。
-- 三地基层已完成改造：**错误处理**（stack + codes + auto-map）、**日志**（Debug + JSON/Text + cfg 驱动）、**数据库**（单池 + TxOption）。
-- 新增代码文件：`internal/platform/errors/codes.go`（全局错误码）、`internal/platform/redis/`（Redis 客户端/锁/缓存）。
+- 三地基层已完成改造：**错误处理**（stack + codes + auto-map）、**日志**（Debug + JSON/Text + cfg 驱动）、**数据库**（单池 + TxOption）、**队列**（in-memory + Redis Stream + 延迟/优先级/死信）。
+- 新增代码文件：`internal/platform/errors/codes.go`（全局错误码）、`internal/platform/redis/`（Redis 客户端/锁/缓存）、`internal/platform/queue/`（消息队列）。
 - `response.Fail` 签名改为 `(c, err error)` 自动 `errors.As` 映射，不再要求调用方传 `AppError`。
