@@ -21,7 +21,7 @@ internal/platform/
 ## WHERE TO LOOK
 | Task | Location | Notes |
 |------|----------|-------|
-| 配置加载 | `config/config.go` | `LoadConfig`、env override、校验、脱敏摘要；`LogConfig.Format` 控制 JSON/text |
+| 配置加载 | `config/config.go` | `LoadConfig`、env override、校验、脱敏摘要；`LogConfig.Format` 控制 JSON/text；`Watcher` 提供 hot-reload |
 | 统一日志 | `logger/logger.go` | `Logger` 接口（Info/Warn/Error/Debug）、`New(cfg)` 配置驱动、`NewText()` 测试用、JSON/Text 切换 |
 | 错误模型 | `errors/errors.go` | `AppError`（stack + code + cause + HTTP status）、`WithCause`/`StackTrace`、全局 `codes.go` |
 | API 响应 | `response/response.go` | `Success`/`Fail(c, err)` 自动 `errors.As` 映射 |
@@ -30,6 +30,8 @@ internal/platform/
 | Redis | `redis/client.go` | go-redis v9 封装、分布式锁（`lock.go`）、泛型缓存模板（`cache.go`） |
 | 消息队列 | `queue/queue.go` | `Producer`/`Consumer` 接口；in-memory + Redis Stream 驱动；延迟/优先级/死信增强 |
 | 定时任务 | `scheduler/scheduler.go` | `Scheduler` 接口 + `memoryScheduler` 实现；JobMiddleware 链（Logging/Recovery/Timeout/Retry）；内置 cron 解析（5/6 字段） |
+| 配置热加载 | `config/watcher.go` | `Watcher` 基于 fsnotify，防抖 500ms，回调接收新 Config |
+| 日志采样 | `logger/logger.go` | `LogConfig.SampleRate`（0~1），Debug/Info 概率采样，Warn/Error 全量 |
 
 ## CONVENTIONS
 - 平台组件不得在内部隐式读取环境变量；需要运行时配置的组件应由调用方显式传入所需参数或配置，`config` 包除外。
@@ -53,8 +55,9 @@ internal/platform/
 - 优先写组件级单元测试和契约测试，例如 `config_test.go`、`logger_contract_test.go`。
 - 配置测试要覆盖：文件加载、环境覆盖、必填校验、脱敏摘要。
 - 错误/响应测试要覆盖：稳定错误码、HTTP 状态、safe message、stack trace 格式。
-- 日志测试验证 JSON/Text 两种输出格式正确。
+- 日志测试验证 JSON/Text 两种输出格式正确、SampleRate 采样行为（0=静默、1=全量、0.5=概率采样）。
 - 数据库测试验证 `TxOption.ReadOnly` 和 `TxOption.Timeout` 生效。
+- Config 测试覆盖：文件加载、环境覆盖、必填校验、脱敏摘要、fsnotify hot-reload 防抖与回调。
 - Queue 测试覆盖：in-memory 基本 Pub/Sub + 多订阅者；Redis Stream XADD/XREADGROUP 完整流程；delayed 短延迟投递；priority 按序 Pop；DLQ 失败 N 次后进死信。
 - Scheduler 测试覆盖：Register/Start/Remove/重复注册；duration 和 cron（6 字段）两种调度；middleware 链通过 RunWith 透传。
 

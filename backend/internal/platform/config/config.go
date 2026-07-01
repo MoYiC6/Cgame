@@ -36,8 +36,9 @@ type ServerConfig struct {
 }
 
 type LogConfig struct {
-	Level  string `yaml:"level"`
-	Format string `yaml:"format"`
+	Level     string  `yaml:"level"`
+	Format    string  `yaml:"format"`
+	SampleRate float64 `yaml:"sample_rate"`
 }
 
 type DBConfig struct {

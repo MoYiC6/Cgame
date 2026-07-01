@@ -4,8 +4,11 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"math/rand"
 	"os"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"backend/internal/platform/config"
 	"backend/internal/platform/observability"
@@ -21,7 +24,10 @@ type Logger interface {
 }
 
 type structuredLogger struct {
-	inner *slog.Logger
+	inner      *slog.Logger
+	sampleRate float64
+	seed       int64
+	counter    int64
 }
 
 func String(key, value string) Field {
@@ -33,17 +39,24 @@ func Any(key string, value any) Field {
 }
 
 func New(cfg config.LogConfig) Logger {
-	return newLogger(cfg.Level, cfg.Format, os.Stdout)
+	return newLogger(cfg.Level, cfg.Format, cfg.SampleRate, os.Stdout)
 }
 
 func NewText(level string, writer io.Writer) Logger {
 	if writer == nil {
 		writer = os.Stdout
 	}
-	return newLogger(level, "text", writer)
+	return newLogger(level, "text", 1.0, writer)
 }
 
-func newLogger(level, format string, writer io.Writer) Logger {
+func NewWithSample(level, format string, sampleRate float64, writer io.Writer) Logger {
+	if writer == nil {
+		writer = os.Stdout
+	}
+	return newLogger(level, format, sampleRate, writer)
+}
+
+func newLogger(level, format string, sampleRate float64, writer io.Writer) Logger {
 	if writer == nil {
 		writer = os.Stdout
 	}
@@ -60,6 +73,13 @@ func newLogger(level, format string, writer io.Writer) Logger {
 		slogLevel = slog.LevelInfo
 	}
 
+	if sampleRate < 0 {
+		sampleRate = 0
+	}
+	if sampleRate > 1 {
+		sampleRate = 1
+	}
+
 	opts := &slog.HandlerOptions{Level: slogLevel}
 	if slogLevel == slog.LevelDebug {
 		opts.AddSource = true
@@ -72,15 +92,23 @@ func newLogger(level, format string, writer io.Writer) Logger {
 		handler = slog.NewTextHandler(writer, opts)
 	}
 
-	return &structuredLogger{inner: slog.New(handler)}
+	return &structuredLogger{
+		inner:      slog.New(handler),
+		sampleRate: sampleRate,
+		seed:       time.Now().UnixNano(),
+	}
 }
 
 func (l *structuredLogger) Debug(msg string, fields ...Field) {
-	l.inner.Debug(msg, fields...)
+	if l.shouldLog(msg) {
+		l.inner.Debug(msg, fields...)
+	}
 }
 
 func (l *structuredLogger) Info(msg string, fields ...Field) {
-	l.inner.Info(msg, fields...)
+	if l.shouldLog(msg) {
+		l.inner.Info(msg, fields...)
+	}
 }
 
 func (l *structuredLogger) Warn(msg string, fields ...Field) {
@@ -91,8 +119,20 @@ func (l *structuredLogger) Error(msg string, fields ...Field) {
 	l.inner.Error(msg, fields...)
 }
 
+func (l *structuredLogger) shouldLog(msg string) bool {
+	if l.sampleRate >= 1.0 {
+		return true
+	}
+	if l.sampleRate <= 0 {
+		return false
+	}
+	counter := atomic.AddInt64(&l.counter, 1)
+	r := rand.New(rand.NewSource(l.seed + counter))
+	return r.Float64() < l.sampleRate
+}
+
 func (l *structuredLogger) with(fields ...any) Logger {
-	return &structuredLogger{inner: l.inner.With(fields...)}
+	return &structuredLogger{inner: l.inner.With(fields...), sampleRate: l.sampleRate, seed: l.seed}
 }
 
 func WithContext(ctx context.Context, base Logger) Logger {
@@ -116,5 +156,3 @@ func WithContext(ctx context.Context, base Logger) Logger {
 	}
 	return contextual.with(fields...)
 }
-
-
