@@ -18,6 +18,7 @@ import (
 	"backend/internal/modules/order"
 	"backend/internal/modules/payment"
 	"backend/internal/modules/system"
+	"backend/internal/modules/teacher"
 	"backend/internal/modules/user"
 	"backend/internal/modules/visitor"
 	"backend/internal/platform/config"
@@ -99,6 +100,7 @@ func main() {
 		visitor.NewHandler(visitor.NewService(visitor.NewRepository(sqlDB)), authMiddleware),
 		file.NewHandler(file.NewService(file.NewRepository(sqlDB)), authMiddleware),
 		chat.NewHandler(chat.NewService(chat.NewRepository(sqlDB)), authMiddleware),
+		teacher.NewHandler(teacher.NewService(teacher.NewRepository(sqlDB)), authMiddleware),
 		user.NewHandler(user.NewService(user.NewRepository(sqlDB)), authMiddleware),
 		system.NewHandler(system.NewService(system.NewRepository(sqlDB)), authMiddleware),
 		notification.NewHandler(notification.NewService(notification.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
