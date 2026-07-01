@@ -21,6 +21,7 @@ func NewAPIEngine(deps Dependencies, registrars ...HTTPRouteRegistrar) *gin.Engi
 	engine.Use(
 		RequestIDMiddleware(),
 		TraceContextMiddleware(deps.Propagator),
+		AccessLogMiddleware(deps.Logger),
 		CORSMiddleware(deps.Config.CORS),
 		SecurityHeadersMiddleware(deps.Config.SecurityHeaders),
 		RateLimitMiddleware(deps.Config.RateLimit),

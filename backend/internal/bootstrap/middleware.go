@@ -103,6 +103,20 @@ type rateLimitEntry struct {
 	count         int
 }
 
+func AccessLogMiddleware(log logger.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		path := c.Request.URL.Path
+		c.Next()
+		logger.WithContext(c.Request.Context(), log).Info("request",
+			"method", c.Request.Method,
+			"path", path,
+			"status", c.Writer.Status(),
+			"duration_ms", time.Since(start).Milliseconds(),
+		)
+	}
+}
+
 func RateLimitMiddleware(cfg config.RateLimitConfig) gin.HandlerFunc {
 	limiter := &rateLimiter{entries: make(map[string]*rateLimitEntry)}
 	window := time.Duration(cfg.WindowSecs) * time.Second
