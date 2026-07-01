@@ -2,7 +2,9 @@ package apperrors
 
 import (
 	stderrors "errors"
+	"fmt"
 	"net/http"
+	"runtime"
 )
 
 type AppError struct {
@@ -10,23 +12,29 @@ type AppError struct {
 	Message    string
 	HTTPStatus int
 	Cause      error
+	stack      []uintptr
 }
 
 func New(code, message string, httpStatus int, cause error) *AppError {
-	return &AppError{Code: code, Message: message, HTTPStatus: httpStatus, Cause: cause}
+	return &AppError{
+		Code:       code,
+		Message:    message,
+		HTTPStatus: httpStatus,
+		Cause:      cause,
+		stack:      callers(),
+	}
 }
 
 func NewAppError(code, message string, httpStatus int) *AppError {
 	return New(code, message, httpStatus, nil)
 }
 
-func Wrap(base *AppError, cause error) *AppError {
-	if base == nil {
-		return New("INTERNAL_ERROR", "internal error", http.StatusInternalServerError, cause)
+func (e *AppError) WithCause(cause error) *AppError {
+	if e == nil {
+		return nil
 	}
-	clone := *base
-	clone.Cause = cause
-	return &clone
+	e.Cause = cause
+	return e
 }
 
 func (e *AppError) Error() string {
@@ -43,6 +51,31 @@ func (e *AppError) Unwrap() error {
 	return e.Cause
 }
 
+func (e *AppError) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			fmt.Fprint(s, e.Message)
+			if e.Cause != nil {
+				fmt.Fprintf(s, ": %+v", e.Cause)
+			}
+			for _, pc := range e.stack {
+				fn := runtime.FuncForPC(pc)
+				if fn != nil {
+					file, line := fn.FileLine(pc)
+					fmt.Fprintf(s, "\n\t%s:%d", file, line)
+				}
+			}
+			return
+		}
+		fallthrough
+	case 's':
+		fmt.Fprint(s, e.Message)
+	case 'q':
+		fmt.Fprintf(s, "%q", e.Message)
+	}
+}
+
 func Status(err error) int {
 	var appErr *AppError
 	if stderrors.As(err, &appErr) {
@@ -56,7 +89,7 @@ func Code(err error) string {
 	if stderrors.As(err, &appErr) {
 		return appErr.Code
 	}
-	return "INTERNAL_ERROR"
+	return CodeInternal
 }
 
 func SafeMessage(err error) string {
@@ -65,4 +98,19 @@ func SafeMessage(err error) string {
 		return appErr.Message
 	}
 	return "internal error"
+}
+
+func StackTrace(err error) []uintptr {
+	var appErr *AppError
+	if stderrors.As(err, &appErr) {
+		return appErr.stack
+	}
+	return nil
+}
+
+func callers() []uintptr {
+	const depth = 32
+	var pcs [depth]uintptr
+	n := runtime.Callers(3, pcs[:])
+	return pcs[:n]
 }

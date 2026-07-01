@@ -57,13 +57,13 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil || req.Identifier == "" || req.Password == "" {
-		response.Fail(c, apperrors.New("INVALID_ARGUMENT", "invalid input", http.StatusBadRequest, err))
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid input", http.StatusBadRequest, err))
 		return
 	}
 	ctx := WithClientMetadata(c.Request.Context(), c.ClientIP(), c.GetHeader("User-Agent"))
 	resp, cookie, err := h.service.Login(ctx, &req)
 	if err != nil {
-		response.Fail(c, toAppError(err))
+		response.Fail(c, err)
 		return
 	}
 	h.writeRefreshCookie(c, cookie)
@@ -83,7 +83,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		h.writeRefreshCookie(c, cookie)
 	}
 	if err != nil {
-		response.Fail(c, toAppError(err))
+		response.Fail(c, err)
 		return
 	}
 	response.Success(c, resp)
@@ -102,7 +102,7 @@ func (h *Handler) Logout(c *gin.Context) {
 	}
 	ctx := WithClientMetadata(c.Request.Context(), c.ClientIP(), c.GetHeader("User-Agent"))
 	if err := h.service.Logout(ctx, &LogoutRequest{RefreshToken: refreshToken, SessionID: sessionID, PublicID: publicID}); err != nil {
-		response.Fail(c, toAppError(err))
+		response.Fail(c, err)
 		return
 	}
 	h.writeRefreshCookie(c, &RefreshCookie{Clear: true})
@@ -112,7 +112,7 @@ func (h *Handler) Logout(c *gin.Context) {
 func (h *Handler) Me(c *gin.Context) {
 	resp, err := h.service.Me(c.Request.Context())
 	if err != nil {
-		response.Fail(c, toAppError(err))
+		response.Fail(c, err)
 		return
 	}
 	response.Success(c, resp)
@@ -154,11 +154,4 @@ func mapSameSite(raw string) http.SameSite {
 	default:
 		return http.SameSiteLaxMode
 	}
-}
-
-func toAppError(err error) *apperrors.AppError {
-	if appErr, ok := err.(*apperrors.AppError); ok {
-		return appErr
-	}
-	return apperrors.New("INTERNAL_ERROR", "internal error", http.StatusInternalServerError, err)
 }

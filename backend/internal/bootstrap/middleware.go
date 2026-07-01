@@ -195,10 +195,7 @@ func RecoveryMiddleware(log logger.Logger) gin.HandlerFunc {
 				if log != nil {
 					log.Error("panic recovered", "panic", recovered, "path", c.Request.URL.Path)
 				}
-				response.Fail(c, apperrors.Wrap(
-					apperrors.NewAppError("INTERNAL_ERROR", "internal error", http.StatusInternalServerError),
-					fmt.Errorf("panic: %v", recovered),
-				))
+				response.Fail(c, apperrors.NewAppError("INTERNAL_ERROR", "internal error", http.StatusInternalServerError).WithCause(fmt.Errorf("panic: %v", recovered)))
 				c.Abort()
 			}
 		}()

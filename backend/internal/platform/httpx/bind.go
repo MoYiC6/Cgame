@@ -108,5 +108,5 @@ func collectHeaderValues(targetType reflect.Type, header http.Header, values map
 }
 
 func invalidArgumentError(cause error) *apperrors.AppError {
-	return apperrors.New("INVALID_ARGUMENT", invalidArgumentMessage, http.StatusBadRequest, cause)
+	return apperrors.New(apperrors.CodeInvalidArgument, invalidArgumentMessage, http.StatusBadRequest, cause)
 }

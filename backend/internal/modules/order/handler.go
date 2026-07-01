@@ -1,9 +1,6 @@
 package order
 
 import (
-	"net/http"
-
-	apperrors "backend/internal/platform/errors"
 	"backend/internal/platform/response"
 	"github.com/gin-gonic/gin"
 )
@@ -23,7 +20,7 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 func (h *Handler) Ping(c *gin.Context) {
 	payload, err := h.service.Ping(c.Request.Context())
 	if err != nil {
-		response.Fail(c, apperrors.New("ORDER_PING_FAILED", "order ping failed", http.StatusInternalServerError, err))
+		response.Fail(c, err)
 		return
 	}
 	response.Success(c, payload)
