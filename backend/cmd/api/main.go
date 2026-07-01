@@ -98,10 +98,10 @@ func main() {
 		visitor.NewHandler(visitor.NewService(visitor.NewRepository(sqlDB)), authMiddleware),
 		file.NewHandler(file.NewService(file.NewRepository(sqlDB)), authMiddleware),
 		system.NewHandler(system.NewService(system.NewRepository(sqlDB)), authMiddleware),
+		notification.NewHandler(notification.NewService(notification.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
 		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(), database.NoopTxManager{})),
-		notification.NewHandler(notification.NewService(notification.NewRepository(), database.NoopTxManager{})),
 	)
 
 	httpServer := bootstrap.NewHTTPServer(cfg.Server.Addr, engine)

@@ -116,6 +116,6 @@ func newIntegrationEngine(db database.DB) *gin.Engine {
 		order.NewHandler(order.NewService(order.NewRepository(), database.NoopTxManager{})),
 		payment.NewHandler(payment.NewService(payment.NewRepository(), database.NoopTxManager{})),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(), database.NoopTxManager{})),
-		notification.NewHandler(notification.NewService(notification.NewRepository(), database.NoopTxManager{})),
+		notification.NewHandler(notification.NewService(notification.NewRepository(repoDB), database.NoopTxManager{}), nil),
 	)
 }

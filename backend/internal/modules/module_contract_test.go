@@ -61,11 +61,11 @@ func TestModulePingHandlersReturnTopLevelTraceIDWithoutPayloadTrace(t *testing.T
 			name:          "notification",
 			path:          "/api/v1/notification/ping",
 			module:        "notification",
-			newRepository: func() any { return notification.NewRepository() },
+			newRepository: func() any { return notification.NewRepository(nil) },
 			newService: func(repo any) any {
 				return notification.NewService(repo.(notification.Repository), database.NoopTxManager{})
 			},
-			newHandler: func(service any) routeRegistrar { return notification.NewHandler(service.(notification.Service)) },
+			newHandler:    func(service any) routeRegistrar { return notification.NewHandler(service.(*notification.Service), nil) },
 		},
 	}
 
@@ -145,9 +145,9 @@ func TestModuleConstructorsExposeSymmetricServiceAndRepositorySeams(t *testing.T
 		},
 		{
 			name:           "notification",
-			service:        notification.NewService(notification.NewRepository(), database.NoopTxManager{}),
-			nilTxService:   notification.NewService(notification.NewRepository(), nil),
-			repository:     notification.NewRepository(),
+			service:        notification.NewService(notification.NewRepository(nil), database.NoopTxManager{}),
+			nilTxService:   notification.NewService(notification.NewRepository(nil), nil),
+			repository:     notification.NewRepository(nil),
 			repositoryType: reflect.TypeFor[notification.Repository](),
 		},
 	}
