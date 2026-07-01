@@ -8,9 +8,649 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AuditLog struct {
+	ID            int64
+	EventType     string
+	Result        string
+	UserPublicID  pgtype.Text
+	SessionID     pgtype.Text
+	RequestID     pgtype.Text
+	TraceID       pgtype.Text
+	IpHash        pgtype.Text
+	UserAgentHash pgtype.Text
+	MetadataJson  []byte
+	OccurredAt    pgtype.Timestamptz
+}
+
+type AuthSession struct {
+	ID            string
+	UserID        int64
+	Status        string
+	UserAgentHash pgtype.Text
+	IpHash        pgtype.Text
+	CreatedAt     pgtype.Timestamptz
+	LastSeenAt    pgtype.Timestamptz
+	RevokedAt     pgtype.Timestamptz
+	ExpiresAt     pgtype.Timestamptz
+}
+
+type BombRanking struct {
+	ID           int64
+	RankPosition int32
+	TeacherID    int64
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+}
+
+type ChatMessage struct {
+	ID          int64
+	SessionID   int64
+	SenderID    int64
+	SenderType  string
+	ReceiverID  pgtype.Int8
+	Content     string
+	MessageType pgtype.Text
+	ExtraData   []byte
+	IsRead      pgtype.Int2
+	ReadTime    pgtype.Timestamptz
+	Status      pgtype.Int2
+	CreatedAt   pgtype.Timestamptz
+}
+
+type ChatSession struct {
+	ID                 int64
+	UserID             int64
+	TeacherID          pgtype.Int8
+	TeacherUserID      pgtype.Int8
+	OrderID            pgtype.Int8
+	LastMessageID      pgtype.Int8
+	LastMessageContent pgtype.Text
+	LastMessageTime    pgtype.Timestamptz
+	UserUnreadCount    pgtype.Int4
+	TeacherUnreadCount pgtype.Int4
+	Status             pgtype.Int2
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+}
+
+type FaceidConfig struct {
+	ID            int64
+	SecretID      string
+	SecretKey     string
+	RuleID        string
+	Region        pgtype.Text
+	RedirectUrl   pgtype.Text
+	IsEnabled     pgtype.Int2
+	Remark        pgtype.Text
+	ManualEnabled pgtype.Int2
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	Deleted       pgtype.Int2
+}
+
+type File struct {
+	ID           int64
+	UserID       pgtype.Int8
+	CategoryID   pgtype.Int8
+	DisplayName  pgtype.Text
+	OriginalName pgtype.Text
+	Url          string
+	FileID       pgtype.Text
+	FileHash     pgtype.Text
+	Type         pgtype.Text
+	Size         pgtype.Int8
+	Provider     pgtype.Text
+	Status       pgtype.Int2
+	Description  pgtype.Text
+	Sort         pgtype.Int4
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+	Deleted      pgtype.Int2
+}
+
+type FileCategory struct {
+	ID          int64
+	Name        string
+	Description pgtype.Text
+	Sort        pgtype.Int4
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type GameMap struct {
+	ID          int64
+	Name        string
+	Description pgtype.Text
+	Icon        pgtype.Text
+	Sort        pgtype.Int4
+	Status      pgtype.Int2
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type GameMove struct {
+	ID           int64
+	RecordID     int64
+	RoomID       int64
+	UserID       int64
+	Dice         int32
+	FromPosition int32
+	ToPosition   int32
+	CellText     pgtype.Text
+	SpecialType  pgtype.Text
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+}
+
+type GameRecord struct {
+	ID            int64
+	RoomID        int64
+	RoomCode      string
+	HostUserID    int64
+	FinalPosition pgtype.Int4
+	Status        pgtype.Text
+	StartedAt     pgtype.Timestamptz
+	FinishedAt    pgtype.Timestamptz
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+}
+
+type GameRoom struct {
+	ID                int64
+	RoomCode          string
+	HostUserID        int64
+	Status            pgtype.Text
+	MaxPlayers        pgtype.Int4
+	CurrentPosition   pgtype.Int4
+	GameOver          pgtype.Bool
+	CurrentTurnUserID pgtype.Int8
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type GameRoomPlayer struct {
+	ID        int64
+	RoomID    int64
+	UserID    int64
+	Nickname  string
+	Avatar    pgtype.Text
+	IsHost    pgtype.Bool
+	JoinedAt  pgtype.Timestamptz
+	LeftAt    pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type Good struct {
+	ID               int64
+	CategoryID       pgtype.Int8
+	Platform         pgtype.Text
+	Name             string
+	Description      pgtype.Text
+	CoverImage       pgtype.Text
+	BillingMode      pgtype.Text
+	Status           pgtype.Int2
+	IsVisible        pgtype.Bool
+	CommissionType   pgtype.Text
+	CommissionRate   pgtype.Numeric
+	MinTeacherLevel  pgtype.Int4
+	MapSelectEnabled pgtype.Bool
+	Version          pgtype.Int4
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type GoodsCategory struct {
+	ID        int64
+	ParentID  pgtype.Int8
+	Name      string
+	Icon      pgtype.Text
+	Sort      pgtype.Int4
+	Status    pgtype.Int2
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type GoodsMap struct {
+	ID        int64
+	GoodsID   int64
+	GameMapID int64
+	CreatedAt pgtype.Timestamptz
+}
+
+type GoodsSku struct {
+	ID          int64
+	GoodsID     int64
+	SkuName     string
+	SkuSnapshot []byte
+	Price       pgtype.Numeric
+	Stock       pgtype.Int4
+	Sort        pgtype.Int4
+	Status      pgtype.Int2
+	Version     pgtype.Int4
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type GoodsSkuStockLog struct {
+	ID         int64
+	SkuID      int64
+	OldStock   pgtype.Int4
+	NewStock   pgtype.Int4
+	ChangeType pgtype.Text
+	OrderID    pgtype.Int8
+	OperatorID pgtype.Int8
+	CreatedAt  pgtype.Timestamptz
+}
+
+type GoodsSpec struct {
+	ID         int64
+	GoodsID    int64
+	SpecName   string
+	SpecValues []byte
+	Sort       pgtype.Int4
+	CreatedAt  pgtype.Timestamptz
+}
+
+type LoginAttempt struct {
+	ID             int64
+	IdentifierHash string
+	UserID         pgtype.Int8
+	Success        bool
+	Reason         string
+	IpHash         pgtype.Text
+	UserAgentHash  pgtype.Text
+	RequestID      pgtype.Text
+	TraceID        pgtype.Text
+	CreatedAt      pgtype.Timestamptz
+}
+
+type Notification struct {
+	ID          int64
+	UserID      pgtype.Int8
+	Title       string
+	Content     pgtype.Text
+	Type        string
+	SubType     pgtype.Text
+	TargetType  pgtype.Text
+	TargetID    pgtype.Int8
+	RelatedID   pgtype.Int8
+	RelatedType pgtype.Text
+	ExtraData   []byte
+	Priority    pgtype.Int2
+	IsRead      pgtype.Bool
+	ExpireTime  pgtype.Timestamptz
+	ReadTime    pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type Order struct {
+	ID             int64
+	OrderNo        string
+	UserID         int64
+	Status         string
+	TotalAmount    pgtype.Numeric
+	PayAmount      pgtype.Numeric
+	DiscountAmount pgtype.Numeric
+	GoodsID        pgtype.Int8
+	SkuName        pgtype.Text
+	Quantity       pgtype.Int4
+	Remark         pgtype.Text
+	PayAt          pgtype.Timestamptz
+	CompletedAt    pgtype.Timestamptz
+	CancelledAt    pgtype.Timestamptz
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type OrderItem struct {
+	ID        int64
+	OrderID   int64
+	GoodsID   int64
+	SkuName   string
+	Price     pgtype.Numeric
+	Quantity  int32
+	Subtotal  pgtype.Numeric
+	CreatedAt pgtype.Timestamptz
+}
+
+type PartnerConfig struct {
+	ID          int64
+	ConfigKey   string
+	ConfigValue pgtype.Text
+	Description pgtype.Text
+	Status      pgtype.Int2
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type PaymentRecord struct {
+	ID        int64
+	PaymentNo string
+	OrderNo   string
+	UserID    int64
+	Amount    pgtype.Numeric
+	Status    string
+	PayMethod pgtype.Text
+	PaidAt    pgtype.Timestamptz
+	RefundAt  pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type Permission struct {
+	ID        int64
+	Code      string
+	Name      string
+	CreatedAt pgtype.Timestamptz
+}
+
 type PlatformRuntimeProbe struct {
 	ID         int64
 	RunID      string
 	ProbeName  string
 	ObservedAt pgtype.Timestamptz
+}
+
+type PurchaseLimitRule struct {
+	ID          int64
+	GoodsID     pgtype.Int8
+	LimitType   pgtype.Text
+	LimitCount  pgtype.Int4
+	LimitPeriod pgtype.Int4
+	StartTime   pgtype.Timestamptz
+	EndTime     pgtype.Timestamptz
+	Status      pgtype.Int2
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+}
+
+type RealnameVerifyLog struct {
+	ID              int64
+	UserID          int64
+	EventType       string
+	OperatorID      pgtype.Int8
+	OperatorType    pgtype.Text
+	Detail          pgtype.Text
+	IpAddress       pgtype.Text
+	SubmittedName   pgtype.Text
+	SubmittedIDCard pgtype.Text
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+	Deleted         pgtype.Int2
+}
+
+type RefreshToken struct {
+	ID                int64
+	UserID            int64
+	SessionID         string
+	TokenHash         string
+	FamilyID          string
+	ReplacedByTokenID pgtype.Int8
+	RevokedAt         pgtype.Timestamptz
+	UsedAt            pgtype.Timestamptz
+	ExpiresAt         pgtype.Timestamptz
+	CreatedAt         pgtype.Timestamptz
+}
+
+type Role struct {
+	ID        int64
+	Code      string
+	Name      string
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type RolePermission struct {
+	RoleID       int64
+	PermissionID int64
+	CreatedAt    pgtype.Timestamptz
+}
+
+type ScanLoginSession struct {
+	LoginKey  string
+	Status    string
+	UserID    pgtype.Int8
+	Token     pgtype.Text
+	ExpiresAt pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type SystemSetting struct {
+	ID           int64
+	SettingKey   string
+	SettingValue pgtype.Text
+	SettingType  pgtype.Text
+	Category     pgtype.Text
+	Description  pgtype.Text
+	IsPublic     pgtype.Int2
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+}
+
+type SystemTodo struct {
+	ID            int64
+	Title         string
+	Completed     pgtype.Bool
+	SortOrder     pgtype.Int4
+	CreatedBy     pgtype.Text
+	CompletedBy   pgtype.Text
+	CompletedTime pgtype.Timestamptz
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+}
+
+type Teacher struct {
+	ID                int64
+	UserID            int64
+	Name              pgtype.Text
+	Mobile            pgtype.Text
+	Avatar            pgtype.Text
+	Status            pgtype.Int2
+	Rating            pgtype.Numeric
+	OrderCount        pgtype.Int4
+	Deposit           pgtype.Numeric
+	Balance           pgtype.Numeric
+	Platforms         []byte
+	Tags              []byte
+	GoodsIds          []byte
+	AutoStatusEnabled pgtype.Bool
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type TeacherBalanceLog struct {
+	ID           int64
+	TeacherID    int64
+	ChangeType   string
+	Amount       pgtype.Numeric
+	BalanceAfter pgtype.Numeric
+	RelatedID    pgtype.Int8
+	RelatedNo    pgtype.Text
+	Description  pgtype.Text
+	CreatedAt    pgtype.Timestamptz
+}
+
+type TeacherLevel struct {
+	ID             int64
+	Name           string
+	MinOrders      pgtype.Int4
+	CommissionRate pgtype.Numeric
+	Priority       pgtype.Int4
+	Status         pgtype.Int2
+	Description    pgtype.Text
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type TeacherLevelGood struct {
+	ID             int64
+	LevelID        int64
+	GoodsID        int64
+	CommissionRate pgtype.Numeric
+	CreatedAt      pgtype.Timestamptz
+}
+
+type TeacherMapPermission struct {
+	ID        int64
+	TeacherID int64
+	MapID     int64
+	CreatedAt pgtype.Timestamptz
+}
+
+type TeacherStatusLog struct {
+	ID         int64
+	TeacherID  int64
+	OldStatus  pgtype.Int2
+	NewStatus  pgtype.Int2
+	Reason     pgtype.Text
+	OperatorID pgtype.Int8
+	CreatedAt  pgtype.Timestamptz
+}
+
+type User struct {
+	ID                int64
+	PublicID          string
+	Email             string
+	PasswordHash      string
+	Status            string
+	PasswordChangedAt pgtype.Timestamptz
+	LastLoginAt       pgtype.Timestamptz
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type UserBalanceLog struct {
+	ID           int64
+	UserID       int64
+	ChangeType   string
+	Amount       pgtype.Numeric
+	BalanceAfter pgtype.Numeric
+	RelatedID    pgtype.Int8
+	RelatedNo    pgtype.Text
+	Description  pgtype.Text
+	CreatedAt    pgtype.Timestamptz
+}
+
+type UserLevel struct {
+	ID             int64
+	Name           string
+	MinConsumption pgtype.Numeric
+	DiscountRate   pgtype.Numeric
+	Benefits       []byte
+	Status         pgtype.Int2
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type UserLevelLog struct {
+	ID           int64
+	UserID       int64
+	OldLevelID   pgtype.Int8
+	NewLevelID   pgtype.Int8
+	ChangeReason pgtype.Text
+	CreatedAt    pgtype.Timestamptz
+}
+
+type UserNotification struct {
+	ID             int64
+	UserID         int64
+	NotificationID int64
+	IsRead         pgtype.Int2
+	ReadTime       pgtype.Timestamptz
+	CreatedAt      pgtype.Timestamptz
+}
+
+type UserOauth struct {
+	ID         int64
+	UserID     int64
+	Platform   string
+	OpenID     string
+	UnionID    pgtype.Text
+	Nickname   pgtype.Text
+	Avatar     pgtype.Text
+	SessionKey pgtype.Text
+	Phone      pgtype.Text
+	BoundAt    pgtype.Timestamptz
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+}
+
+type UserPurchaseRecord struct {
+	ID           int64
+	UserID       int64
+	GoodsID      pgtype.Int8
+	OrderID      pgtype.Int8
+	Quantity     pgtype.Int4
+	PurchaseTime pgtype.Timestamptz
+}
+
+type UserRole struct {
+	UserID    int64
+	RoleID    int64
+	CreatedAt pgtype.Timestamptz
+}
+
+type UserToken struct {
+	ID           int64
+	UserID       int64
+	AccessToken  string
+	RefreshToken string
+	ExpiresAt    pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+}
+
+type VisitorDailyStat struct {
+	ID                 int64
+	StatDate           pgtype.Date
+	UniqueVisitors     pgtype.Int4
+	TotalSessions      pgtype.Int4
+	TotalPageViews     pgtype.Int4
+	AvgSessionDuration pgtype.Numeric
+	BounceRate         pgtype.Numeric
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+}
+
+type VisitorPageView struct {
+	ID        int64
+	VisitorID string
+	SessionID string
+	PagePath  string
+	PageTitle pgtype.Text
+	VisitTime pgtype.Timestamptz
+	Duration  pgtype.Int4
+	Referrer  pgtype.Text
+	CreatedAt pgtype.Timestamptz
+}
+
+type VisitorSession struct {
+	ID             int64
+	VisitorID      string
+	SessionID      string
+	FirstVisitTime pgtype.Timestamptz
+	LastVisitTime  pgtype.Timestamptz
+	PageCount      pgtype.Int4
+	Platform       pgtype.Text
+	Version        pgtype.Text
+	UserAgent      pgtype.Text
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type WxPayConfig struct {
+	ID         int64
+	ConfigType string
+	AppID      string
+	MchID      string
+	ApiKey     pgtype.Text
+	ApiV3Key   pgtype.Text
+	SerialNo   pgtype.Text
+	PrivateKey pgtype.Text
+	PublicKey  pgtype.Text
+	Status     pgtype.Int2
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
 }
