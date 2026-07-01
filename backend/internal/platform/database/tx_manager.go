@@ -28,12 +28,23 @@ func NewSQLTxManager(db Beginner) *SQLTxManager {
 	return &SQLTxManager{db: db}
 }
 
-func (m *SQLTxManager) WithinTx(ctx context.Context, fn func(ctx context.Context) error) error {
+func (m *SQLTxManager) WithinTx(ctx context.Context, fn func(ctx context.Context) error, opts ...TxOption) error {
 	if ExecutorFromContext(ctx, nil) != nil {
 		return fn(ctx)
 	}
 
-	tx, err := m.db.BeginTx(ctx, nil)
+	var sqlOpts *sql.TxOptions
+	if len(opts) > 0 && opts[0].ReadOnly {
+		sqlOpts = &sql.TxOptions{Isolation: sql.LevelSerializable, ReadOnly: true}
+	}
+
+	var cancel context.CancelFunc
+	if len(opts) > 0 && opts[0].Timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, opts[0].Timeout)
+		defer cancel()
+	}
+
+	tx, err := m.db.BeginTx(ctx, sqlOpts)
 	if err != nil {
 		return err
 	}

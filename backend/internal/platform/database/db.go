@@ -10,7 +10,7 @@ import (
 	"backend/internal/platform/config"
 	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
 
@@ -83,6 +83,14 @@ func (p *PgxPool) Pool() *pgxpool.Pool {
 		return nil
 	}
 	return p.pool
+}
+
+func (p *PgxPool) SQLDB() (*SQLDB, error) {
+	if p == nil || p.pool == nil {
+		return nil, fmt.Errorf("pgx pool is nil")
+	}
+	db := stdlib.OpenDBFromPool(p.pool)
+	return &SQLDB{db: db}, nil
 }
 
 func NewSQLDB(cfg config.DBConfig) (*SQLDB, error) {

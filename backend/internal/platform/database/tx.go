@@ -3,7 +3,14 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 )
+
+type TxOption struct {
+	ReadOnly bool
+	Label    string
+	Timeout  time.Duration
+}
 
 type DBTX interface {
 	Exec(query string, args ...any) (sql.Result, error)
@@ -15,7 +22,7 @@ type DBTX interface {
 }
 
 type TxManager interface {
-	WithinTx(ctx context.Context, fn func(ctx context.Context) error) error
+	WithinTx(ctx context.Context, fn func(ctx context.Context) error, opts ...TxOption) error
 }
 
 type txKey struct{}
@@ -35,6 +42,6 @@ func ExecutorFromContext(ctx context.Context, fallback DBTX) DBTX {
 
 type NoopTxManager struct{}
 
-func (NoopTxManager) WithinTx(ctx context.Context, fn func(ctx context.Context) error) error {
+func (NoopTxManager) WithinTx(ctx context.Context, fn func(ctx context.Context) error, opts ...TxOption) error {
 	return fn(ctx)
 }

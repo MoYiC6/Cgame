@@ -48,9 +48,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	sqlDB, err := database.NewSQLDB(cfg.DB)
+	sqlDB, err := dbPool.SQLDB()
 	if err != nil {
-		appLogger.Error("init sql db failed", "error", err)
+		appLogger.Error("init sql db from pool failed", "error", err)
 		os.Exit(1)
 	}
 	txManager := database.NewSQLTxManager(sqlDB)
