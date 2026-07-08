@@ -34,11 +34,11 @@ type TeacherLevel struct {
 }
 
 type TeacherLevelGoods struct {
-	ID            int64
-	LevelID       int64
-	GoodsID       int64
+	ID             int64
+	LevelID        int64
+	GoodsID        int64
 	CommissionRate float64
-	CreatedAt     time.Time
+	CreatedAt      time.Time
 }
 
 type TeacherStatusLog struct {
@@ -61,4 +61,83 @@ type TeacherBalanceLog struct {
 	RelatedNo    *string
 	Description  *string
 	CreatedAt    time.Time
+}
+
+// TeacherApplication represents an application to become a teacher
+type TeacherApplication struct {
+	ID          int64
+	UserID      int64
+	Name        string
+	Mobile      *string
+	Avatar      *string
+	Platforms   map[string]any
+	Tags        []string
+	Intro       *string
+	Status      int // 0=pending, 1=approved, 2=rejected
+	Reason      *string
+	OperatorID  *int64
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+// TeacherRanking represents a teacher ranking entry
+type TeacherRanking struct {
+	TeacherID  int64
+	Name       string
+	Avatar     *string
+	Rating     float64
+	OrderCount int
+	Balance    float64
+	Rank       int
+}
+
+// TeacherDashboardStats represents teacher dashboard statistics
+type TeacherDashboardStats struct {
+	TodayIncome     float64
+	WeekIncome      float64
+	MonthIncome     float64
+	TotalIncome     float64
+	TodayOrders     int
+	WeekOrders      int
+	MonthOrders     int
+	TotalOrders     int
+	PendingOrders   int
+	Rating          float64
+	CompletionRate  float64
+}
+
+// TeacherOnlineStatus represents a teacher's online status update
+type TeacherOnlineStatus struct {
+	TeacherID int64
+	Status    int // 1=online, 2=offline, 3=busy
+}
+
+// TeacherIntro represents a teacher's introduction
+type TeacherIntro struct {
+	TeacherID int64
+	Intro     string
+	Tags      []string
+}
+
+// TeacherPaymentInfo represents a teacher's payment information
+type TeacherPaymentInfo struct {
+	TeacherID     int64
+	AlipayAccount *string
+	BankName      *string
+	BankAccount   *string
+	RealName      *string
+}
+
+// TeacherAutoStatus represents auto status configuration
+type TeacherAutoStatus struct {
+	TeacherID     int64
+	Enabled       bool
+	OnlineTime    *string
+	OfflineTime   *string
+}
+
+// TeacherHeartbeat represents a heartbeat from a teacher
+type TeacherHeartbeat struct {
+	TeacherID int64
+	Timestamp time.Time
 }

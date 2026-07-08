@@ -9,7 +9,7 @@
 |------|--------|----------|----------|
 | 1 | auth | JWT 认证、登录/注册/登出、短信验证码、微信 OAuth | ✅ 已完成 |
 | 2 | user | 用户中心、余额、充值、等级、消费排名 | ⚠️ 部分（基础信息/余额查询） |
-| 3 | teacher | 选手生态、审核、等级、动态、收入分成、排名 | ⚠️ 部分（基础信息/等级） |
+| 3 | teacher | 选手生态、审核、等级、动态、收入分成、排名 | ⚠️ 部分（核心接口/申请审核/等级管理已完成，动态/评价/视频待迁移） |
 | 4 | goods/inventory | 商品管理、SKU、分类、限购、Banner、印象标签 | ⚠️ 部分（基础 CRUD） |
 | 5 | order | 订单生命周期、状态流转、结单、退单、转移、评价 | ⚠️ 部分（基础 CRUD + 状态机） |
 | 6 | payment | 微信支付、支付宝、收银台、支付记录、回调 | ⚠️ 部分（基础 CRUD） |
@@ -99,10 +99,10 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 获取选手列表（公开） | `GET /api/client/teachers` | ⚠️ |
-| 获取选手详情（公开） | `GET /api/client/teachers/{id}` | ⚠️ |
-| 更新在线状态 | `PUT /api/client/teacher/online-status` | ⚠️ |
-| 获取当前选手状态 | `GET /api/client/teacher/status` | ⚠️ |
+| 获取选手列表（公开） | `GET /api/client/teachers` | ✅ |
+| 获取选手详情（公开） | `GET /api/client/teachers/{id}` | ✅ |
+| 更新在线状态 | `PUT /api/client/teacher/online-status` | ✅ |
+| 获取当前选手状态 | `GET /api/client/teacher/status` | ✅ |
 | 获取我的选手状态 | `GET /api/client/teacher/my-status` | ✅ |
 | 实名认证状态 | `GET /api/client/teacher/realname/status` | ❌ |
 | 发起人脸验证 | `POST /api/client/teacher/realname/face/initiate` | ❌ |
@@ -111,33 +111,33 @@
 | 更新收款信息 | `PUT /api/client/teacher/payment-info` | ❌ |
 | 获取个人介绍 | `GET /api/client/teacher/intro` | ❌ |
 | 更新个人介绍 | `PUT /api/client/teacher/intro` | ❌ |
-| 选手心跳 | `POST /api/client/teacher/heartbeat` | ❌ |
-| 设置自动状态 | `PUT /api/client/teacher/auto-status` | ❌ |
-| 获取自动状态设置 | `GET /api/client/teacher/auto-status` | ❌ |
-| 申请成为选手 | `POST /api/client/teacher/application` | ❌ |
+| 选手心跳 | `POST /api/client/teacher/heartbeat` | ✅ |
+| 设置自动状态 | `PUT /api/client/teacher/auto-status` | ✅ |
+| 获取自动状态设置 | `GET /api/client/teacher/auto-status` | ✅ |
+| 申请成为选手 | `POST /api/client/teacher/application` | ✅ |
 | 获取选手动态 | `GET /api/client/teacher/dynamics/{teacherId}` | ❌ |
 | 删除动态 | `DELETE /api/client/teacher/dynamics/{id}` | ❌ |
 | 获取选手评价 | `GET /api/client/teacher/reviews/{teacherId}` | ❌ |
 | 选手订单列表 | `GET /api/client/teacher/orders` | ❌ |
 | 公开等级列表 | `GET /api/client/teacher/levels` | ✅ |
-| 选手仪表盘统计 | `GET /api/teacher/dashboard/stats` | ❌ |
-| 选手排名 | `GET /api/teacher/ranking` | ⚠️ |
-| 选手列表（管理端） | `GET /api/admin/teachers` | ⚠️ |
-| 更新选手状态 | `PUT /api/admin/teachers/{id}/status` | ⚠️ |
-| 审核选手 | `POST /api/admin/teachers/{id}/verify` | ❌ |
-| 批量更新状态 | `POST /api/admin/teachers/batch-status` | ❌ |
-| 状态变更日志 | `GET /api/admin/teachers/{id}/status-log` | ⚠️ |
-| 申请列表 | `GET /api/admin/teacher/applications` | ❌ |
-| 审核通过 | `POST /api/admin/teacher/applications/{id}/approve` | ❌ |
-| 审核拒绝 | `POST /api/admin/teacher/applications/{id}/reject` | ❌ |
+| 选手仪表盘统计 | `GET /api/teacher/dashboard/stats` | ✅ |
+| 选手排名 | `GET /api/teacher/ranking` | ✅ |
+| 选手列表（管理端） | `GET /api/admin/teachers` | ✅ |
+| 更新选手状态 | `PUT /api/admin/teachers/{id}/status` | ✅ |
+| 审核选手 | `POST /api/admin/teachers/{id}/verify` | ✅ |
+| 批量更新状态 | `POST /api/admin/teachers/batch-status` | ✅ |
+| 状态变更日志 | `GET /api/admin/teachers/{id}/status-log` | ✅ |
+| 申请列表 | `GET /api/admin/teacher/applications` | ✅ |
+| 审核通过 | `POST /api/admin/teacher/applications/{id}/approve` | ✅ |
+| 审核拒绝 | `POST /api/admin/teacher/applications/{id}/reject` | ✅ |
 | 手动升级 | `POST /api/admin/teacher/upgrade/manual/{teacherId}` | ❌ |
 | 检查升级条件 | `POST /api/admin/teacher/upgrade/check/{teacherId}` | ❌ |
 | 升级历史 | `GET /api/admin/teacher/upgrade/history` | ❌ |
-| 等级列表（管理端） | `GET /api/admin/teacher/levels` | ⚠️ |
-| 更新等级 | `PUT /api/admin/teacher/levels/{id}` | ⚠️ |
-| 删除等级 | `DELETE /api/admin/teacher/levels/{id}` | ❌ |
-| 等级关联商品 | `GET /api/admin/teacher/levels/{id}/goods` | ❌ |
-| 更新等级商品 | `PUT /api/admin/teacher/levels/{id}/goods` | ❌ |
+| 等级列表（管理端） | `GET /api/admin/teacher/levels` | ✅ |
+| 更新等级 | `PUT /api/admin/teacher/levels/{id}` | ✅ |
+| 删除等级 | `DELETE /api/admin/teacher/levels/{id}` | ✅ |
+| 等级关联商品 | `GET /api/admin/teacher/levels/{id}/goods` | ✅ |
+| 更新等级商品 | `PUT /api/admin/teacher/levels/{id}/goods` | ✅ |
 | 导出等级 | `GET /api/admin/teacher/levels/export` | ❌ |
 | 导入等级 | `POST /api/admin/teacher/levels/import` | ❌ |
 | 导出模板 | `GET /api/admin/teacher/levels/export/template` | ❌ |
