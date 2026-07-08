@@ -24,7 +24,7 @@
 | 15 | refund | 退款申请、审批、退款状态机 | ✅ 已完成 |
 | 16 | coupon | 优惠券发放、领取、使用、统计 | ✅ 已完成 |
 | 17 | recharge | 充值订单、返利规则、返利统计 | ✅ 已完成 |
-| 18 | withdrawal | 选手提现申请、审批、打款、税务计算 | ❌ 未迁移 |
+| 18 | withdrawal | 选手提现申请、审批、打款、税务计算 | ✅ 已完成 |
 | 19 | invite | 用户邀请、选手邀请码、邀请记录 | ✅ 已完成 |
 | 20 | feedback | 用户反馈提交、回复、管理 | ✅ 已完成 |
 | 21 | partner | 运营合作伙伴管理、分成配置 | ⚠️ 部分（基础配置） |
@@ -507,14 +507,14 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 收入统计 | `GET /api/client/teacher/withdrawal/income-stats` | ❌ |
-| 未结算订单 | `GET /api/client/teacher/withdrawal/unsettled-orders` | ❌ |
-| 已结算订单 | `GET /api/client/teacher/withdrawal/settled-orders` | ❌ |
-| 计算提现金额 | `POST /api/client/teacher/withdrawal/calculate` | ❌ |
-| 申请提现 | `POST /api/client/teacher/withdrawal/apply` | ❌ |
-| 取消提现 | `PUT /api/client/teacher/withdrawal/{id}/cancel` | ❌ |
-| 提现记录 | `GET /api/client/teacher/withdrawal/records` | ❌ |
-| 提现详情 | `GET /api/client/teacher/withdrawal/{id}` | ❌ |
+| 收入统计 | `GET /api/client/teacher/withdrawal/income-stats` | ✅ |
+| 未结算订单 | `GET /api/client/teacher/withdrawal/unsettled-orders` | ⚠️ |
+| 已结算订单 | `GET /api/client/teacher/withdrawal/settled-orders` | ⚠️ |
+| 计算提现金额 | `POST /api/client/teacher/withdrawal/calculate` | ✅ |
+| 申请提现 | `POST /api/client/teacher/withdrawal/apply` | ✅ |
+| 取消提现 | `PUT /api/client/teacher/withdrawal/{id}/cancel` | ✅ |
+| 提现记录 | `GET /api/client/teacher/withdrawal/records` | ✅ |
+| 提现详情 | `GET /api/client/teacher/withdrawal/{id}` | ✅ |
 
 ### 19. invite（邀请机制）
 

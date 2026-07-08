@@ -29,6 +29,7 @@ import (
 	"backend/internal/modules/teacher"
 	"backend/internal/modules/user"
 	"backend/internal/modules/visitor"
+	"backend/internal/modules/withdrawal"
 	"backend/internal/platform/config"
 	"backend/internal/platform/database"
 	"backend/internal/platform/logger"
@@ -125,6 +126,7 @@ func main() {
 		invite.NewHandler(invite.NewService(invite.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 		refund.NewHandler(refund.NewService(refund.NewRepository(sqlDB), txManager), authMiddleware),
 		recharge.NewHandler(recharge.NewService(recharge.NewRepository(sqlDB), txManager), authMiddleware),
+		withdrawal.NewHandler(withdrawal.NewService(withdrawal.NewRepository(sqlDB)), authMiddleware),
 	)
 
 	gameHandler.RegisterWebSocket(engine, authMiddleware)
