@@ -44,6 +44,22 @@ type Repository interface {
 	UpdateWxPayConfig(ctx context.Context, config *WxPayConfig) error
 	UpdateWxPayConfigStatus(ctx context.Context, id int64, status int) error
 	DeleteWxPayConfig(ctx context.Context, id int64) error
+
+	// KOOK operations
+	CreateKookBinding(ctx context.Context, binding *KookBinding) error
+	GetKookBindingByUserID(ctx context.Context, userID int64) (*KookBinding, error)
+	DeleteKookBinding(ctx context.Context, userID int64) error
+}
+
+type KookBinding struct {
+	ID           int64      `json:"id"`
+	UserID       int64      `json:"userId"`
+	KookUserID   string     `json:"kookUserId"`
+	KookNickname string     `json:"kookNickname"`
+	BindCode     string     `json:"bindCode"`
+	BoundAt      time.Time  `json:"boundAt"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
 }
 
 type Service struct {
@@ -52,6 +68,22 @@ type Service struct {
 
 func NewService(repo Repository) *Service {
 	return &Service{repo: repo}
+}
+
+func (s *Service) GenerateScanLoginQR(ctx context.Context) (*ScanLoginSession, error) {
+	loginKey := generateLoginKey()
+	now := time.Now()
+	session := &ScanLoginSession{
+		LoginKey:  loginKey,
+		Status:    "pending",
+		ExpiresAt: now.Add(10 * time.Minute),
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	if err := s.repo.CreateScanLoginSession(ctx, session); err != nil {
+		return nil, fmt.Errorf("create scan login session: %w", err)
+	}
+	return session, nil
 }
 
 func (s *Service) WechatLogin(ctx context.Context, platform, code, appID string) (*UserOAuth, *UserToken, error) {
@@ -70,10 +102,6 @@ func (s *Service) GetWechatPhone(ctx context.Context, code string) (*WechatPhone
 	return nil, fmt.Errorf("not implemented: wechat phone requires external API call")
 }
 
-func (s *Service) GenerateScanLoginQR(ctx context.Context) (*ScanLoginSession, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 func (s *Service) CheckScanLoginStatus(ctx context.Context, loginKey string) (*ScanLoginSession, error) {
 	return s.repo.GetScanLoginSession(ctx, loginKey)
 }
@@ -88,6 +116,47 @@ func (s *Service) ConfirmScanLogin(ctx context.Context, loginKey string, userID 
 	session.UserID = &userID
 	session.Token = &token
 	return s.repo.UpdateScanLoginSession(ctx, session)
+}
+
+func (s *Service) GenerateKookBindCode(ctx context.Context, userID int64) (string, error) {
+	if userID == 0 {
+		return "", fmt.Errorf("user id is required")
+	}
+	code := generateKookBindCode()
+	now := time.Now()
+	binding := &KookBinding{
+		UserID:   userID,
+		BindCode: code,
+		BoundAt:  now,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	if err := s.repo.CreateKookBinding(ctx, binding); err != nil {
+		return "", fmt.Errorf("create kook binding: %w", err)
+	}
+	return code, nil
+}
+
+func (s *Service) GetKookBindingStatus(ctx context.Context, userID int64) (*KookBindingStatusResponse, error) {
+	if userID == 0 {
+		return nil, fmt.Errorf("user id is required")
+	}
+	binding, err := s.repo.GetKookBindingByUserID(ctx, userID)
+	if err != nil {
+		return &KookBindingStatusResponse{Bound: false}, nil
+	}
+	return &KookBindingStatusResponse{
+		Bound:        binding.KookUserID != "",
+		KookUserID:   binding.KookUserID,
+		KookNickname: binding.KookNickname,
+	}, nil
+}
+
+func (s *Service) KookUnbind(ctx context.Context, userID int64) error {
+	if userID == 0 {
+		return fmt.Errorf("user id is required")
+	}
+	return s.repo.DeleteKookBinding(ctx, userID)
 }
 
 func (s *Service) CreateWxPayConfig(ctx context.Context, config *WxPayConfig) (int64, error) {
@@ -155,4 +224,22 @@ func (s *Service) DeleteWxPayConfig(ctx context.Context, id int64) error {
 		return fmt.Errorf("delete wx pay config: %w", err)
 	}
 	return nil
+}
+
+func generateLoginKey() string {
+	const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, 16)
+	for i := range b {
+		b[i] = alphabet[time.Now().UnixNano()%int64(len(alphabet))]
+	}
+	return string(b)
+}
+
+func generateKookBindCode() string {
+	const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+	b := make([]byte, 6)
+	for i := range b {
+		b[i] = alphabet[time.Now().UnixNano()%int64(len(alphabet))]
+	}
+	return string(b)
 }

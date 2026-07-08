@@ -198,3 +198,15 @@ func (s *stubExternalRepository) UpdateWxPayConfigStatus(ctx context.Context, id
 func (s *stubExternalRepository) DeleteWxPayConfig(ctx context.Context, id int64) error {
 	return nil
 }
+
+func (s *stubExternalRepository) CreateKookBinding(ctx context.Context, binding *KookBinding) error {
+	return nil
+}
+
+func (s *stubExternalRepository) GetKookBindingByUserID(ctx context.Context, userID int64) (*KookBinding, error) {
+	return nil, nil
+}
+
+func (s *stubExternalRepository) DeleteKookBinding(ctx context.Context, userID int64) error {
+	return nil
+}

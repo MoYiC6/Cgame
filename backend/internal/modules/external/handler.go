@@ -34,6 +34,17 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		wechat.DELETE("/scan-login/cancel", h.ScanLoginCancel)
 	}
 
+	// KOOK routes
+	kook := group.Group("/client/kook")
+	if h.authMiddleware != nil {
+		kook.Use(h.authMiddleware)
+	}
+	{
+		kook.POST("/bind-code", h.KookBindCode)
+		kook.GET("/binding", h.KookBindingStatus)
+		kook.DELETE("/binding", h.KookUnbind)
+	}
+
 	admin := group.Group("/admin/wxpay/config")
 	if h.authMiddleware != nil {
 		admin.Use(h.authMiddleware)
@@ -182,6 +193,35 @@ func (h *Handler) ScanLoginCancel(c *gin.Context) {
 	loginKey := c.Query("loginKey")
 	if loginKey == "" {
 		response.Fail(c, fmt.Errorf("loginKey is required"))
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) KookBindCode(c *gin.Context) {
+	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
+	code, err := h.service.GenerateKookBindCode(c.Request.Context(), userID)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"bindCode": code})
+}
+
+func (h *Handler) KookBindingStatus(c *gin.Context) {
+	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
+	status, err := h.service.GetKookBindingStatus(c.Request.Context(), userID)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, status)
+}
+
+func (h *Handler) KookUnbind(c *gin.Context) {
+	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
+	if err := h.service.KookUnbind(c.Request.Context(), userID); err != nil {
+		response.Fail(c, err)
 		return
 	}
 	response.Success(c, nil)

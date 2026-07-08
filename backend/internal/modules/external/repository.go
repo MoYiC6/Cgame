@@ -255,3 +255,38 @@ func (r *repository) DeleteWxPayConfig(ctx context.Context, id int64) error {
 	}
 	return nil
 }
+
+// KOOK operations
+
+func (r *repository) CreateKookBinding(ctx context.Context, binding *KookBinding) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	return exec.QueryRowContext(ctx,
+		`INSERT INTO kook_bindings (user_id, kook_user_id, kook_nickname, bind_code, bound_at, created_at, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING id`,
+		binding.UserID, binding.KookUserID, binding.KookNickname, binding.BindCode, binding.BoundAt,
+	).Scan(&binding.ID)
+}
+
+func (r *repository) GetKookBindingByUserID(ctx context.Context, userID int64) (*KookBinding, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	row := exec.QueryRowContext(ctx,
+		`SELECT id, user_id, kook_user_id, kook_nickname, bind_code, bound_at, created_at, updated_at
+		 FROM kook_bindings WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+		userID,
+	)
+	var binding KookBinding
+	err := row.Scan(&binding.ID, &binding.UserID, &binding.KookUserID, &binding.KookNickname, &binding.BindCode, &binding.BoundAt, &binding.CreatedAt, &binding.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("get kook binding by user id: %w", err)
+	}
+	return &binding, nil
+}
+
+func (r *repository) DeleteKookBinding(ctx context.Context, userID int64) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	_, err := exec.ExecContext(ctx, `DELETE FROM kook_bindings WHERE user_id = $1`, userID)
+	if err != nil {
+		return fmt.Errorf("delete kook binding: %w", err)
+	}
+	return nil
+}

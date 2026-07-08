@@ -439,17 +439,17 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 微信登录 | `POST /api/wechat/login` | ⚠️ |
-| 绑定微信 | `POST /api/wechat/bind` | ⚠️ |
-| 解绑微信 | `DELETE /api/wechat/unbind` | ⚠️ |
-| 获取微信手机号 | `POST /api/wechat/phone` | ⚠️ |
-| 生成扫码登录码 | `GET /api/wechat/scan-login/generate-qrcode` | ⚠️ |
-| 检查扫码登录状态 | `GET /api/wechat/scan-login/check-status` | ⚠️ |
-| 扫码确认登录 | `POST /api/wechat/scan-login/confirm` | ⚠️ |
-| 取消登录 | `DELETE /api/wechat/scan-login/cancel` | ⚠️ |
-| KOOK 绑定码 | `POST /api/client/kook/bind-code` | ⚠️ |
-| 查询绑定状态 | `GET /api/client/kook/binding` | ⚠️ |
-| 解绑 KOOK | `DELETE /api/client/kook/binding` | ⚠️ |
+| 微信登录 | `POST /api/wechat/login` | ✅ |
+| 绑定微信 | `POST /api/wechat/bind` | ✅ |
+| 解绑微信 | `DELETE /api/wechat/unbind` | ✅ |
+| 获取微信手机号 | `POST /api/wechat/phone` | ✅ |
+| 生成扫码登录码 | `GET /api/wechat/scan-login/generate-qrcode` | ✅ |
+| 检查扫码登录状态 | `GET /api/wechat/scan-login/check-status` | ✅ |
+| 扫码确认登录 | `POST /api/wechat/scan-login/confirm` | ✅ |
+| 取消登录 | `DELETE /api/wechat/scan-login/cancel` | ✅ |
+| KOOK 绑定码 | `POST /api/client/kook/bind-code` | ✅ |
+| 查询绑定状态 | `GET /api/client/kook/binding` | ✅ |
+| 解绑 KOOK | `DELETE /api/client/kook/binding` | ✅ |
 
 ### 15. refund（退款管理）
 
