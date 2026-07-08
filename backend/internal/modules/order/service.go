@@ -45,6 +45,20 @@ type Service interface {
 	// Transfer
 	GetTransferConfig(ctx context.Context) (*OrderTransferConfig, error)
 	TransferOrder(ctx context.Context, orderID int64, targetTeacherID int64) error
+
+	// Payment
+	CreateCashierOrder(ctx context.Context, orderID int64) (*CashierOrder, error)
+	GetCashierOrder(ctx context.Context, token string) (*CashierOrder, error)
+	CashierPay(ctx context.Context, token, channel string) (*PaymentRecord, error)
+	ManualSyncPayment(ctx context.Context, outTradeNo, channel string) error
+	BatchSyncPayments(ctx context.Context, ids []int64) error
+	SyncOverduePayments(ctx context.Context) error
+	CreateWxPayOrder(ctx context.Context, orderID int64, amount float64) (*WxPayOrderResponse, error)
+	WxPayNotify(ctx context.Context, outTradeNo string) error
+	QueryWxPay(ctx context.Context, outTradeNo string) (*PaymentRecord, error)
+	CreateAlipayOrder(ctx context.Context, orderID int64, amount float64) (*AlipayOrderResponse, error)
+	AlipayNotify(ctx context.Context, outTradeNo string) error
+	QueryAlipay(ctx context.Context, outTradeNo string) (*PaymentRecord, error)
 }
 
 type service struct {
@@ -328,4 +342,174 @@ func (s *service) TransferOrder(ctx context.Context, orderID int64, targetTeache
 		return fmt.Errorf("transfer order: %w", err)
 	}
 	return s.repo.UpdateOrderTeachers(ctx, orderID, []int64{targetTeacherID})
+}
+
+func (s *service) CreateCashierOrder(ctx context.Context, orderID int64) (*CashierOrder, error) {
+	order, err := s.repo.GetOrderByID(ctx, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("order not found: %w", err)
+	}
+	if order.Status != OrderStatusPending {
+		return nil, fmt.Errorf("order cannot be paid")
+	}
+	token := fmt.Sprintf("CASH%d%d", time.Now().UnixNano(), orderID)
+	co := &CashierOrder{
+		Token:    token,
+		OrderID:  orderID,
+		UserID:   order.UserID,
+		Amount:   order.TotalAmount,
+		Status:   string(CashierStatusPending),
+		ExpireAt: time.Now().Add(30 * time.Minute),
+	}
+	if err := s.repo.CreateCashierOrder(ctx, co); err != nil {
+		return nil, fmt.Errorf("create cashier order: %w", err)
+	}
+	return co, nil
+}
+
+func (s *service) GetCashierOrder(ctx context.Context, token string) (*CashierOrder, error) {
+	co, err := s.repo.GetCashierOrderByToken(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("get cashier order: %w", err)
+	}
+	if co.Status == string(CashierStatusPending) && time.Now().After(co.ExpireAt) {
+		_ = s.repo.UpdateCashierOrderStatus(ctx, co.ID, string(CashierStatusExpired), nil)
+		co.Status = string(CashierStatusExpired)
+	}
+	return co, nil
+}
+
+func (s *service) CashierPay(ctx context.Context, token, channel string) (*PaymentRecord, error) {
+	co, err := s.GetCashierOrder(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+	if co.Status != string(CashierStatusPending) {
+		return nil, fmt.Errorf("cashier order not pending")
+	}
+	outTradeNo := fmt.Sprintf("PAY%d%d", time.Now().UnixNano(), co.OrderID)
+	record := &PaymentRecord{
+		OrderID:    co.OrderID,
+		UserID:     co.UserID,
+		OutTradeNo: outTradeNo,
+		Channel:    channel,
+		Amount:     co.Amount,
+		Status:     string(PaymentStatusPending),
+	}
+	if err := s.repo.CreatePaymentRecord(ctx, record); err != nil {
+		return nil, fmt.Errorf("create payment record: %w", err)
+	}
+	return record, nil
+}
+
+func (s *service) ManualSyncPayment(ctx context.Context, outTradeNo, channel string) error {
+	record, err := s.repo.GetPaymentByOutTradeNo(ctx, outTradeNo)
+	if err != nil {
+		return fmt.Errorf("payment not found: %w", err)
+	}
+	now := time.Now()
+	if err := s.repo.UpdatePaymentPaidAt(ctx, record.ID, &now, &outTradeNo); err != nil {
+		return fmt.Errorf("manual sync payment: %w", err)
+	}
+	if err := s.repo.UpdateOrderStatus(ctx, record.OrderID, OrderStatusPaid); err != nil {
+		return fmt.Errorf("update order status: %w", err)
+	}
+	log := &PaymentSyncLog{
+		RecordID:   record.ID,
+		Channel:    channel,
+		OutTradeNo: outTradeNo,
+		Action:     "manual",
+		Success:    true,
+	}
+	_ = s.repo.CreatePaymentSyncLog(ctx, log)
+	return nil
+}
+
+func (s *service) BatchSyncPayments(ctx context.Context, ids []int64) error {
+	for _, id := range ids {
+		record, err := s.repo.GetPaymentByID(ctx, id)
+		if err != nil {
+			continue
+		}
+		if record.Status == string(PaymentStatusPending) {
+			_ = s.ManualSyncPayment(ctx, record.OutTradeNo, record.Channel)
+		}
+	}
+	return nil
+}
+
+func (s *service) SyncOverduePayments(ctx context.Context) error {
+	records, _, err := s.repo.ListPayments(ctx, PaymentQuery{
+		PageNum:  1,
+		PageSize: 100,
+		Status:   string(PaymentStatusPending),
+	})
+	if err != nil {
+		return fmt.Errorf("list overdue payments: %w", err)
+	}
+	now := time.Now()
+	for _, rec := range records {
+		if now.Sub(rec.CreatedAt) > 24*time.Hour {
+			_ = s.repo.UpdatePaymentStatus(ctx, rec.ID, string(PaymentStatusFailed))
+		}
+	}
+	return nil
+}
+
+func (s *service) CreateWxPayOrder(ctx context.Context, orderID int64, amount float64) (*WxPayOrderResponse, error) {
+	// Placeholder: returns a dummy prepay response without real SDK integration.
+	return &WxPayOrderResponse{
+		AppID:     "wx_placeholder_appid",
+		PartnerID: "wx_placeholder_mchid",
+		PrepayID:  fmt.Sprintf("prepay_%d_%d", orderID, time.Now().Unix()),
+		NonceStr:  "nonce_placeholder",
+		TimeStamp: fmt.Sprintf("%d", time.Now().Unix()),
+		Package:   "Sign=WXPay",
+		Sign:      "placeholder_sign",
+	}, nil
+}
+
+func (s *service) WxPayNotify(ctx context.Context, outTradeNo string) error {
+	record, err := s.repo.GetPaymentByOutTradeNo(ctx, outTradeNo)
+	if err != nil {
+		return fmt.Errorf("payment not found: %w", err)
+	}
+	now := time.Now()
+	if err := s.repo.UpdatePaymentPaidAt(ctx, record.ID, &now, &outTradeNo); err != nil {
+		return fmt.Errorf("wxpay notify: %w", err)
+	}
+	if err := s.repo.UpdateOrderStatus(ctx, record.OrderID, OrderStatusPaid); err != nil {
+		return fmt.Errorf("update order status: %w", err)
+	}
+	return nil
+}
+
+func (s *service) QueryWxPay(ctx context.Context, outTradeNo string) (*PaymentRecord, error) {
+	return s.repo.GetPaymentByOutTradeNo(ctx, outTradeNo)
+}
+
+func (s *service) CreateAlipayOrder(ctx context.Context, orderID int64, amount float64) (*AlipayOrderResponse, error) {
+	// Placeholder: returns a dummy order string without real SDK integration.
+	return &AlipayOrderResponse{
+		OrderStr: fmt.Sprintf("alipay_order_%d_%d", orderID, time.Now().Unix()),
+	}, nil
+}
+
+func (s *service) AlipayNotify(ctx context.Context, outTradeNo string) error {
+	record, err := s.repo.GetPaymentByOutTradeNo(ctx, outTradeNo)
+	if err != nil {
+		return fmt.Errorf("payment not found: %w", err)
+	}
+	now := time.Now()
+	if err := s.repo.UpdatePaymentPaidAt(ctx, record.ID, &now, &outTradeNo); err != nil {
+		return fmt.Errorf("alipay notify: %w", err)
+	}
+	if err := s.repo.UpdateOrderStatus(ctx, record.OrderID, OrderStatusPaid); err != nil {
+		return fmt.Errorf("update order status: %w", err)
+	}
+	return nil
+}
+
+func (s *service) QueryAlipay(ctx context.Context, outTradeNo string) (*PaymentRecord, error) {
+	return s.repo.GetPaymentByOutTradeNo(ctx, outTradeNo)
 }

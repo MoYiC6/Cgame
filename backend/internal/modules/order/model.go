@@ -103,3 +103,79 @@ type FinalReviewQuery struct {
 	PageSize int
 	Status   string
 }
+
+// PaymentRecord 支付记录
+type PaymentRecord struct {
+	ID          int64
+	OrderID     int64
+	UserID      int64
+	OutTradeNo  string
+	Channel     string // wxpay / alipay
+	Amount      float64
+	Status      string // pending / paid / failed / refunded
+	PaidAt      *time.Time
+	TransactionID *string
+	NotifyRaw   *string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+// CashierOrder 收银台订单
+type CashierOrder struct {
+	ID         int64
+	Token      string
+	OrderID    int64
+	UserID     int64
+	Amount     float64
+	Status     string // pending / paid / expired / cancelled
+	ExpireAt   time.Time
+	PaidAt     *time.Time
+	PayChannel *string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+// PaymentSyncLog 支付同步日志
+type PaymentSyncLog struct {
+	ID        int64
+	RecordID  int64
+	Channel   string
+	OutTradeNo string
+	Action    string // query / notify / manual
+	Request   *string
+	Response  *string
+	Success   bool
+	ErrorMsg  *string
+	CreatedAt time.Time
+}
+
+// PaymentQuery 支付记录查询参数
+type PaymentQuery struct {
+	PageNum    int
+	PageSize   int
+	OrderID    *int64
+	UserID     *int64
+	OutTradeNo string
+	Status     string
+	Channel    string
+	StartTime  *time.Time
+	EndTime    *time.Time
+}
+
+// WxPayConfig 微信支付配置
+type WxPayConfig struct {
+	AppID       string
+	MchID       string
+	APIKey      string
+	NotifyURL   string
+	AppSecret   string
+}
+
+// AlipayConfig 支付宝配置
+type AlipayConfig struct {
+	AppID      string
+	PrivateKey string
+	PublicKey  string
+	NotifyURL  string
+	ReturnURL  string
+}

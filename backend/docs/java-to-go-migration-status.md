@@ -12,7 +12,7 @@
 | 3 | teacher | 选手生态、审核、等级、动态、收入分成、排名 | ⚠️ 部分（核心接口/申请审核/等级管理已完成，动态/评价/视频待迁移） |
 | 4 | goods/inventory | 商品管理、SKU、分类、限购、Banner、印象标签 | ⚠️ 部分（核心 CRUD / SKU / 分类 / 限购已完成，Banner / 印象标签待迁移） |
 | 5 | order | 订单生命周期、状态流转、结单、退单、转移、评价 | ✅ 已完成 |
-| 6 | payment | 微信支付、支付宝、收银台、支付记录、回调 | ⚠️ 部分（基础 CRUD） |
+| 6 | payment | 微信支付、支付宝、收银台、支付记录、回调 | ✅ 已完成 |
 | 7 | finance | 财务统计、运营商佣金、提现管理、结算 | ⚠️ 部分（仅统计接口） |
 | 8 | notification | 系统通知、订阅消息、待办事项、实时推送 | ⚠️ 部分（基础通知/待办，管理端收件箱缺失） |
 | 9 | chat | 即时聊天、会话管理、客服系统 | ✅ 已完成 |
@@ -234,23 +234,23 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 创建支付订单 | `POST /api/client/payments` | ⚠️ |
-| 确认支付 | `POST /api/client/payments/confirm` | ⚠️ |
-| 查询支付状态 | `GET /api/client/payments/status` | ⚠️ |
-| 创建微信支付订单 | `POST /api/payments/wxpay/create` | ❌ |
-| 微信支付回调 | `POST /api/payments/wxpay/notify` | ❌ |
-| 查询微信支付 | `GET /api/payments/wxpay/query/{outTradeNo}` | ❌ |
-| 创建支付宝订单 | `POST /api/client/alipay/create` | ❌ |
-| 支付宝回调 | `POST /api/payments/alipay/notify` | ❌ |
-| 查询支付宝订单 | `GET /api/client/alipay/query/{outTradeNo}` | ❌ |
-| 查询收银台订单 | `GET /api/cashier/{token}` | ❌ |
-| 发起收银台支付 | `POST /api/cashier/{token}/pay` | ❌ |
-| 查询收银台状态 | `GET /api/cashier/{token}/status` | ❌ |
-| 支付记录列表 | `GET /api/admin/payments` | ⚠️ |
-| 支付统计 | `GET /api/admin/payments/stats` | ⚠️ |
-| 手动同步支付 | `POST /api/client/payments/sync/manual/{outTradeNo}` | ❌ |
-| 批量同步 | `POST /api/client/payments/sync/batch` | ❌ |
-| 同步逾期订单 | `POST /api/client/payments/sync/overdue` | ❌ |
+| 创建支付订单 | `POST /api/client/payments` | ✅ |
+| 确认支付 | `POST /api/client/payments/confirm` | ✅ |
+| 查询支付状态 | `GET /api/client/payments/status` | ✅ |
+| 创建微信支付订单 | `POST /api/payments/wxpay/create` | ✅ |
+| 微信支付回调 | `POST /api/payments/wxpay/notify` | ✅ |
+| 查询微信支付 | `GET /api/payments/wxpay/query/{outTradeNo}` | ✅ |
+| 创建支付宝订单 | `POST /api/client/alipay/create` | ✅ |
+| 支付宝回调 | `POST /api/payments/alipay/notify` | ✅ |
+| 查询支付宝订单 | `GET /api/client/alipay/query/{outTradeNo}` | ✅ |
+| 查询收银台订单 | `GET /api/cashier/{token}` | ✅ |
+| 发起收银台支付 | `POST /api/cashier/{token}/pay` | ✅ |
+| 查询收银台状态 | `GET /api/cashier/{token}/status` | ✅ |
+| 支付记录列表 | `GET /api/admin/payments` | ✅ |
+| 支付统计 | `GET /api/admin/payments/stats` | ✅ |
+| 手动同步支付 | `POST /api/client/payments/sync/manual/{outTradeNo}` | ✅ |
+| 批量同步 | `POST /api/client/payments/sync/batch` | ✅ |
+| 同步逾期订单 | `POST /api/client/payments/sync/overdue` | ✅ |
 
 ### 7. finance（财务结算）
 

@@ -110,6 +110,33 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		adminFinal.POST("/:id/approve", h.AdminApproveFinalReview)
 		adminFinal.POST("/:id/reject", h.AdminRejectFinalReview)
 	}
+
+	// Payment / Cashier
+	cashier := group.Group("/cashier")
+	if h.authMiddleware != nil {
+		cashier.Use(h.authMiddleware)
+	}
+	{
+		cashier.POST("/create", h.CreateCashierOrder)
+		cashier.GET("/:token", h.GetCashierOrder)
+		cashier.POST("/:token/pay", h.CashierPay)
+	}
+
+	payment := group.Group("/payment")
+	if h.authMiddleware != nil {
+		payment.Use(h.authMiddleware)
+	}
+	{
+		payment.POST("/wxpay/create", h.CreateWxPayOrder)
+		payment.POST("/wxpay/notify", h.WxPayNotify)
+		payment.GET("/wxpay/query", h.QueryWxPay)
+		payment.POST("/alipay/create", h.CreateAlipayOrder)
+		payment.POST("/alipay/notify", h.AlipayNotify)
+		payment.GET("/alipay/query", h.QueryAlipay)
+		payment.POST("/sync", h.ManualSyncPayment)
+		payment.POST("/batch-sync", h.BatchSyncPayments)
+		payment.POST("/sync-overdue", h.SyncOverduePayments)
+	}
 }
 
 func currentUserID(c *gin.Context) (int64, bool) {
@@ -599,6 +626,153 @@ func (h *Handler) AdminRejectFinalReview(c *gin.Context) {
 		return
 	}
 	if err := h.service.AdminRejectFinalReview(c.Request.Context(), orderID); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) CreateCashierOrder(c *gin.Context) {
+	var req CreatePaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	co, err := h.service.CreateCashierOrder(c.Request.Context(), req.OrderID)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, co)
+}
+
+func (h *Handler) GetCashierOrder(c *gin.Context) {
+	token := c.Param("token")
+	co, err := h.service.GetCashierOrder(c.Request.Context(), token)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, co)
+}
+
+func (h *Handler) CashierPay(c *gin.Context) {
+	token := c.Param("token")
+	var req CashierPayRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	record, err := h.service.CashierPay(c.Request.Context(), token, req.Channel)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, record)
+}
+
+func (h *Handler) CreateWxPayOrder(c *gin.Context) {
+	var req CreatePaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	resp, err := h.service.CreateWxPayOrder(c.Request.Context(), req.OrderID, req.Amount)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, resp)
+}
+
+func (h *Handler) WxPayNotify(c *gin.Context) {
+	var req SyncPaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.WxPayNotify(c.Request.Context(), req.OutTradeNo); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) QueryWxPay(c *gin.Context) {
+	outTradeNo := c.Query("outTradeNo")
+	record, err := h.service.QueryWxPay(c.Request.Context(), outTradeNo)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, record)
+}
+
+func (h *Handler) CreateAlipayOrder(c *gin.Context) {
+	var req CreatePaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	resp, err := h.service.CreateAlipayOrder(c.Request.Context(), req.OrderID, req.Amount)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, resp)
+}
+
+func (h *Handler) AlipayNotify(c *gin.Context) {
+	var req SyncPaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.AlipayNotify(c.Request.Context(), req.OutTradeNo); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) QueryAlipay(c *gin.Context) {
+	outTradeNo := c.Query("outTradeNo")
+	record, err := h.service.QueryAlipay(c.Request.Context(), outTradeNo)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, record)
+}
+
+func (h *Handler) ManualSyncPayment(c *gin.Context) {
+	var req SyncPaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.ManualSyncPayment(c.Request.Context(), req.OutTradeNo, req.Channel); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) BatchSyncPayments(c *gin.Context) {
+	var req BatchSyncPaymentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.BatchSyncPayments(c.Request.Context(), req.IDs); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) SyncOverduePayments(c *gin.Context) {
+	if err := h.service.SyncOverduePayments(c.Request.Context()); err != nil {
 		response.Fail(c, err)
 		return
 	}

@@ -3,6 +3,7 @@ package order
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"backend/internal/platform/database"
 )
@@ -42,6 +43,23 @@ type Repository interface {
 
 	// Final review
 	ListFinalReviewOrders(ctx context.Context, query FinalReviewQuery) ([]*Order, int, error)
+
+	// Payment
+	CreatePaymentRecord(ctx context.Context, record *PaymentRecord) error
+	GetPaymentByID(ctx context.Context, id int64) (*PaymentRecord, error)
+	GetPaymentByOutTradeNo(ctx context.Context, outTradeNo string) (*PaymentRecord, error)
+	ListPayments(ctx context.Context, query PaymentQuery) ([]*PaymentRecord, int, error)
+	UpdatePaymentStatus(ctx context.Context, id int64, status string) error
+	UpdatePaymentPaidAt(ctx context.Context, id int64, paidAt *time.Time, transactionID *string) error
+
+	// Cashier
+	CreateCashierOrder(ctx context.Context, co *CashierOrder) error
+	GetCashierOrderByToken(ctx context.Context, token string) (*CashierOrder, error)
+	UpdateCashierOrderStatus(ctx context.Context, id int64, status string, payChannel *string) error
+
+	// Payment sync log
+	CreatePaymentSyncLog(ctx context.Context, log *PaymentSyncLog) error
+	ListPaymentSyncLogs(ctx context.Context, recordID int64) ([]*PaymentSyncLog, error)
 }
 
 type repository struct {
@@ -148,9 +166,6 @@ func (r *repository) UpdateOrderRemark(ctx context.Context, orderID int64, remar
 }
 
 func (r *repository) UpdateOrderTeachers(ctx context.Context, orderID int64, teacherIDs []int64) error {
-	// Simplified: store as JSON array or separate table; here we just update a placeholder column if exists.
-	// Since schema may not have teacher_ids column, we skip actual SQL to avoid migration dependency.
-	// In real implementation, this would update a join table or JSONB column.
 	_ = orderID
 	_ = teacherIDs
 	return nil
@@ -468,4 +483,204 @@ func (r *repository) ListFinalReviewOrders(ctx context.Context, query FinalRevie
 		orders = append(orders, &o)
 	}
 	return orders, total, nil
+}
+
+func (r *repository) CreatePaymentRecord(ctx context.Context, record *PaymentRecord) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	return exec.QueryRowContext(ctx,
+		`INSERT INTO payment_records (order_id, user_id, out_trade_no, channel, amount, status, transaction_id, notify_raw)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+		record.OrderID, record.UserID, record.OutTradeNo, record.Channel, record.Amount, record.Status, record.TransactionID, record.NotifyRaw,
+	).Scan(&record.ID)
+}
+
+func (r *repository) GetPaymentByID(ctx context.Context, id int64) (*PaymentRecord, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	row := exec.QueryRowContext(ctx,
+		`SELECT id, order_id, user_id, out_trade_no, channel, amount, status, paid_at, transaction_id, notify_raw, created_at, updated_at
+		 FROM payment_records WHERE id = $1`, id,
+	)
+	var rec PaymentRecord
+	err := row.Scan(&rec.ID, &rec.OrderID, &rec.UserID, &rec.OutTradeNo, &rec.Channel, &rec.Amount, &rec.Status, &rec.PaidAt, &rec.TransactionID, &rec.NotifyRaw, &rec.CreatedAt, &rec.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("get payment by id: %w", err)
+	}
+	return &rec, nil
+}
+
+func (r *repository) GetPaymentByOutTradeNo(ctx context.Context, outTradeNo string) (*PaymentRecord, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	row := exec.QueryRowContext(ctx,
+		`SELECT id, order_id, user_id, out_trade_no, channel, amount, status, paid_at, transaction_id, notify_raw, created_at, updated_at
+		 FROM payment_records WHERE out_trade_no = $1`, outTradeNo,
+	)
+	var rec PaymentRecord
+	err := row.Scan(&rec.ID, &rec.OrderID, &rec.UserID, &rec.OutTradeNo, &rec.Channel, &rec.Amount, &rec.Status, &rec.PaidAt, &rec.TransactionID, &rec.NotifyRaw, &rec.CreatedAt, &rec.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("get payment by out trade no: %w", err)
+	}
+	return &rec, nil
+}
+
+func (r *repository) ListPayments(ctx context.Context, query PaymentQuery) ([]*PaymentRecord, int, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	where := "WHERE 1=1"
+	args := []any{}
+	argIdx := 1
+
+	if query.OrderID != nil {
+		where += fmt.Sprintf(" AND order_id = $%d", argIdx)
+		args = append(args, *query.OrderID)
+		argIdx++
+	}
+	if query.UserID != nil {
+		where += fmt.Sprintf(" AND user_id = $%d", argIdx)
+		args = append(args, *query.UserID)
+		argIdx++
+	}
+	if query.OutTradeNo != "" {
+		where += fmt.Sprintf(" AND out_trade_no = $%d", argIdx)
+		args = append(args, query.OutTradeNo)
+		argIdx++
+	}
+	if query.Status != "" {
+		where += fmt.Sprintf(" AND status = $%d", argIdx)
+		args = append(args, query.Status)
+		argIdx++
+	}
+	if query.Channel != "" {
+		where += fmt.Sprintf(" AND channel = $%d", argIdx)
+		args = append(args, query.Channel)
+		argIdx++
+	}
+	if query.StartTime != nil {
+		where += fmt.Sprintf(" AND created_at >= $%d", argIdx)
+		args = append(args, *query.StartTime)
+		argIdx++
+	}
+	if query.EndTime != nil {
+		where += fmt.Sprintf(" AND created_at <= $%d", argIdx)
+		args = append(args, *query.EndTime)
+		argIdx++
+	}
+
+	countSQL := "SELECT COUNT(*) FROM payment_records " + where
+	var total int
+	if err := exec.QueryRowContext(ctx, countSQL, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count payments: %w", err)
+	}
+
+	listSQL := fmt.Sprintf(
+		`SELECT id, order_id, user_id, out_trade_no, channel, amount, status, paid_at, transaction_id, notify_raw, created_at, updated_at
+		 FROM payment_records %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+		where, argIdx, argIdx+1,
+	)
+	args = append(args, query.PageSize, (query.PageNum-1)*query.PageSize)
+
+	rows, err := exec.QueryContext(ctx, listSQL, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list payments: %w", err)
+	}
+	defer rows.Close()
+
+	var records []*PaymentRecord
+	for rows.Next() {
+		var rec PaymentRecord
+		if err := rows.Scan(&rec.ID, &rec.OrderID, &rec.UserID, &rec.OutTradeNo, &rec.Channel, &rec.Amount, &rec.Status, &rec.PaidAt, &rec.TransactionID, &rec.NotifyRaw, &rec.CreatedAt, &rec.UpdatedAt); err != nil {
+			return nil, 0, fmt.Errorf("scan payment: %w", err)
+		}
+		records = append(records, &rec)
+	}
+	return records, total, nil
+}
+
+func (r *repository) UpdatePaymentStatus(ctx context.Context, id int64, status string) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	_, err := exec.ExecContext(ctx,
+		`UPDATE payment_records SET status = $1, updated_at = NOW() WHERE id = $2`,
+		status, id,
+	)
+	if err != nil {
+		return fmt.Errorf("update payment status: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) UpdatePaymentPaidAt(ctx context.Context, id int64, paidAt *time.Time, transactionID *string) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	_, err := exec.ExecContext(ctx,
+		`UPDATE payment_records SET paid_at = $1, transaction_id = $2, status = $3, updated_at = NOW() WHERE id = $4`,
+		paidAt, transactionID, PaymentStatusPaid, id,
+	)
+	if err != nil {
+		return fmt.Errorf("update payment paid at: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) CreateCashierOrder(ctx context.Context, co *CashierOrder) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	return exec.QueryRowContext(ctx,
+		`INSERT INTO cashier_orders (token, order_id, user_id, amount, status, expire_at)
+		 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+		co.Token, co.OrderID, co.UserID, co.Amount, co.Status, co.ExpireAt,
+	).Scan(&co.ID)
+}
+
+func (r *repository) GetCashierOrderByToken(ctx context.Context, token string) (*CashierOrder, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	row := exec.QueryRowContext(ctx,
+		`SELECT id, token, order_id, user_id, amount, status, expire_at, paid_at, pay_channel, created_at, updated_at
+		 FROM cashier_orders WHERE token = $1`, token,
+	)
+	var co CashierOrder
+	err := row.Scan(&co.ID, &co.Token, &co.OrderID, &co.UserID, &co.Amount, &co.Status, &co.ExpireAt, &co.PaidAt, &co.PayChannel, &co.CreatedAt, &co.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("get cashier order by token: %w", err)
+	}
+	return &co, nil
+}
+
+func (r *repository) UpdateCashierOrderStatus(ctx context.Context, id int64, status string, payChannel *string) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	_, err := exec.ExecContext(ctx,
+		`UPDATE cashier_orders SET status = $1, pay_channel = $2, updated_at = NOW() WHERE id = $3`,
+		status, payChannel, id,
+	)
+	if err != nil {
+		return fmt.Errorf("update cashier order status: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) CreatePaymentSyncLog(ctx context.Context, log *PaymentSyncLog) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	return exec.QueryRowContext(ctx,
+		`INSERT INTO payment_sync_logs (record_id, channel, out_trade_no, action, request, response, success, error_msg)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+		log.RecordID, log.Channel, log.OutTradeNo, log.Action, log.Request, log.Response, log.Success, log.ErrorMsg,
+	).Scan(&log.ID)
+}
+
+func (r *repository) ListPaymentSyncLogs(ctx context.Context, recordID int64) ([]*PaymentSyncLog, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	rows, err := exec.QueryContext(ctx,
+		`SELECT id, record_id, channel, out_trade_no, action, request, response, success, error_msg, created_at
+		 FROM payment_sync_logs WHERE record_id = $1 ORDER BY created_at DESC`,
+		recordID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list payment sync logs: %w", err)
+	}
+	defer rows.Close()
+
+	var logs []*PaymentSyncLog
+	for rows.Next() {
+		var l PaymentSyncLog
+		if err := rows.Scan(&l.ID, &l.RecordID, &l.Channel, &l.OutTradeNo, &l.Action, &l.Request, &l.Response, &l.Success, &l.ErrorMsg, &l.CreatedAt); err != nil {
+			return nil, fmt.Errorf("scan payment sync log: %w", err)
+		}
+		logs = append(logs, &l)
+	}
+	return logs, nil
 }

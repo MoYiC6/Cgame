@@ -28,3 +28,21 @@ const (
 	ComplaintStatusResolved = "resolved"
 	ComplaintStatusRejected = "rejected"
 )
+
+type PaymentStatus string
+
+const (
+	PaymentStatusPending  = "pending"
+	PaymentStatusPaid     = "paid"
+	PaymentStatusFailed   = "failed"
+	PaymentStatusRefunded = "refunded"
+)
+
+type CashierStatus string
+
+const (
+	CashierStatusPending   = "pending"
+	CashierStatusPaid      = "paid"
+	CashierStatusExpired   = "expired"
+	CashierStatusCancelled = "cancelled"
+)
