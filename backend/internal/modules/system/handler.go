@@ -95,6 +95,56 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		sensitive.GET("/teacher/:teacherId/alipay-account", h.GetTeacherAlipayAccount)
 		sensitive.GET("/teacher/:teacherId/real-name", h.GetTeacherRealName)
 	}
+
+	// Admin menus
+	menus := group.Group("/admin/menus")
+	if h.authMiddleware != nil {
+		menus.Use(h.authMiddleware)
+	}
+	{
+		menus.GET("/tree", h.GetMenuTree)
+		menus.GET("/list", h.ListMenus)
+		menus.GET("/:id", h.GetMenu)
+		menus.POST("/batch", h.BatchCreateMenus)
+		menus.PUT("/:id", h.UpdateMenu)
+		menus.DELETE("/:id", h.DeleteMenu)
+		menus.GET("/cascader", h.GetMenuCascader)
+	}
+
+	// Admin permissions
+	permissions := group.Group("/admin/permissions")
+	if h.authMiddleware != nil {
+		permissions.Use(h.authMiddleware)
+	}
+	{
+		permissions.GET("", h.ListPermissions)
+		permissions.PUT("/:id", h.UpdatePermission)
+		permissions.DELETE("/:id", h.DeletePermission)
+	}
+
+	// Admin roles
+	roles := group.Group("/admin/roles")
+	if h.authMiddleware != nil {
+		roles.Use(h.authMiddleware)
+	}
+	{
+		roles.GET("", h.ListRoles)
+		roles.POST("", h.CreateRole)
+		roles.PUT("/:id", h.UpdateRole)
+		roles.DELETE("/:id", h.DeleteRole)
+		roles.PUT("/:id/status", h.UpdateRoleStatus)
+		roles.PUT("/:id/permissions", h.AssignPermissionsToRole)
+		roles.PUT("/:id/menus", h.AssignMenusToRole)
+	}
+
+	// FaceId config list
+	faceid := group.Group("/admin/faceid")
+	if h.authMiddleware != nil {
+		faceid.Use(h.authMiddleware)
+	}
+	{
+		faceid.GET("/config", h.ListFaceIdConfigs)
+	}
 }
 
 func (h *Handler) ListSettings(c *gin.Context) {
@@ -320,4 +370,261 @@ func (h *Handler) ListRealNameVerifyLogs(c *gin.Context) {
 		return
 	}
 	response.Success(c, gin.H{"list": logs, "total": total})
+}
+
+// Menu handlers
+func (h *Handler) GetMenuTree(c *gin.Context) {
+	tree, err := h.service.GetMenuTree(c.Request.Context())
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, tree)
+}
+
+func (h *Handler) ListMenus(c *gin.Context) {
+	menus, err := h.service.ListMenus(c.Request.Context())
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, menus)
+}
+
+func (h *Handler) GetMenu(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	menu, err := h.service.GetMenuByID(c.Request.Context(), id)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, menu)
+}
+
+func (h *Handler) BatchCreateMenus(c *gin.Context) {
+	var req []SystemMenu
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.BatchCreateMenus(c.Request.Context(), req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) UpdateMenu(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	var req SystemMenu
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	req.ID = id
+	if err := h.service.UpdateMenu(c.Request.Context(), &req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) DeleteMenu(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.DeleteMenu(c.Request.Context(), id); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) GetMenuCascader(c *gin.Context) {
+	cascader, err := h.service.GetMenuCascader(c.Request.Context())
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, cascader)
+}
+
+// Permission handlers
+func (h *Handler) ListPermissions(c *gin.Context) {
+	permissions, err := h.service.ListPermissions(c.Request.Context())
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, permissions)
+}
+
+func (h *Handler) UpdatePermission(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	var req SystemPermission
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	req.ID = id
+	if err := h.service.UpdatePermission(c.Request.Context(), &req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) DeletePermission(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.DeletePermission(c.Request.Context(), id); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+// Role handlers
+func (h *Handler) ListRoles(c *gin.Context) {
+	roles, err := h.service.ListRoles(c.Request.Context())
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, roles)
+}
+
+func (h *Handler) CreateRole(c *gin.Context) {
+	var req SystemRole
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	id, err := h.service.CreateRole(c.Request.Context(), &req)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"id": id})
+}
+
+func (h *Handler) UpdateRole(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	var req SystemRole
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	req.ID = id
+	if err := h.service.UpdateRole(c.Request.Context(), &req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) DeleteRole(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.DeleteRole(c.Request.Context(), id); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) UpdateRoleStatus(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	var req struct {
+		Status int `json:"status"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.UpdateRoleStatus(c.Request.Context(), id, req.Status); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) AssignPermissionsToRole(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	var req struct {
+		PermissionIDs []int64 `json:"permissionIds"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.AssignPermissionsToRole(c.Request.Context(), id, req.PermissionIDs); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) AssignMenusToRole(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	var req struct {
+		MenuIDs []int64 `json:"menuIds"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.AssignMenusToRole(c.Request.Context(), id, req.MenuIDs); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+// FaceId config list handler
+func (h *Handler) ListFaceIdConfigs(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	configs, total, err := h.service.ListFaceIdConfigs(c.Request.Context(), page, pageSize)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"list": configs, "total": total, "page": page, "pageSize": pageSize})
 }

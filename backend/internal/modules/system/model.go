@@ -53,3 +53,53 @@ type RealNameVerifyLog struct {
 	UpdatedAt       time.Time
 	Deleted         *int
 }
+
+// RBAC Models
+
+type SystemMenu struct {
+	ID             int64
+	Name           string
+	Path           *string
+	Component      *string
+	Icon           *string
+	SortOrder      *int
+	ParentID       *int64
+	IsHidden       *int
+	Status         *int
+	PermissionCode *string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Children       []*SystemMenu `json:"children,omitempty"`
+}
+
+type SystemPermission struct {
+	ID          int64
+	Code        string
+	Name        string
+	Description *string
+	Status      *int
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+type SystemRole struct {
+	ID          int64
+	Name        string
+	Code        string
+	Description *string
+	Status      *int
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+type RolePermission struct {
+	RoleID       int64
+	PermissionID int64
+	CreatedAt    time.Time
+}
+
+type RoleMenu struct {
+	RoleID    int64
+	MenuID    int64
+	CreatedAt time.Time
+}

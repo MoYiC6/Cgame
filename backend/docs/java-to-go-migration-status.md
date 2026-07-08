@@ -17,7 +17,7 @@
 | 8 | notification | 系统通知、订阅消息、待办事项、实时推送 | ⚠️ 部分（基础通知/待办，管理端收件箱缺失） |
 | 9 | chat | 即时聊天、会话管理、客服系统 | ✅ 已完成 |
 | 10 | file | 文件上传、素材管理、七牛云存储 | ⚠️ 部分（素材管理/上传路径） |
-| 11 | system | RBAC 权限、系统设置、菜单、角色、日志 | ⚠️ 部分（基础配置） |
+| 11 | system | RBAC 权限、系统设置、菜单、角色、日志 | ✅ 已完成 |
 | 12 | visitor | 访客追踪、页面浏览、统计报表 | ✅ 已完成 |
 | 13 | game | 飞行棋房间、游戏地图、游戏订单、排行榜 | ✅ 已完成 |
 | 14 | external | KOOK 机器人、微信集成、外部系统对接 | ⚠️ 部分（OAuth/绑定） |
@@ -353,23 +353,23 @@
 | 环境变量 | `GET /api/system/status/environment` | ✅ |
 | 系统信息 | `GET /api/system/status/system` | ✅ |
 | 健康检查 | `GET /api/system/status/health` | ✅ |
-| 菜单树 | `GET /api/admin/menus/tree` | ❌ |
-| 菜单列表 | `GET /api/admin/menus/list` | ❌ |
-| 菜单详情 | `GET /api/admin/menus/{id}` | ❌ |
-| 批量创建菜单 | `POST /api/admin/menus/batch` | ❌ |
-| 更新菜单 | `PUT /api/admin/menus/{id}` | ❌ |
-| 删除菜单 | `DELETE /api/admin/menus/{id}` | ❌ |
-| 级联选择器 | `GET /api/admin/menus/cascader` | ❌ |
-| 权限列表 | `GET /api/admin/permissions` | ❌ |
-| 更新权限 | `PUT /api/admin/permissions/{id}` | ❌ |
-| 删除权限 | `DELETE /api/admin/permissions/{id}` | ❌ |
-| 角色列表 | `GET /api/admin/roles` | ❌ |
-| 创建角色 | `POST /api/admin/roles` | ❌ |
-| 更新角色 | `PUT /api/admin/roles/{id}` | ❌ |
-| 删除角色 | `DELETE /api/admin/roles/{id}` | ❌ |
-| 更新角色状态 | `PUT /api/admin/roles/{id}/status` | ❌ |
-| 分配权限 | `PUT /api/admin/roles/{id}/permissions` | ❌ |
-| 分配菜单 | `PUT /api/admin/roles/{id}/menus` | ❌ |
+| 菜单树 | `GET /api/admin/menus/tree` | ✅ |
+| 菜单列表 | `GET /api/admin/menus/list` | ✅ |
+| 菜单详情 | `GET /api/admin/menus/{id}` | ✅ |
+| 批量创建菜单 | `POST /api/admin/menus/batch` | ✅ |
+| 更新菜单 | `PUT /api/admin/menus/{id}` | ✅ |
+| 删除菜单 | `DELETE /api/admin/menus/{id}` | ✅ |
+| 级联选择器 | `GET /api/admin/menus/cascader` | ✅ |
+| 权限列表 | `GET /api/admin/permissions` | ✅ |
+| 更新权限 | `PUT /api/admin/permissions/{id}` | ✅ |
+| 删除权限 | `DELETE /api/admin/permissions/{id}` | ✅ |
+| 角色列表 | `GET /api/admin/roles` | ✅ |
+| 创建角色 | `POST /api/admin/roles` | ✅ |
+| 更新角色 | `PUT /api/admin/roles/{id}` | ✅ |
+| 删除角色 | `DELETE /api/admin/roles/{id}` | ✅ |
+| 更新角色状态 | `PUT /api/admin/roles/{id}/status` | ✅ |
+| 分配权限 | `PUT /api/admin/roles/{id}/permissions` | ✅ |
+| 分配菜单 | `PUT /api/admin/roles/{id}/menus` | ✅ |
 | 客户列表 | `GET /api/admin/customers` | ❌ |
 | 清除缓存 | `GET /api/admin/cache/clear` | ❌ |
 | 待办列表 | `GET /api/admin/system-todos` | ✅ |
@@ -378,7 +378,7 @@
 | 错误日志 | `GET /api/admin/logs/error` | ✅ |
 | 日志统计 | `GET /api/admin/logs/stats` | ✅ |
 | 业务日志 | `GET /api/admin/logs/business` | ✅ |
-| FaceId 配置列表 | `GET /api/admin/faceid/config` | ❌ |
+| FaceId 配置列表 | `GET /api/admin/faceid/config` | ✅ |
 | FaceId 配置详情 | `GET /api/admin/faceid/config/{id}` | ✅ |
 | 更新 FaceId 配置 | `PUT /api/admin/faceid/config/{id}` | ✅ |
 | 删除配置 | `DELETE /api/admin/faceid/config/{id}` | ✅ |
