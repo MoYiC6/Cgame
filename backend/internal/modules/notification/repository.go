@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"backend/internal/platform/database"
 )
@@ -14,6 +15,9 @@ type Repository interface {
 	MarkAsRead(ctx context.Context, userID, notificationID int64) error
 	MarkAllAsRead(ctx context.Context, userID int64) error
 	GetUnreadCount(ctx context.Context, userID int64) (int, error)
+	ListInboxNotifications(ctx context.Context, userID int64, page, pageSize int, notificationType string, unreadOnly *bool) (*NotificationInboxList, error)
+	MarkInboxAsRead(ctx context.Context, userID, inboxID int64) error
+	MarkAllInboxAsRead(ctx context.Context, userID int64, notificationType string) error
 	CreateTodo(ctx context.Context, t *SystemTodo) error
 	GetTodos(ctx context.Context, completed *bool) ([]*SystemTodo, error)
 	ToggleTodo(ctx context.Context, id int64, completed bool, operator string) error
@@ -107,6 +111,84 @@ func (r *repository) GetUnreadCount(ctx context.Context, userID int64) (int, err
 		return 0, fmt.Errorf("get unread count: %w", err)
 	}
 	return count, nil
+}
+
+func (r *repository) ListInboxNotifications(ctx context.Context, userID int64, page, pageSize int, notificationType string, unreadOnly *bool) (*NotificationInboxList, error) {
+	where, args := inboxWhereClause(userID, notificationType, unreadOnly)
+
+	var total int64
+	if err := r.dbtx.QueryRowContext(ctx, "SELECT COUNT(*) FROM user_notifications un JOIN notifications n ON n.id = un.notification_id "+where, args...).Scan(&total); err != nil {
+		return nil, fmt.Errorf("count inbox notifications: %w", err)
+	}
+
+	var unreadCount int64
+	if err := r.dbtx.QueryRowContext(ctx, `SELECT COUNT(*) FROM user_notifications WHERE user_id = $1 AND is_read = 0`, userID).Scan(&unreadCount); err != nil {
+		return nil, fmt.Errorf("count unread inbox notifications: %w", err)
+	}
+
+	query := `SELECT un.id, un.notification_id, n.title, n.content, n.type, n.target_type,
+	                 n.target_id::text, un.is_read, un.read_time, n.created_at, un.created_at
+	          FROM user_notifications un
+	          JOIN notifications n ON n.id = un.notification_id ` + where + `
+	          ORDER BY un.created_at DESC
+	          LIMIT $` + strconv.Itoa(len(args)+1) + ` OFFSET $` + strconv.Itoa(len(args)+2)
+	args = append(args, pageSize, (page-1)*pageSize)
+
+	rows, err := r.dbtx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list inbox notifications: %w", err)
+	}
+	defer rows.Close()
+
+	result := &NotificationInboxList{Total: total, UnreadCount: unreadCount, Rows: []NotificationInboxItem{}}
+	for rows.Next() {
+		var item NotificationInboxItem
+		if err := rows.Scan(&item.ID, &item.NotificationID, &item.Title, &item.Content, &item.Type, &item.TargetType, &item.TargetID, &item.IsRead, &item.ReadTime, &item.SendTime, &item.CreateTime); err != nil {
+			return nil, fmt.Errorf("scan inbox notification: %w", err)
+		}
+		result.Rows = append(result.Rows, item)
+	}
+	return result, nil
+}
+
+func (r *repository) MarkInboxAsRead(ctx context.Context, userID, inboxID int64) error {
+	_, err := r.dbtx.ExecContext(ctx,
+		`UPDATE user_notifications SET is_read = 1, read_time = NOW() WHERE id = $1 AND user_id = $2`,
+		inboxID, userID,
+	)
+	if err != nil {
+		return fmt.Errorf("mark inbox as read: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) MarkAllInboxAsRead(ctx context.Context, userID int64, notificationType string) error {
+	query := `UPDATE user_notifications un SET is_read = 1, read_time = NOW()
+	          FROM notifications n
+	          WHERE n.id = un.notification_id AND un.user_id = $1 AND un.is_read = 0`
+	args := []interface{}{userID}
+	if notificationType != "" {
+		query += " AND n.type = $2"
+		args = append(args, notificationType)
+	}
+	_, err := r.dbtx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("mark all inbox as read: %w", err)
+	}
+	return nil
+}
+
+func inboxWhereClause(userID int64, notificationType string, unreadOnly *bool) (string, []interface{}) {
+	where := "WHERE un.user_id = $1"
+	args := []interface{}{userID}
+	if notificationType != "" {
+		where += fmt.Sprintf(" AND n.type = $%d", len(args)+1)
+		args = append(args, notificationType)
+	}
+	if unreadOnly != nil && *unreadOnly {
+		where += " AND un.is_read = 0"
+	}
+	return where, args
 }
 
 func (r *repository) CreateTodo(ctx context.Context, t *SystemTodo) error {

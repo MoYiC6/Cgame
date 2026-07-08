@@ -12,9 +12,11 @@ import (
 	"backend/internal/bootstrap"
 	"backend/internal/modules/auth"
 	"backend/internal/modules/chat"
+	"backend/internal/modules/coupon"
 	"backend/internal/modules/external"
-	"backend/internal/modules/finance"
+	"backend/internal/modules/feedback"
 	"backend/internal/modules/file"
+	"backend/internal/modules/finance"
 	"backend/internal/modules/game"
 	"backend/internal/modules/inventory"
 	"backend/internal/modules/notification"
@@ -113,6 +115,8 @@ func main() {
 		payment.NewHandler(payment.NewService(payment.NewRepository(sqlDB), txManager)),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 		external.NewHandler(external.NewService(external.NewRepository(sqlDB)), authMiddleware),
+		feedback.NewHandler(feedback.NewService(feedback.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
+		coupon.NewHandler(coupon.NewService(coupon.NewRepository(sqlDB), txManager), authMiddleware),
 		finance.NewHandler(finance.NewService(finance.NewRepository(sqlDB))),
 	)
 

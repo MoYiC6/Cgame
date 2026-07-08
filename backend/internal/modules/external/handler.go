@@ -188,10 +188,10 @@ func (h *Handler) ScanLoginCancel(c *gin.Context) {
 }
 
 func (h *Handler) ListWxPayConfigs(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	page, _ := strconv.Atoi(c.DefaultQuery("pageIndex", c.DefaultQuery("page", "1")))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
 	configType := c.Query("configType")
-	
+
 	var typePtr *string
 	if configType != "" {
 		typePtr = &configType
@@ -206,16 +206,12 @@ func (h *Handler) ListWxPayConfigs(c *gin.Context) {
 }
 
 func (h *Handler) GetWxPayConfig(c *gin.Context) {
-	configType := c.Query("configType")
-	
-	var config *WxPayConfig
-	var err error
-	if configType != "" {
-		config, err = h.service.GetWxPayConfig(c.Request.Context(), configType)
-	} else {
-		response.Fail(c, fmt.Errorf("configType is required"))
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
 		return
 	}
+	config, err := h.service.GetWxPayConfigByID(c.Request.Context(), id)
 	if err != nil {
 		response.Fail(c, err)
 		return
@@ -264,6 +260,20 @@ func (h *Handler) UpdateWxPayConfig(c *gin.Context) {
 
 func (h *Handler) UpdateWxPayConfigStatus(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	if enabled := c.Query("enabled"); enabled != "" {
+		status, err := strconv.Atoi(enabled)
+		if err != nil {
+			response.Fail(c, err)
+			return
+		}
+		if err := h.service.UpdateWxPayConfigStatus(c.Request.Context(), id, status); err != nil {
+			response.Fail(c, err)
+			return
+		}
+		response.Success(c, true)
+		return
+	}
+
 	var req struct {
 		Status int `json:"status"`
 	}
@@ -271,12 +281,11 @@ func (h *Handler) UpdateWxPayConfigStatus(c *gin.Context) {
 		response.Fail(c, err)
 		return
 	}
-	config := &WxPayConfig{ID: id, Status: req.Status}
-	if err := h.service.UpdateWxPayConfig(c.Request.Context(), config); err != nil {
+	if err := h.service.UpdateWxPayConfigStatus(c.Request.Context(), id, req.Status); err != nil {
 		response.Fail(c, err)
 		return
 	}
-	response.Success(c, nil)
+	response.Success(c, true)
 }
 
 func (h *Handler) DeleteWxPayConfig(c *gin.Context) {

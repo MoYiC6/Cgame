@@ -26,11 +26,31 @@ type WxPayConfig struct {
 	UpdatedAt  time.Time
 }
 
-type Service struct {
-	repo *Repository
+type Repository interface {
+	GetUserOAuth(ctx context.Context, platform, openID string) (*UserOAuth, error)
+	GetUserOAuthByUserID(ctx context.Context, userID int64, platform string) (*UserOAuth, error)
+	CreateUserOAuth(ctx context.Context, oauth *UserOAuth) error
+	UpdateUserOAuth(ctx context.Context, oauth *UserOAuth) error
+	DeleteUserOAuth(ctx context.Context, userID int64, platform string) error
+	CreateUserToken(ctx context.Context, token *UserToken) error
+	GetUserToken(ctx context.Context, accessToken string) (*UserToken, error)
+	CreateScanLoginSession(ctx context.Context, session *ScanLoginSession) error
+	GetScanLoginSession(ctx context.Context, loginKey string) (*ScanLoginSession, error)
+	UpdateScanLoginSession(ctx context.Context, session *ScanLoginSession) error
+	CreateWxPayConfig(ctx context.Context, config *WxPayConfig) error
+	GetWxPayConfig(ctx context.Context, configType string) (*WxPayConfig, error)
+	GetWxPayConfigByID(ctx context.Context, id int64) (*WxPayConfig, error)
+	ListWxPayConfigs(ctx context.Context, page, pageSize int, configType *string) ([]*WxPayConfig, int, error)
+	UpdateWxPayConfig(ctx context.Context, config *WxPayConfig) error
+	UpdateWxPayConfigStatus(ctx context.Context, id int64, status int) error
+	DeleteWxPayConfig(ctx context.Context, id int64) error
 }
 
-func NewService(repo *Repository) *Service {
+type Service struct {
+	repo Repository
+}
+
+func NewService(repo Repository) *Service {
 	return &Service{repo: repo}
 }
 
@@ -88,6 +108,17 @@ func (s *Service) GetWxPayConfig(ctx context.Context, configType string) (*WxPay
 	return config, nil
 }
 
+func (s *Service) GetWxPayConfigByID(ctx context.Context, id int64) (*WxPayConfig, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("id is required")
+	}
+	config, err := s.repo.GetWxPayConfigByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("get wx pay config by id: %w", err)
+	}
+	return config, nil
+}
+
 func (s *Service) ListWxPayConfigs(ctx context.Context, page, pageSize int, configType *string) ([]*WxPayConfig, int, error) {
 	configs, total, err := s.repo.ListWxPayConfigs(ctx, page, pageSize, configType)
 	if err != nil {
@@ -102,6 +133,19 @@ func (s *Service) UpdateWxPayConfig(ctx context.Context, config *WxPayConfig) er
 	}
 	if err := s.repo.UpdateWxPayConfig(ctx, config); err != nil {
 		return fmt.Errorf("update wx pay config: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) UpdateWxPayConfigStatus(ctx context.Context, id int64, status int) error {
+	if id == 0 {
+		return fmt.Errorf("id is required")
+	}
+	if status != 0 && status != 1 {
+		return fmt.Errorf("status must be 0 or 1")
+	}
+	if err := s.repo.UpdateWxPayConfigStatus(ctx, id, status); err != nil {
+		return fmt.Errorf("update wx pay config status: %w", err)
 	}
 	return nil
 }

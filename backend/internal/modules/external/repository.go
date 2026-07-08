@@ -7,15 +7,15 @@ import (
 	"backend/internal/platform/database"
 )
 
-type Repository struct {
+type repository struct {
 	dbtx database.DBTX
 }
 
-func NewRepository(dbtx database.DBTX) *Repository {
-	return &Repository{dbtx: dbtx}
+func NewRepository(dbtx database.DBTX) Repository {
+	return &repository{dbtx: dbtx}
 }
 
-func (r *Repository) GetUserOAuth(ctx context.Context, platform, openID string) (*UserOAuth, error) {
+func (r *repository) GetUserOAuth(ctx context.Context, platform, openID string) (*UserOAuth, error) {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	row := exec.QueryRowContext(ctx,
 		`SELECT id, user_id, platform, open_id, union_id, nickname, avatar, session_key, phone, bound_at, created_at, updated_at
@@ -30,7 +30,7 @@ func (r *Repository) GetUserOAuth(ctx context.Context, platform, openID string) 
 	return &oauth, nil
 }
 
-func (r *Repository) GetUserOAuthByUserID(ctx context.Context, userID int64, platform string) (*UserOAuth, error) {
+func (r *repository) GetUserOAuthByUserID(ctx context.Context, userID int64, platform string) (*UserOAuth, error) {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	row := exec.QueryRowContext(ctx,
 		`SELECT id, user_id, platform, open_id, union_id, nickname, avatar, session_key, phone, bound_at, created_at, updated_at
@@ -45,7 +45,7 @@ func (r *Repository) GetUserOAuthByUserID(ctx context.Context, userID int64, pla
 	return &oauth, nil
 }
 
-func (r *Repository) CreateUserOAuth(ctx context.Context, oauth *UserOAuth) error {
+func (r *repository) CreateUserOAuth(ctx context.Context, oauth *UserOAuth) error {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	return exec.QueryRowContext(ctx,
 		`INSERT INTO user_oauth (user_id, platform, open_id, union_id, nickname, avatar, session_key, phone, bound_at)
@@ -54,7 +54,7 @@ func (r *Repository) CreateUserOAuth(ctx context.Context, oauth *UserOAuth) erro
 	).Scan(&oauth.ID)
 }
 
-func (r *Repository) UpdateUserOAuth(ctx context.Context, oauth *UserOAuth) error {
+func (r *repository) UpdateUserOAuth(ctx context.Context, oauth *UserOAuth) error {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	_, err := exec.ExecContext(ctx,
 		`UPDATE user_oauth SET union_id = $1, nickname = $2, avatar = $3, session_key = $4, phone = $5, updated_at = NOW() WHERE id = $6`,
@@ -66,7 +66,7 @@ func (r *Repository) UpdateUserOAuth(ctx context.Context, oauth *UserOAuth) erro
 	return nil
 }
 
-func (r *Repository) DeleteUserOAuth(ctx context.Context, userID int64, platform string) error {
+func (r *repository) DeleteUserOAuth(ctx context.Context, userID int64, platform string) error {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	_, err := exec.ExecContext(ctx,
 		`DELETE FROM user_oauth WHERE user_id = $1 AND platform = $2`,
@@ -78,7 +78,7 @@ func (r *Repository) DeleteUserOAuth(ctx context.Context, userID int64, platform
 	return nil
 }
 
-func (r *Repository) CreateUserToken(ctx context.Context, token *UserToken) error {
+func (r *repository) CreateUserToken(ctx context.Context, token *UserToken) error {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	return exec.QueryRowContext(ctx,
 		`INSERT INTO user_tokens (user_id, access_token, refresh_token, expires_at) VALUES ($1, $2, $3, $4) RETURNING id`,
@@ -86,7 +86,7 @@ func (r *Repository) CreateUserToken(ctx context.Context, token *UserToken) erro
 	).Scan(&token.ID)
 }
 
-func (r *Repository) GetUserToken(ctx context.Context, accessToken string) (*UserToken, error) {
+func (r *repository) GetUserToken(ctx context.Context, accessToken string) (*UserToken, error) {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	row := exec.QueryRowContext(ctx,
 		`SELECT id, user_id, access_token, refresh_token, expires_at, created_at FROM user_tokens WHERE access_token = $1`,
@@ -100,7 +100,7 @@ func (r *Repository) GetUserToken(ctx context.Context, accessToken string) (*Use
 	return &token, nil
 }
 
-func (r *Repository) CreateScanLoginSession(ctx context.Context, session *ScanLoginSession) error {
+func (r *repository) CreateScanLoginSession(ctx context.Context, session *ScanLoginSession) error {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	_, err := exec.ExecContext(ctx,
 		`INSERT INTO scan_login_sessions (login_key, status, expires_at) VALUES ($1, $2, $3)`,
@@ -112,7 +112,7 @@ func (r *Repository) CreateScanLoginSession(ctx context.Context, session *ScanLo
 	return nil
 }
 
-func (r *Repository) GetScanLoginSession(ctx context.Context, loginKey string) (*ScanLoginSession, error) {
+func (r *repository) GetScanLoginSession(ctx context.Context, loginKey string) (*ScanLoginSession, error) {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	row := exec.QueryRowContext(ctx,
 		`SELECT login_key, status, user_id, token, expires_at, created_at, updated_at FROM scan_login_sessions WHERE login_key = $1`,
@@ -126,7 +126,7 @@ func (r *Repository) GetScanLoginSession(ctx context.Context, loginKey string) (
 	return &session, nil
 }
 
-func (r *Repository) UpdateScanLoginSession(ctx context.Context, session *ScanLoginSession) error {
+func (r *repository) UpdateScanLoginSession(ctx context.Context, session *ScanLoginSession) error {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	_, err := exec.ExecContext(ctx,
 		`UPDATE scan_login_sessions SET status = $1, user_id = $2, token = $3, updated_at = NOW() WHERE login_key = $4`,
@@ -138,7 +138,7 @@ func (r *Repository) UpdateScanLoginSession(ctx context.Context, session *ScanLo
 	return nil
 }
 
-func (r *Repository) CreateWxPayConfig(ctx context.Context, config *WxPayConfig) error {
+func (r *repository) CreateWxPayConfig(ctx context.Context, config *WxPayConfig) error {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	return exec.QueryRowContext(ctx,
 		`INSERT INTO wx_pay_config (config_type, app_id, mch_id, api_key, api_v3_key, serial_no, private_key, public_key, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
@@ -146,7 +146,7 @@ func (r *Repository) CreateWxPayConfig(ctx context.Context, config *WxPayConfig)
 	).Scan(&config.ID)
 }
 
-func (r *Repository) GetWxPayConfig(ctx context.Context, configType string) (*WxPayConfig, error) {
+func (r *repository) GetWxPayConfig(ctx context.Context, configType string) (*WxPayConfig, error) {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	row := exec.QueryRowContext(ctx,
 		`SELECT id, config_type, app_id, mch_id, api_key, api_v3_key, serial_no, private_key, public_key, status, created_at, updated_at FROM wx_pay_config WHERE config_type = $1 AND status = 1`,
@@ -160,7 +160,21 @@ func (r *Repository) GetWxPayConfig(ctx context.Context, configType string) (*Wx
 	return &config, nil
 }
 
-func (r *Repository) ListWxPayConfigs(ctx context.Context, page, pageSize int, configType *string) ([]*WxPayConfig, int, error) {
+func (r *repository) GetWxPayConfigByID(ctx context.Context, id int64) (*WxPayConfig, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	row := exec.QueryRowContext(ctx,
+		`SELECT id, config_type, app_id, mch_id, api_key, api_v3_key, serial_no, private_key, public_key, status, created_at, updated_at FROM wx_pay_config WHERE id = $1`,
+		id,
+	)
+	var config WxPayConfig
+	err := row.Scan(&config.ID, &config.ConfigType, &config.AppID, &config.MchID, &config.APIKey, &config.APIV3Key, &config.SerialNo, &config.PrivateKey, &config.PublicKey, &config.Status, &config.CreatedAt, &config.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("get wx pay config by id: %w", err)
+	}
+	return &config, nil
+}
+
+func (r *repository) ListWxPayConfigs(ctx context.Context, page, pageSize int, configType *string) ([]*WxPayConfig, int, error) {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	countQuery := "SELECT COUNT(*) FROM wx_pay_config WHERE 1=1"
 	args := []interface{}{}
@@ -209,7 +223,7 @@ func (r *Repository) ListWxPayConfigs(ctx context.Context, page, pageSize int, c
 	return configs, total, nil
 }
 
-func (r *Repository) UpdateWxPayConfig(ctx context.Context, config *WxPayConfig) error {
+func (r *repository) UpdateWxPayConfig(ctx context.Context, config *WxPayConfig) error {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	_, err := exec.ExecContext(ctx,
 		`UPDATE wx_pay_config SET app_id = $1, mch_id = $2, api_key = $3, api_v3_key = $4, serial_no = $5, private_key = $6, public_key = $7, status = $8, updated_at = NOW() WHERE id = $9`,
@@ -221,7 +235,19 @@ func (r *Repository) UpdateWxPayConfig(ctx context.Context, config *WxPayConfig)
 	return nil
 }
 
-func (r *Repository) DeleteWxPayConfig(ctx context.Context, id int64) error {
+func (r *repository) UpdateWxPayConfigStatus(ctx context.Context, id int64, status int) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	_, err := exec.ExecContext(ctx,
+		`UPDATE wx_pay_config SET status = $1, updated_at = NOW() WHERE id = $2`,
+		status, id,
+	)
+	if err != nil {
+		return fmt.Errorf("update wx pay config status: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) DeleteWxPayConfig(ctx context.Context, id int64) error {
 	exec := database.ExecutorFromContext(ctx, r.dbtx)
 	_, err := exec.ExecContext(ctx, `DELETE FROM wx_pay_config WHERE id = $1`, id)
 	if err != nil {

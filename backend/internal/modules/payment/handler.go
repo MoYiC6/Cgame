@@ -18,12 +18,26 @@ func NewHandler(service Service) *Handler {
 
 func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/payment/ping", h.Ping)
+
 	client := group.Group("/client/payment")
 	{
 		client.POST("/create", h.CreatePayment)
 		client.POST("/confirm", h.ConfirmPayment)
 		client.GET("/:paymentNo", h.GetPayment)
 		client.GET("/list", h.ListPayments)
+	}
+
+	compatibleClient := group.Group("/client/payments")
+	{
+		compatibleClient.POST("", h.CreatePayment)
+		compatibleClient.POST("/confirm", h.ConfirmPayment)
+		compatibleClient.GET("/status", h.GetPaymentStatus)
+	}
+
+	admin := group.Group("/admin/payments")
+	{
+		admin.GET("", h.ListAdminPayments)
+		admin.GET("/stats", h.GetPaymentStats)
 	}
 }
 
@@ -34,9 +48,9 @@ func (h *Handler) Ping(c *gin.Context) {
 func (h *Handler) CreatePayment(c *gin.Context) {
 	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
 	var req struct {
-		OrderNo  string  `json:"orderNo"`
-		Amount   float64 `json:"amount"`
-		PayMethod string `json:"payMethod"`
+		OrderNo   string  `json:"orderNo"`
+		Amount    float64 `json:"amount"`
+		PayMethod string  `json:"payMethod"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, err)
@@ -75,6 +89,24 @@ func (h *Handler) GetPayment(c *gin.Context) {
 	response.Success(c, payment)
 }
 
+func (h *Handler) GetPaymentStatus(c *gin.Context) {
+	paymentNo := c.Query("paymentNo")
+	if paymentNo == "" {
+		paymentNo = c.Query("outTradeNo")
+	}
+	if paymentNo == "" {
+		response.Success(c, gin.H{"status": "unknown"})
+		return
+	}
+
+	payment, err := h.service.GetPayment(c.Request.Context(), paymentNo)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"paymentNo": payment.PaymentNo, "status": payment.Status})
+}
+
 func (h *Handler) ListPayments(c *gin.Context) {
 	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -85,4 +117,24 @@ func (h *Handler) ListPayments(c *gin.Context) {
 		return
 	}
 	response.Success(c, gin.H{"list": payments, "total": total})
+}
+
+func (h *Handler) ListAdminPayments(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("pageIndex", c.DefaultQuery("page", "1")))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	payments, total, err := h.service.ListAdminPayments(c.Request.Context(), page, pageSize)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"list": payments, "total": total})
+}
+
+func (h *Handler) GetPaymentStats(c *gin.Context) {
+	stats, err := h.service.GetPaymentStats(c.Request.Context())
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, stats)
 }

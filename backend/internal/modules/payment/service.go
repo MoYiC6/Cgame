@@ -14,6 +14,8 @@ type Service interface {
 	ConfirmPayment(ctx context.Context, paymentNo string) error
 	GetPayment(ctx context.Context, paymentNo string) (*PaymentRecord, error)
 	ListPayments(ctx context.Context, userID int64, page, pageSize int) ([]*PaymentRecord, int, error)
+	ListAdminPayments(ctx context.Context, page, pageSize int) ([]*PaymentRecord, int, error)
+	GetPaymentStats(ctx context.Context) (*PaymentStats, error)
 }
 
 type service struct {
@@ -95,4 +97,12 @@ func (s *service) GetPayment(ctx context.Context, paymentNo string) (*PaymentRec
 
 func (s *service) ListPayments(ctx context.Context, userID int64, page, pageSize int) ([]*PaymentRecord, int, error) {
 	return s.repo.ListPayments(ctx, userID, page, pageSize)
+}
+
+func (s *service) ListAdminPayments(ctx context.Context, page, pageSize int) ([]*PaymentRecord, int, error) {
+	return s.repo.ListAdminPayments(ctx, page, pageSize)
+}
+
+func (s *service) GetPaymentStats(ctx context.Context) (*PaymentStats, error) {
+	return s.repo.GetPaymentStats(ctx)
 }

@@ -6,6 +6,7 @@ import (
 
 	apperrors "backend/internal/platform/errors"
 	"backend/internal/platform/response"
+	"backend/internal/platform/security"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,6 +43,16 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		admin.POST("", h.AdminCreate)
 		admin.GET("", h.AdminList)
 		admin.DELETE("", h.AdminDelete)
+	}
+
+	adminInbox := group.Group("/admin/notification-inbox")
+	if h.authMiddleware != nil {
+		adminInbox.Use(h.authMiddleware)
+	}
+	{
+		adminInbox.GET("", h.AdminInboxList)
+		adminInbox.PUT("/:id/read", h.AdminInboxMarkRead)
+		adminInbox.PUT("/read-all", h.AdminInboxMarkAllRead)
 	}
 
 	adminTodo := group.Group("/admin/system-todos")
@@ -123,6 +134,64 @@ func (h *Handler) AdminDelete(c *gin.Context) {
 	response.Success(c, gin.H{"message": "admin delete notifications endpoint"})
 }
 
+func (h *Handler) AdminInboxList(c *gin.Context) {
+	userID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+
+	page, _ := strconv.Atoi(c.DefaultQuery("pageIndex", c.DefaultQuery("page", "1")))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	var unreadOnly *bool
+	if raw := c.Query("unreadOnly"); raw != "" {
+		value, err := strconv.ParseBool(raw)
+		if err != nil {
+			response.Fail(c, err)
+			return
+		}
+		unreadOnly = &value
+	}
+
+	result, err := h.service.ListInboxNotifications(c.Request.Context(), userID, page, pageSize, c.Query("type"), unreadOnly)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, result)
+}
+
+func (h *Handler) AdminInboxMarkRead(c *gin.Context) {
+	userID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.MarkInboxAsRead(c.Request.Context(), userID, id); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) AdminInboxMarkAllRead(c *gin.Context) {
+	userID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	if err := h.service.MarkAllInboxAsRead(c.Request.Context(), userID, c.Query("type")); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
 // Todos
 func (h *Handler) CreateTodo(c *gin.Context) {
 	response.Success(c, gin.H{"message": "create todo endpoint"})
@@ -151,6 +220,21 @@ func (h *Handler) ToggleTodo(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil)
+}
+
+func currentUserID(c *gin.Context) (int64, bool) {
+	if principal, ok := security.PrincipalFromContext(c.Request.Context()); ok {
+		userID, err := strconv.ParseInt(principal.UserID, 10, 64)
+		if err == nil && userID != 0 {
+			return userID, true
+		}
+	}
+
+	userID, err := strconv.ParseInt(c.GetString("userID"), 10, 64)
+	if err != nil || userID == 0 {
+		return 0, false
+	}
+	return userID, true
 }
 
 func (h *Handler) DeleteTodos(c *gin.Context) {
