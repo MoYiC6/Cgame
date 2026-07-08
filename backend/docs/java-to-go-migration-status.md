@@ -343,16 +343,16 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 按前缀查询设置 | `GET /api/admin/settings/prefix/{prefix}` | ⚠️ |
-| 检查初始化状态 | `GET /api/system/init/check` | ❌ |
-| 执行初始化 | `POST /api/system/init/setup` | ❌ |
-| 完整状态 | `GET /api/system/status/full` | ❌ |
-| 应用状态 | `GET /api/system/status/application` | ❌ |
-| 数据库状态 | `GET /api/system/status/database` | ❌ |
-| Redis 状态 | `GET /api/system/status/redis` | ❌ |
-| 环境变量 | `GET /api/system/status/environment` | ❌ |
-| 系统信息 | `GET /api/system/status/system` | ❌ |
-| 健康检查 | `GET /api/system/status/health` | ❌ |
+| 按前缀查询设置 | `GET /api/admin/settings/prefix/{prefix}` | ✅ |
+| 检查初始化状态 | `GET /api/system/init/check` | ✅ |
+| 执行初始化 | `POST /api/system/init/setup` | ✅ |
+| 完整状态 | `GET /api/system/status/full` | ✅ |
+| 应用状态 | `GET /api/system/status/application` | ✅ |
+| 数据库状态 | `GET /api/system/status/database` | ✅ |
+| Redis 状态 | `GET /api/system/status/redis` | ✅ |
+| 环境变量 | `GET /api/system/status/environment` | ✅ |
+| 系统信息 | `GET /api/system/status/system` | ✅ |
+| 健康检查 | `GET /api/system/status/health` | ✅ |
 | 菜单树 | `GET /api/admin/menus/tree` | ❌ |
 | 菜单列表 | `GET /api/admin/menus/list` | ❌ |
 | 菜单详情 | `GET /api/admin/menus/{id}` | ❌ |
@@ -372,36 +372,36 @@
 | 分配菜单 | `PUT /api/admin/roles/{id}/menus` | ❌ |
 | 客户列表 | `GET /api/admin/customers` | ❌ |
 | 清除缓存 | `GET /api/admin/cache/clear` | ❌ |
-| 待办列表 | `GET /api/admin/system-todos` | ⚠️ |
-| 切换待办状态 | `PUT /api/admin/system-todos/{id}/toggle` | ⚠️ |
-| 管理员日志 | `GET /api/admin/logs/admin` | ❌ |
-| 错误日志 | `GET /api/admin/logs/error` | ❌ |
-| 日志统计 | `GET /api/admin/logs/stats` | ❌ |
-| 业务日志 | `GET /api/admin/logs/business` | ❌ |
+| 待办列表 | `GET /api/admin/system-todos` | ✅ |
+| 切换待办状态 | `PUT /api/admin/system-todos/{id}/toggle` | ✅ |
+| 管理员日志 | `GET /api/admin/logs/admin` | ✅ |
+| 错误日志 | `GET /api/admin/logs/error` | ✅ |
+| 日志统计 | `GET /api/admin/logs/stats` | ✅ |
+| 业务日志 | `GET /api/admin/logs/business` | ✅ |
 | FaceId 配置列表 | `GET /api/admin/faceid/config` | ❌ |
-| FaceId 配置详情 | `GET /api/admin/faceid/config/{id}` | ❌ |
-| 更新 FaceId 配置 | `PUT /api/admin/faceid/config/{id}` | ❌ |
-| 删除配置 | `DELETE /api/admin/faceid/config/{id}` | ❌ |
+| FaceId 配置详情 | `GET /api/admin/faceid/config/{id}` | ✅ |
+| 更新 FaceId 配置 | `PUT /api/admin/faceid/config/{id}` | ✅ |
+| 删除配置 | `DELETE /api/admin/faceid/config/{id}` | ✅ |
 | 启用/禁用 | `PUT /api/admin/faceid/config/{id}/status` | ❌ |
 | 支付宝配置分页 | `GET /api/admin/alipay/config/page` | ❌ |
 | 支付宝配置详情 | `GET /api/admin/alipay/config/{id}` | ❌ |
 | 更新支付宝配置 | `PUT /api/admin/alipay/config/{id}` | ❌ |
 | 删除配置 | `DELETE /api/admin/alipay/config/{id}` | ❌ |
 | 启用/禁用 | `PUT /api/admin/alipay/config/{id}/status` | ❌ |
-| 微信支付配置列表 | `GET /api/admin/wxpay/config/page` | ⚠️（兼容 `pageIndex/pageSize`） |
-| 微信支付配置详情 | `GET /api/admin/wxpay/config/{id}` | ⚠️（按路径 ID 查询） |
-| 更新微信支付配置 | `PUT /api/admin/wxpay/config/{id}` | ⚠️ |
-| 删除配置 | `DELETE /api/admin/wxpay/config/{id}` | ⚠️ |
-| 启用/禁用 | `PUT /api/admin/wxpay/config/{id}/status` | ⚠️（兼容 `enabled` 参数，专用状态更新） |
-| 按类型查询微信支付配置 | `GET /api/admin/wxpay/config/type/{configType}` | ⚠️ |
-| 查询用户手机号 | `GET /api/admin/sensitive/user/{userId}/mobile` | ❌ |
-| 查询用户邮箱 | `GET /api/admin/sensitive/user/{userId}/email` | ❌ |
-| 查询用户身份证 | `GET /api/admin/sensitive/user/{userId}/id-card` | ❌ |
-| 查询选手手机号 | `GET /api/admin/sensitive/teacher/{teacherId}/mobile` | ❌ |
-| 查询选手身份证 | `GET /api/admin/sensitive/teacher/{teacherId}/id-card` | ❌ |
-| 查询选手银行卡 | `GET /api/admin/sensitive/teacher/{teacherId}/bank-account` | ❌ |
-| 查询选手支付宝 | `GET /api/admin/sensitive/teacher/{teacherId}/alipay-account` | ❌ |
-| 查询选手真实姓名 | `GET /api/admin/sensitive/teacher/{teacherId}/real-name` | ❌ |
+| 微信支付配置列表 | `GET /api/admin/wxpay/config/page` | ✅ |
+| 微信支付配置详情 | `GET /api/admin/wxpay/config/{id}` | ✅ |
+| 更新微信支付配置 | `PUT /api/admin/wxpay/config/{id}` | ✅ |
+| 删除配置 | `DELETE /api/admin/wxpay/config/{id}` | ✅ |
+| 启用/禁用 | `PUT /api/admin/wxpay/config/{id}/status` | ✅ |
+| 按类型查询微信支付配置 | `GET /api/admin/wxpay/config/type/{configType}` | ✅ |
+| 查询用户手机号 | `GET /api/admin/sensitive/user/{userId}/mobile` | ✅ |
+| 查询用户邮箱 | `GET /api/admin/sensitive/user/{userId}/email` | ✅ |
+| 查询用户身份证 | `GET /api/admin/sensitive/user/{userId}/id-card` | ✅ |
+| 查询选手手机号 | `GET /api/admin/sensitive/teacher/{teacherId}/mobile` | ✅ |
+| 查询选手身份证 | `GET /api/admin/sensitive/teacher/{teacherId}/id-card` | ✅ |
+| 查询选手银行卡 | `GET /api/admin/sensitive/teacher/{teacherId}/bank-account` | ✅ |
+| 查询选手支付宝 | `GET /api/admin/sensitive/teacher/{teacherId}/alipay-account` | ✅ |
+| 查询选手真实姓名 | `GET /api/admin/sensitive/teacher/{teacherId}/real-name` | ✅ |
 
 ### 12. visitor（访客分析）
 

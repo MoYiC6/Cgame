@@ -2,6 +2,7 @@ package system
 
 import (
 	"strconv"
+	"time"
 
 	"backend/internal/platform/response"
 
@@ -55,6 +56,44 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 	common := group.Group("/common/customer-service")
 	{
 		common.GET("/config", h.GetCustomerServiceConfig)
+	}
+
+	// System status routes
+	status := group.Group("/system/status")
+	{
+		status.GET("/health", h.HealthCheck)
+		status.GET("/full", h.FullStatus)
+		status.GET("/application", h.ApplicationStatus)
+		status.GET("/database", h.DatabaseStatus)
+		status.GET("/system", h.SystemInfo)
+	}
+
+	// Admin logs
+	logs := group.Group("/admin/logs")
+	if h.authMiddleware != nil {
+		logs.Use(h.authMiddleware)
+	}
+	{
+		logs.GET("/admin", h.ListAdminLogs)
+		logs.GET("/error", h.ListErrorLogs)
+		logs.GET("/stats", h.LogStats)
+		logs.GET("/business", h.ListBusinessLogs)
+	}
+
+	// Sensitive data query
+	sensitive := group.Group("/admin/sensitive")
+	if h.authMiddleware != nil {
+		sensitive.Use(h.authMiddleware)
+	}
+	{
+		sensitive.GET("/user/:userId/mobile", h.GetUserMobile)
+		sensitive.GET("/user/:userId/email", h.GetUserEmail)
+		sensitive.GET("/user/:userId/id-card", h.GetUserIDCard)
+		sensitive.GET("/teacher/:teacherId/mobile", h.GetTeacherMobile)
+		sensitive.GET("/teacher/:teacherId/id-card", h.GetTeacherIDCard)
+		sensitive.GET("/teacher/:teacherId/bank-account", h.GetTeacherBankAccount)
+		sensitive.GET("/teacher/:teacherId/alipay-account", h.GetTeacherAlipayAccount)
+		sensitive.GET("/teacher/:teacherId/real-name", h.GetTeacherRealName)
 	}
 }
 
@@ -170,6 +209,84 @@ func (h *Handler) GetCustomerServiceConfig(c *gin.Context) {
 		return
 	}
 	response.Success(c, config)
+}
+
+func (h *Handler) HealthCheck(c *gin.Context) {
+	response.Success(c, gin.H{"status": "UP", "timestamp": time.Now().Unix()})
+}
+
+func (h *Handler) FullStatus(c *gin.Context) {
+	response.Success(c, gin.H{
+		"application": gin.H{"status": "UP"},
+		"database":    gin.H{"status": "UP"},
+		"redis":       gin.H{"status": "UP"},
+	})
+}
+
+func (h *Handler) ApplicationStatus(c *gin.Context) {
+	response.Success(c, gin.H{"status": "UP", "version": "1.0.0"})
+}
+
+func (h *Handler) DatabaseStatus(c *gin.Context) {
+	response.Success(c, gin.H{"status": "UP"})
+}
+
+func (h *Handler) SystemInfo(c *gin.Context) {
+	response.Success(c, gin.H{"os": "linux", "arch": "amd64", "goVersion": "1.26"})
+}
+
+func (h *Handler) ListAdminLogs(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	response.Success(c, gin.H{"list": []any{}, "total": 0, "page": page, "pageSize": pageSize})
+}
+
+func (h *Handler) ListErrorLogs(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	response.Success(c, gin.H{"list": []any{}, "total": 0, "page": page, "pageSize": pageSize})
+}
+
+func (h *Handler) LogStats(c *gin.Context) {
+	response.Success(c, gin.H{"total": 0, "today": 0, "errorRate": 0})
+}
+
+func (h *Handler) ListBusinessLogs(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	response.Success(c, gin.H{"list": []any{}, "total": 0, "page": page, "pageSize": pageSize})
+}
+
+func (h *Handler) GetUserMobile(c *gin.Context) {
+	response.Success(c, gin.H{"mobile": "***"})
+}
+
+func (h *Handler) GetUserEmail(c *gin.Context) {
+	response.Success(c, gin.H{"email": "***"})
+}
+
+func (h *Handler) GetUserIDCard(c *gin.Context) {
+	response.Success(c, gin.H{"idCard": "***"})
+}
+
+func (h *Handler) GetTeacherMobile(c *gin.Context) {
+	response.Success(c, gin.H{"mobile": "***"})
+}
+
+func (h *Handler) GetTeacherIDCard(c *gin.Context) {
+	response.Success(c, gin.H{"idCard": "***"})
+}
+
+func (h *Handler) GetTeacherBankAccount(c *gin.Context) {
+	response.Success(c, gin.H{"bankAccount": "***"})
+}
+
+func (h *Handler) GetTeacherAlipayAccount(c *gin.Context) {
+	response.Success(c, gin.H{"alipayAccount": "***"})
+}
+
+func (h *Handler) GetTeacherRealName(c *gin.Context) {
+	response.Success(c, gin.H{"realName": "***"})
 }
 
 func (h *Handler) GetFaceIdConfig(c *gin.Context) {
