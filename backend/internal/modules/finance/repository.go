@@ -2,6 +2,7 @@ package finance
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -209,4 +210,227 @@ func (r *Repository) GetMonthlyReport(ctx context.Context, month string) (*Month
 	}
 	report.Commission = report.TotalRevenue * 0.3
 	return report, nil
+}
+
+func (r *Repository) ListTeacherWithdrawals(ctx context.Context, query *TeacherWithdrawalQuery) ([]*TeacherWithdrawal, int, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	where := "WHERE 1=1"
+	args := []any{}
+	argIdx := 1
+
+	if query.TeacherID > 0 {
+		where += fmt.Sprintf(" AND teacher_id = $%d", argIdx)
+		args = append(args, query.TeacherID)
+		argIdx++
+	}
+	if query.Status != "" {
+		where += fmt.Sprintf(" AND status = $%d", argIdx)
+		args = append(args, query.Status)
+		argIdx++
+	}
+	if query.StartDate != "" {
+		where += fmt.Sprintf(" AND created_at >= $%d", argIdx)
+		args = append(args, query.StartDate)
+		argIdx++
+	}
+	if query.EndDate != "" {
+		where += fmt.Sprintf(" AND created_at <= $%d", argIdx)
+		args = append(args, query.EndDate+" 23:59:59")
+		argIdx++
+	}
+
+	var total int
+	countQuery := "SELECT COUNT(*) FROM teacher_withdrawals " + where
+	if err := exec.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count teacher withdrawals: %w", err)
+	}
+
+	page := normalizePage(query.Page)
+	pageSize := normalizePageSize(query.PageSize)
+	limitOffset := fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+	args = append(args, pageSize, (page-1)*pageSize)
+
+	rows, err := exec.QueryContext(ctx,
+		"SELECT id, teacher_id, amount, status, admin_remark, processed_by, processed_at, created_at, updated_at FROM teacher_withdrawals "+where+" ORDER BY created_at DESC "+limitOffset,
+		args...,
+	)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list teacher withdrawals: %w", err)
+	}
+	defer rows.Close()
+
+	withdrawals := []*TeacherWithdrawal{}
+	for rows.Next() {
+		var w TeacherWithdrawal
+		if err := rows.Scan(&w.ID, &w.TeacherID, &w.Amount, &w.Status, &w.AdminRemark, &w.ProcessedBy, &w.ProcessedAt, &w.CreatedAt, &w.UpdatedAt); err != nil {
+			return nil, 0, fmt.Errorf("scan teacher withdrawal: %w", err)
+		}
+		withdrawals = append(withdrawals, &w)
+	}
+	return withdrawals, total, nil
+}
+
+func (r *Repository) GetTeacherWithdrawalByID(ctx context.Context, id int64) (*TeacherWithdrawal, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	var w TeacherWithdrawal
+	if err := exec.QueryRowContext(ctx,
+		`SELECT id, teacher_id, amount, status, admin_remark, processed_by, processed_at, created_at, updated_at
+		 FROM teacher_withdrawals WHERE id = $1`,
+		id,
+	).Scan(&w.ID, &w.TeacherID, &w.Amount, &w.Status, &w.AdminRemark, &w.ProcessedBy, &w.ProcessedAt, &w.CreatedAt, &w.UpdatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("teacher withdrawal not found")
+		}
+		return nil, fmt.Errorf("get teacher withdrawal: %w", err)
+	}
+	return &w, nil
+}
+
+func (r *Repository) UpdateTeacherWithdrawalStatus(ctx context.Context, id int64, status, adminRemark string, processedBy int64) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	_, err := exec.ExecContext(ctx,
+		`UPDATE teacher_withdrawals SET status = $1, admin_remark = $2, processed_by = $3, processed_at = NOW(), updated_at = NOW() WHERE id = $4`,
+		status, adminRemark, processedBy, id,
+	)
+	if err != nil {
+		return fmt.Errorf("update teacher withdrawal status: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) GetWithdrawalStats(ctx context.Context) (*WithdrawalStats, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	stats := &WithdrawalStats{}
+
+	if err := exec.QueryRowContext(ctx,
+		`SELECT COALESCE(SUM(amount), 0), COUNT(*) FROM teacher_withdrawals`,
+	).Scan(&stats.TotalWithdrawals, &stats.TotalCount); err != nil {
+		return nil, fmt.Errorf("get total withdrawals: %w", err)
+	}
+
+	if err := exec.QueryRowContext(ctx,
+		`SELECT COALESCE(SUM(amount), 0), COUNT(*) FROM teacher_withdrawals WHERE status = 'pending'`,
+	).Scan(&stats.PendingAmount, &stats.PendingCount); err != nil {
+		return nil, fmt.Errorf("get pending withdrawals: %w", err)
+	}
+
+	if err := exec.QueryRowContext(ctx,
+		`SELECT COALESCE(SUM(amount), 0), COUNT(*) FROM teacher_withdrawals WHERE status = 'approved'`,
+	).Scan(&stats.ApprovedAmount, &stats.ApprovedCount); err != nil {
+		return nil, fmt.Errorf("get approved withdrawals: %w", err)
+	}
+
+	if err := exec.QueryRowContext(ctx,
+		`SELECT COALESCE(SUM(amount), 0), COUNT(*) FROM teacher_withdrawals WHERE status = 'paid'`,
+	).Scan(&stats.PaidAmount, &stats.PaidCount); err != nil {
+		return nil, fmt.Errorf("get paid withdrawals: %w", err)
+	}
+
+	if err := exec.QueryRowContext(ctx,
+		`SELECT COALESCE(SUM(amount), 0), COUNT(*) FROM teacher_withdrawals WHERE status = 'rejected'`,
+	).Scan(&stats.RejectedAmount, &stats.RejectedCount); err != nil {
+		return nil, fmt.Errorf("get rejected withdrawals: %w", err)
+	}
+
+	return stats, nil
+}
+
+func (r *Repository) ListSettleableOrders(ctx context.Context, teacherID int64, page, pageSize int) ([]*SettleableOrder, int, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	where := "WHERE o.status = 'completed' AND o.teacher_settled = false"
+	args := []any{}
+	argIdx := 1
+
+	if teacherID > 0 {
+		where += fmt.Sprintf(" AND o.teacher_id = $%d", argIdx)
+		args = append(args, teacherID)
+		argIdx++
+	}
+
+	var total int
+	countQuery := `SELECT COUNT(*) FROM orders o ` + where
+	if err := exec.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count settleable orders: %w", err)
+	}
+
+	limitOffset := fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+	args = append(args, pageSize, (page-1)*pageSize)
+
+	rows, err := exec.QueryContext(ctx,
+		`SELECT o.id, o.order_no, o.teacher_id, u.nickname, o.total_amount, o.teacher_commission, o.total_amount - o.teacher_commission, o.created_at, o.completed_at
+		 FROM orders o
+		 LEFT JOIN users u ON o.teacher_id = u.id
+		 `+where+` ORDER BY o.completed_at DESC `+limitOffset,
+		args...,
+	)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list settleable orders: %w", err)
+	}
+	defer rows.Close()
+
+	orders := []*SettleableOrder{}
+	for rows.Next() {
+		var o SettleableOrder
+		var completedAt sql.NullTime
+		if err := rows.Scan(&o.ID, &o.OrderNo, &o.TeacherID, &o.TeacherName, &o.Amount, &o.Commission, &o.NetAmount, &o.CreatedAt, &completedAt); err != nil {
+			return nil, 0, fmt.Errorf("scan settleable order: %w", err)
+		}
+		if completedAt.Valid {
+			o.CompletedAt = completedAt.Time
+		}
+		orders = append(orders, &o)
+	}
+	return orders, total, nil
+}
+
+func (r *Repository) RejectOrderSettlement(ctx context.Context, withdrawalID, orderID int64) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	_, err := exec.ExecContext(ctx,
+		`UPDATE orders SET teacher_settled = true, settlement_rejected = true, settlement_rejected_at = NOW(), withdrawal_id = $1 WHERE id = $2`,
+		withdrawalID, orderID,
+	)
+	if err != nil {
+		return fmt.Errorf("reject order settlement: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) GetSettleableOrderTotal(ctx context.Context, teacherID int64) (float64, error) {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	var total float64
+	where := "WHERE status = 'completed' AND teacher_settled = false"
+	args := []any{}
+	if teacherID > 0 {
+		where += " AND teacher_id = $1"
+		args = append(args, teacherID)
+	}
+	if err := exec.QueryRowContext(ctx,
+		"SELECT COALESCE(SUM(teacher_commission), 0) FROM orders "+where,
+		args...,
+	).Scan(&total); err != nil {
+		return 0, fmt.Errorf("get settleable order total: %w", err)
+	}
+	return total, nil
+}
+
+func (r *Repository) MarkOrdersAsSettled(ctx context.Context, teacherID int64, withdrawalID int64) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	where := "WHERE status = 'completed' AND teacher_settled = false AND teacher_id = $1"
+	_, err := exec.ExecContext(ctx,
+		"UPDATE orders SET teacher_settled = true, settled_at = NOW(), withdrawal_id = $2 "+where,
+		teacherID, withdrawalID,
+	)
+	if err != nil {
+		return fmt.Errorf("mark orders as settled: %w", err)
+	}
+	return nil
+}
+
+func (r *Repository) CreateTeacherWithdrawal(ctx context.Context, withdrawal *TeacherWithdrawal) error {
+	exec := database.ExecutorFromContext(ctx, r.dbtx)
+	return exec.QueryRowContext(ctx,
+		`INSERT INTO teacher_withdrawals (teacher_id, amount, status, created_at, updated_at)
+		 VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id`,
+		withdrawal.TeacherID, withdrawal.Amount, withdrawal.Status,
+	).Scan(&withdrawal.ID)
 }

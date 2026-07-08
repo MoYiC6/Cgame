@@ -13,7 +13,7 @@
 | 4 | goods/inventory | 商品管理、SKU、分类、限购、Banner、印象标签 | ✅ 已完成 |
 | 5 | order | 订单生命周期、状态流转、结单、退单、转移、评价 | ✅ 已完成 |
 | 6 | payment | 微信支付、支付宝、收银台、支付记录、回调 | ✅ 已完成 |
-| 7 | finance | 财务统计、运营商佣金、提现管理、结算 | ⚠️ 部分（统计/佣金/提现/余额/报表已完成，选手提现管理待迁移） |
+| 7 | finance | 财务统计、运营商佣金、提现管理、结算 | ⚠️ 部分（统计/佣金/提现/余额/报表/选手提现管理已完成，导出待迁移） |
 | 8 | notification | 系统通知、订阅消息、待办事项、实时推送 | ✅ 已完成 |
 | 9 | chat | 即时聊天、会话管理、客服系统 | ✅ 已完成 |
 | 10 | file | 文件上传、素材管理、七牛云存储 | ⚠️ 部分（素材管理/上传路径） |
@@ -267,19 +267,19 @@
 | 打款 | `PUT /api/admin/finance/operator-commissions/withdrawals/{id}/pay` | ✅ |
 | 取消 | `PUT /api/admin/finance/operator-commissions/withdrawals/{id}/cancel` | ✅ |
 | 余额明细 | `GET /api/admin/balance/details` | ✅ |
-| 提现列表 | `GET /api/admin/withdrawal/list` | ❌ |
-| 提现详情 | `GET /api/admin/withdrawal/{id}` | ❌ |
-| 审批通过 | `PUT /api/admin/withdrawal/{id}/approve` | ❌ |
-| 审批拒绝 | `PUT /api/admin/withdrawal/{id}/reject` | ❌ |
-| 拒绝订单结算 | `PUT /api/admin/withdrawal/{withdrawalId}/orders/{orderId}/reject` | ❌ |
-| 打款 | `PUT /api/admin/withdrawal/{id}/pay` | ❌ |
-| 提现统计 | `GET /api/admin/withdrawal/stats` | ❌ |
+| 提现列表 | `GET /api/admin/withdrawal/list` | ✅ |
+| 提现详情 | `GET /api/admin/withdrawal/{id}` | ✅ |
+| 审批通过 | `PUT /api/admin/withdrawal/{id}/approve` | ✅ |
+| 审批拒绝 | `PUT /api/admin/withdrawal/{id}/reject` | ✅ |
+| 拒绝订单结算 | `PUT /api/admin/withdrawal/{withdrawalId}/orders/{orderId}/reject` | ✅ |
+| 打款 | `PUT /api/admin/withdrawal/{id}/pay` | ✅ |
+| 提现统计 | `GET /api/admin/withdrawal/stats` | ✅ |
 | 月度报表 | `GET /api/admin/withdrawal/monthly-report` | ✅ |
 | 导出提现记录 | `GET /api/admin/withdrawal/export` | ❌ |
 | 导出月度报表 | `GET /api/admin/withdrawal/monthly-report/export` | ❌ |
-| 可结算订单 | `GET /api/admin/withdrawal/settleable-orders` | ❌ |
-| 代结算预览 | `POST /api/admin/withdrawal/settle-on-behalf/preview` | ❌ |
-| 代结算执行 | `POST /api/admin/withdrawal/settle-on-behalf` | ❌ |
+| 可结算订单 | `GET /api/admin/withdrawal/settleable-orders` | ✅ |
+| 代结算预览 | `POST /api/admin/withdrawal/settle-on-behalf/preview` | ✅ |
+| 代结算执行 | `POST /api/admin/withdrawal/settle-on-behalf` | ✅ |
 | 用户月度报告 | `GET /api/admin/finance/user-monthly-report` | ✅ |
 | 导出用户月度报告 | `GET /api/admin/finance/user-monthly-report/export` | ❌ |
 
@@ -586,7 +586,7 @@
    - system：⚠️ 部分完成（基础配置已完成；RBAC权限、菜单、角色待迁移）
    - goods：⚠️ 部分完成（核心CRUD/SKU/分类/限购已完成；Banner、印象标签待迁移）
    - teacher：⚠️ 部分完成（申请审核、等级、排名、仪表盘已完成；动态、评价、视频待迁移）
-   - finance：⚠️ 部分完成（统计、佣金、提现、余额、报表已完成；选手提现管理待迁移）
+   - finance：⚠️ 部分完成（统计、佣金、提现、余额、报表、选手提现管理已完成；导出待迁移）
 
 3. **低优先级（可延后）**
    - coupon：✅ 已完成

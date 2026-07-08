@@ -102,6 +102,94 @@ func (s *Service) GetMonthlyReport(ctx context.Context, month string) (*MonthlyR
 	return s.repo.GetMonthlyReport(ctx, month)
 }
 
+func (s *Service) ListTeacherWithdrawals(ctx context.Context, query *TeacherWithdrawalQuery) ([]*TeacherWithdrawal, int, error) {
+	return s.repo.ListTeacherWithdrawals(ctx, query)
+}
+
+func (s *Service) GetTeacherWithdrawalByID(ctx context.Context, id int64) (*TeacherWithdrawal, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("withdrawal id is required")
+	}
+	return s.repo.GetTeacherWithdrawalByID(ctx, id)
+}
+
+func (s *Service) ApproveTeacherWithdrawal(ctx context.Context, adminUserID, id int64, adminRemark string) error {
+	if adminUserID == 0 || id == 0 {
+		return fmt.Errorf("admin user id and withdrawal id are required")
+	}
+	return s.repo.UpdateTeacherWithdrawalStatus(ctx, id, "approved", adminRemark, adminUserID)
+}
+
+func (s *Service) RejectTeacherWithdrawal(ctx context.Context, adminUserID, id int64, adminRemark string) error {
+	if adminUserID == 0 || id == 0 {
+		return fmt.Errorf("admin user id and withdrawal id are required")
+	}
+	return s.repo.UpdateTeacherWithdrawalStatus(ctx, id, "rejected", adminRemark, adminUserID)
+}
+
+func (s *Service) PayTeacherWithdrawal(ctx context.Context, adminUserID, id int64) error {
+	if adminUserID == 0 || id == 0 {
+		return fmt.Errorf("admin user id and withdrawal id are required")
+	}
+	return s.repo.UpdateTeacherWithdrawalStatus(ctx, id, "paid", "", adminUserID)
+}
+
+func (s *Service) GetWithdrawalStats(ctx context.Context) (*WithdrawalStats, error) {
+	return s.repo.GetWithdrawalStats(ctx)
+}
+
+func (s *Service) ListSettleableOrders(ctx context.Context, teacherID int64, page, pageSize int) ([]*SettleableOrder, int, error) {
+	return s.repo.ListSettleableOrders(ctx, teacherID, normalizePage(page), normalizePageSize(pageSize))
+}
+
+func (s *Service) RejectOrderSettlement(ctx context.Context, adminUserID, withdrawalID, orderID int64) error {
+	if adminUserID == 0 || withdrawalID == 0 || orderID == 0 {
+		return fmt.Errorf("admin user id, withdrawal id and order id are required")
+	}
+	return s.repo.RejectOrderSettlement(ctx, withdrawalID, orderID)
+}
+
+func (s *Service) SettleOnBehalfPreview(ctx context.Context, teacherID int64) (float64, int, error) {
+	if teacherID == 0 {
+		return 0, 0, fmt.Errorf("teacher id is required")
+	}
+	total, err := s.repo.GetSettleableOrderTotal(ctx, teacherID)
+	if err != nil {
+		return 0, 0, fmt.Errorf("get settleable order total: %w", err)
+	}
+	orders, _, err := s.repo.ListSettleableOrders(ctx, teacherID, 1, 1000)
+	if err != nil {
+		return 0, 0, fmt.Errorf("list settleable orders: %w", err)
+	}
+	return total, len(orders), nil
+}
+
+func (s *Service) SettleOnBehalf(ctx context.Context, adminUserID, teacherID int64) (int64, error) {
+	if adminUserID == 0 || teacherID == 0 {
+		return 0, fmt.Errorf("admin user id and teacher id are required")
+	}
+	total, err := s.repo.GetSettleableOrderTotal(ctx, teacherID)
+	if err != nil {
+		return 0, fmt.Errorf("get settleable order total: %w", err)
+	}
+	if total <= 0 {
+		return 0, fmt.Errorf("no settleable orders")
+	}
+
+	withdrawal := &TeacherWithdrawal{
+		TeacherID: teacherID,
+		Amount:    total,
+		Status:    "pending",
+	}
+	if err := s.repo.CreateTeacherWithdrawal(ctx, withdrawal); err != nil {
+		return 0, fmt.Errorf("create teacher withdrawal: %w", err)
+	}
+	if err := s.repo.MarkOrdersAsSettled(ctx, teacherID, withdrawal.ID); err != nil {
+		return 0, fmt.Errorf("mark orders as settled: %w", err)
+	}
+	return withdrawal.ID, nil
+}
+
 func normalizePage(page int) int {
 	if page <= 0 {
 		return 1

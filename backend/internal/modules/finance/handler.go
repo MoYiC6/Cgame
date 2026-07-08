@@ -40,6 +40,23 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		admin.GET("/balance/details", h.ListBalanceDetails)
 		admin.GET("/user-monthly-report", h.GetMonthlyReport)
 	}
+
+	withdrawal := group.Group("/admin/withdrawal")
+	if h.authMiddleware != nil {
+		withdrawal.Use(h.authMiddleware)
+	}
+	{
+		withdrawal.GET("/list", h.ListTeacherWithdrawals)
+		withdrawal.GET("/:id", h.GetTeacherWithdrawalDetail)
+		withdrawal.PUT("/:id/approve", h.ApproveTeacherWithdrawal)
+		withdrawal.PUT("/:id/reject", h.RejectTeacherWithdrawal)
+		withdrawal.PUT("/:id/pay", h.PayTeacherWithdrawal)
+		withdrawal.PUT("/:withdrawalId/orders/:orderId/reject", h.RejectOrderSettlement)
+		withdrawal.GET("/stats", h.GetWithdrawalStats)
+		withdrawal.GET("/settleable-orders", h.ListSettleableOrders)
+		withdrawal.POST("/settle-on-behalf/preview", h.SettleOnBehalfPreview)
+		withdrawal.POST("/settle-on-behalf", h.SettleOnBehalf)
+	}
 }
 
 func (h *Handler) GetFinanceStats(c *gin.Context) {
@@ -242,6 +259,193 @@ func (h *Handler) GetMonthlyReport(c *gin.Context) {
 		return
 	}
 	response.Success(c, report)
+}
+
+func (h *Handler) ListTeacherWithdrawals(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("pageNum", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	teacherID, _ := strconv.ParseInt(c.Query("teacherId"), 10, 64)
+	status := c.Query("status")
+	startDate := c.Query("startDate")
+	endDate := c.Query("endDate")
+
+	query := &TeacherWithdrawalQuery{
+		TeacherID: teacherID,
+		Status:    status,
+		StartDate: startDate,
+		EndDate:   endDate,
+		Page:      page,
+		PageSize:  pageSize,
+	}
+	withdrawals, total, err := h.service.ListTeacherWithdrawals(c.Request.Context(), query)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"list": withdrawals, "total": total})
+}
+
+func (h *Handler) GetTeacherWithdrawalDetail(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	withdrawal, err := h.service.GetTeacherWithdrawalByID(c.Request.Context(), id)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, withdrawal)
+}
+
+func (h *Handler) ApproveTeacherWithdrawal(c *gin.Context) {
+	adminUserID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	var req struct {
+		AdminRemark string `json:"adminRemark"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.ApproveTeacherWithdrawal(c.Request.Context(), adminUserID, id, req.AdminRemark); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) RejectTeacherWithdrawal(c *gin.Context) {
+	adminUserID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	var req struct {
+		AdminRemark string `json:"adminRemark"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.RejectTeacherWithdrawal(c.Request.Context(), adminUserID, id, req.AdminRemark); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) PayTeacherWithdrawal(c *gin.Context) {
+	adminUserID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.PayTeacherWithdrawal(c.Request.Context(), adminUserID, id); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) RejectOrderSettlement(c *gin.Context) {
+	adminUserID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	withdrawalID, err := strconv.ParseInt(c.Param("withdrawalId"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	orderID, err := strconv.ParseInt(c.Param("orderId"), 10, 64)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.RejectOrderSettlement(c.Request.Context(), adminUserID, withdrawalID, orderID); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) GetWithdrawalStats(c *gin.Context) {
+	stats, err := h.service.GetWithdrawalStats(c.Request.Context())
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, stats)
+}
+
+func (h *Handler) ListSettleableOrders(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("pageNum", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	teacherID, _ := strconv.ParseInt(c.Query("teacherId"), 10, 64)
+	orders, total, err := h.service.ListSettleableOrders(c.Request.Context(), teacherID, page, pageSize)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"list": orders, "total": total})
+}
+
+func (h *Handler) SettleOnBehalfPreview(c *gin.Context) {
+	var req struct {
+		TeacherID int64 `json:"teacherId"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	total, count, err := h.service.SettleOnBehalfPreview(c.Request.Context(), req.TeacherID)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"totalAmount": total, "orderCount": count})
+}
+
+func (h *Handler) SettleOnBehalf(c *gin.Context) {
+	adminUserID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	var req struct {
+		TeacherID int64 `json:"teacherId"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	id, err := h.service.SettleOnBehalf(c.Request.Context(), adminUserID, req.TeacherID)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"id": id})
 }
 
 func currentUserID(c *gin.Context) (int64, bool) {
