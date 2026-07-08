@@ -10,7 +10,7 @@
 | 1 | auth | JWT 认证、登录/注册/登出、短信验证码、微信 OAuth | ✅ 已完成 |
 | 2 | user | 用户中心、余额、充值、等级、消费排名 | ⚠️ 部分（基础信息/余额查询） |
 | 3 | teacher | 选手生态、审核、等级、动态、收入分成、排名 | ⚠️ 部分（核心接口/申请审核/等级管理已完成，动态/评价/视频待迁移） |
-| 4 | goods/inventory | 商品管理、SKU、分类、限购、Banner、印象标签 | ⚠️ 部分（基础 CRUD） |
+| 4 | goods/inventory | 商品管理、SKU、分类、限购、Banner、印象标签 | ⚠️ 部分（核心 CRUD / SKU / 分类 / 限购已完成，Banner / 印象标签待迁移） |
 | 5 | order | 订单生命周期、状态流转、结单、退单、转移、评价 | ⚠️ 部分（基础 CRUD + 状态机） |
 | 6 | payment | 微信支付、支付宝、收银台、支付记录、回调 | ⚠️ 部分（基础 CRUD） |
 | 7 | finance | 财务统计、运营商佣金、提现管理、结算 | ⚠️ 部分（仅统计接口） |
@@ -162,29 +162,29 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 商品列表（客户端） | `GET /api/client/goods` | ⚠️ |
-| 商品详情 | `GET /api/client/goods/{id}` | ⚠️ |
-| 商品详情（含SKU） | `GET /api/client/goods/detail/{goodsId}` | ⚠️ |
-| SKU 库存检查 | `POST /api/client/goods/sku/check` | ⚠️ |
+| 商品列表（客户端） | `GET /api/client/goods` | ✅ |
+| 商品详情 | `GET /api/client/goods/{id}` | ✅ |
+| 商品详情（含SKU） | `GET /api/client/goods/detail/{goodsId}` | ✅ |
+| SKU 库存检查 | `POST /api/client/goods/sku/check` | ✅ |
 | 分类列表 | `GET /api/client/categories` | ✅ |
-| 分类详情 | `GET /api/client/categories/{id}` | ⚠️ |
+| 分类详情 | `GET /api/client/categories/{id}` | ✅ |
 | Banner 列表 | `GET /api/client/banners` | ❌ |
 | 印象标签列表 | `GET /api/client/impression-tags` | ❌ |
-| 商品列表（管理端） | `GET /api/admin/goods` | ⚠️ |
-| 创建商品 | `POST /api/admin/goods` | ❌ |
-| 更新商品 | `PUT /api/admin/goods/{id}` | ❌ |
-| 删除商品 | `DELETE /api/admin/goods/{id}` | ❌ |
-| 上下架 | `PUT /api/admin/goods/{id}/status` | ⚠️ |
-| 商品统计 | `GET /api/admin/goods/stats` | ❌ |
-| SKU 列表 | `GET /api/admin/goods/sku` | ⚠️ |
-| 创建 SKU | `POST /api/admin/goods/sku` | ❌ |
-| 更新 SKU | `PUT /api/admin/goods/sku/{id}` | ❌ |
-| 删除 SKU | `DELETE /api/admin/goods/sku/{id}` | ❌ |
-| 分类列表（管理端） | `GET /api/admin/categories` | ⚠️ |
-| 全部分类 | `GET /api/admin/categories/all` | ⚠️ |
-| 分类详情 | `GET /api/admin/categories/{id}` | ⚠️ |
-| 更新分类 | `PUT /api/admin/categories/{id}` | ⚠️ |
-| 删除分类 | `DELETE /api/admin/categories/{id}` | ⚠️ |
+| 商品列表（管理端） | `GET /api/admin/goods` | ✅ |
+| 创建商品 | `POST /api/admin/goods` | ✅ |
+| 更新商品 | `PUT /api/admin/goods/{id}` | ✅ |
+| 删除商品 | `DELETE /api/admin/goods/{id}` | ✅ |
+| 上下架 | `PUT /api/admin/goods/{id}/status` | ✅ |
+| 商品统计 | `GET /api/admin/goods/stats` | ✅ |
+| SKU 列表 | `GET /api/admin/goods/{id}/skus` | ✅ |
+| 创建 SKU | `POST /api/admin/goods/sku` | ✅ |
+| 更新 SKU | `PUT /api/admin/goods/sku/{id}` | ✅ |
+| 删除 SKU | `DELETE /api/admin/goods/sku/{id}` | ✅ |
+| 分类列表（管理端） | `GET /api/admin/categories` | ✅ |
+| 全部分类 | `GET /api/admin/categories/all` | ✅ |
+| 分类详情 | `GET /api/admin/categories/{id}` | ✅ |
+| 更新分类 | `PUT /api/admin/categories/{id}` | ✅ |
+| 删除分类 | `DELETE /api/admin/categories/{id}` | ✅ |
 | Banner 列表（管理端） | `GET /api/admin/banners` | ❌ |
 | 创建 Banner | `POST /api/admin/banners` | ❌ |
 | 更新 Banner | `PUT /api/admin/banners/{id}` | ❌ |
@@ -193,10 +193,10 @@
 | 创建标签 | `POST /api/admin/impression-tags` | ❌ |
 | 更新标签 | `PUT /api/admin/impression-tags/{id}` | ❌ |
 | 删除标签 | `DELETE /api/admin/impression-tags/{id}` | ❌ |
-| 限购规则列表 | `GET /api/admin/purchase-limit` | ⚠️ |
-| 创建限购规则 | `POST /api/admin/purchase-limit` | ❌ |
-| 更新限购规则 | `PUT /api/admin/purchase-limit/{id}` | ❌ |
-| 删除限购规则 | `DELETE /api/admin/purchase-limit/{id}` | ❌ |
+| 限购规则列表 | `GET /api/admin/purchase-limit` | ✅ |
+| 创建限购规则 | `POST /api/admin/purchase-limit` | ✅ |
+| 更新限购规则 | `PUT /api/admin/purchase-limit/{id}` | ✅ |
+| 删除限购规则 | `DELETE /api/admin/purchase-limit/{id}` | ✅ |
 
 ### 5. order（订单核心）
 

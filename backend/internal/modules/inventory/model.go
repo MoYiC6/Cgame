@@ -66,6 +66,35 @@ type GoodsSKUStockLog struct {
 	CreatedAt time.Time
 }
 
+type GoodsStats struct {
+	TotalGoods   int64
+	TotalSKUs    int64
+	TotalStock   int64
+	ActiveGoods  int64
+	InactiveGoods int64
+}
+
+type GoodsQuery struct {
+	CategoryID *int64
+	Status     *int
+	Keyword    string
+	Page       int
+	PageSize   int
+}
+
+type SKUQuery struct {
+	GoodsID  *int64
+	Status   *int
+	Page     int
+	PageSize int
+}
+
+type CategoryQuery struct {
+	Status   *int
+	Page     int
+	PageSize int
+}
+
 type PurchaseLimitRule struct {
 	ID          int64
 	GoodsID     *int64
