@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -42,7 +43,18 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 	{
 		admin.POST("", h.AdminCreate)
 		admin.GET("", h.AdminList)
-		admin.DELETE("", h.AdminDelete)
+		admin.GET("/stats", h.AdminStats)
+		admin.DELETE("/:id", h.AdminDelete)
+	}
+
+	subscribe := group.Group("/client/subscribe-message")
+	if h.authMiddleware != nil {
+		subscribe.Use(h.authMiddleware)
+	}
+	{
+		subscribe.GET("/templates", h.SubscribeTemplates)
+		subscribe.POST("/record", h.RecordSubscribe)
+		subscribe.GET("/status", h.SubscribeStatus)
 	}
 
 	adminInbox := group.Group("/admin/notification-inbox")
@@ -108,7 +120,23 @@ func (h *Handler) MarkAllRead(c *gin.Context) {
 }
 
 func (h *Handler) GetSystemNotifications(c *gin.Context) {
-	response.Success(c, gin.H{"message": "system notifications endpoint"})
+	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	if id > 0 {
+		notification, err := h.service.GetSystemNotification(c.Request.Context(), id)
+		if err != nil {
+			response.Fail(c, err)
+			return
+		}
+		response.Success(c, notification)
+		return
+	}
+	notifications, total, err := h.service.GetUserNotifications(c.Request.Context(), userID, 1, 20)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"list": notifications, "total": total})
 }
 
 func (h *Handler) GetUnreadCount(c *gin.Context) {
@@ -123,15 +151,108 @@ func (h *Handler) GetUnreadCount(c *gin.Context) {
 
 // Admin
 func (h *Handler) AdminCreate(c *gin.Context) {
-	response.Success(c, gin.H{"message": "admin create notification endpoint"})
+	var n Notification
+	if err := c.ShouldBindJSON(&n); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.CreateNotification(c.Request.Context(), &n); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
 }
 
 func (h *Handler) AdminList(c *gin.Context) {
-	response.Success(c, gin.H{"message": "admin list notifications endpoint"})
+	query := AdminNotificationQuery{
+		PageNum:  intQuery(c, "pageNum", 1),
+		PageSize: intQuery(c, "pageSize", 10),
+		Type:     c.Query("type"),
+	}
+	notifications, total, err := h.service.ListAdminNotifications(c.Request.Context(), query)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"list": notifications, "total": total})
 }
 
 func (h *Handler) AdminDelete(c *gin.Context) {
-	response.Success(c, gin.H{"message": "admin delete notifications endpoint"})
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	if id == 0 {
+		var ids []int64
+		if err := c.ShouldBindJSON(&ids); err != nil {
+			response.Fail(c, err)
+			return
+		}
+		if err := h.service.DeleteTodos(c.Request.Context(), ids); err != nil {
+			response.Fail(c, err)
+			return
+		}
+		response.Success(c, nil)
+		return
+	}
+	if err := h.service.DeleteNotification(c.Request.Context(), id); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) AdminStats(c *gin.Context) {
+	stats, err := h.service.GetNotificationStats(c.Request.Context())
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, stats)
+}
+
+// Subscribe message
+func (h *Handler) SubscribeTemplates(c *gin.Context) {
+	templates, err := h.service.GetSubscribeTemplates(c.Request.Context())
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, templates)
+}
+
+func (h *Handler) RecordSubscribe(c *gin.Context) {
+	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
+	var req SubscribeRecordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if err := h.service.RecordSubscribe(c.Request.Context(), userID, req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) SubscribeStatus(c *gin.Context) {
+	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
+	templateID := c.Query("templateId")
+	if templateID == "" {
+		response.Fail(c, fmt.Errorf("templateId is required"))
+		return
+	}
+	status, err := h.service.GetSubscribeStatus(c.Request.Context(), userID, templateID)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, status)
+}
+
+func intQuery(c *gin.Context, key string, fallback int) int {
+	value, err := strconv.Atoi(c.DefaultQuery(key, strconv.Itoa(fallback)))
+	if err != nil {
+		return fallback
+	}
+	return value
 }
 
 func (h *Handler) AdminInboxList(c *gin.Context) {

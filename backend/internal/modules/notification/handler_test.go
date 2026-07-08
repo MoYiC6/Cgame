@@ -177,3 +177,31 @@ func (s *stubNotificationRepository) MarkAllInboxAsRead(ctx context.Context, use
 	s.lastMarkAllInboxType = notificationType
 	return nil
 }
+
+func (s *stubNotificationRepository) GetNotificationByID(ctx context.Context, id int64) (*Notification, error) {
+	return nil, nil
+}
+
+func (s *stubNotificationRepository) ListAdminNotifications(ctx context.Context, page, pageSize int) ([]*Notification, int, error) {
+	return nil, 0, nil
+}
+
+func (s *stubNotificationRepository) DeleteNotification(ctx context.Context, id int64) error {
+	return nil
+}
+
+func (s *stubNotificationRepository) GetNotificationStats(ctx context.Context) (*NotificationStats, error) {
+	return nil, nil
+}
+
+func (s *stubNotificationRepository) GetSubscribeTemplates(ctx context.Context) ([]*SubscribeTemplate, error) {
+	return nil, nil
+}
+
+func (s *stubNotificationRepository) RecordSubscribe(ctx context.Context, userID int64, templateID string) error {
+	return nil
+}
+
+func (s *stubNotificationRepository) GetSubscribeStatus(ctx context.Context, userID int64, templateID string) (*SubscribeStatus, error) {
+	return nil, nil
+}

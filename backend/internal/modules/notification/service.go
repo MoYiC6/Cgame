@@ -97,3 +97,71 @@ func (s *Service) ToggleTodo(ctx context.Context, id int64, completed bool, oper
 func (s *Service) DeleteTodos(ctx context.Context, ids []int64) error {
 	return s.repo.DeleteTodos(ctx, ids)
 }
+
+func (s *Service) GetSystemNotification(ctx context.Context, id int64) (*SystemNotification, error) {
+	if id == 0 {
+		return nil, fmt.Errorf("notification id is required")
+	}
+	n, err := s.repo.GetNotificationByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("notification not found")
+	}
+	content := ""
+	if n.Content != nil {
+		content = *n.Content
+	}
+	priority := 0
+	if n.Priority != nil {
+		priority = *n.Priority
+	}
+	return &SystemNotification{
+		ID:        n.ID,
+		Title:     n.Title,
+		Content:   content,
+		Type:      n.Type,
+		Priority:  priority,
+		CreatedAt: n.CreatedAt,
+	}, nil
+}
+
+func (s *Service) ListAdminNotifications(ctx context.Context, query AdminNotificationQuery) ([]*Notification, int, error) {
+	if query.PageNum <= 0 {
+		query.PageNum = 1
+	}
+	if query.PageSize <= 0 {
+		query.PageSize = 10
+	}
+	return s.repo.ListAdminNotifications(ctx, query.PageNum, query.PageSize)
+}
+
+func (s *Service) DeleteNotification(ctx context.Context, id int64) error {
+	if id == 0 {
+		return fmt.Errorf("notification id is required")
+	}
+	return s.repo.DeleteNotification(ctx, id)
+}
+
+func (s *Service) GetNotificationStats(ctx context.Context) (*NotificationStats, error) {
+	return s.repo.GetNotificationStats(ctx)
+}
+
+func (s *Service) GetSubscribeTemplates(ctx context.Context) ([]*SubscribeTemplate, error) {
+	return s.repo.GetSubscribeTemplates(ctx)
+}
+
+func (s *Service) RecordSubscribe(ctx context.Context, userID int64, req SubscribeRecordRequest) error {
+	if userID == 0 {
+		return fmt.Errorf("user id is required")
+	}
+	if req.TemplateID == "" {
+		return fmt.Errorf("template id is required")
+	}
+	return s.repo.RecordSubscribe(ctx, userID, req.TemplateID)
+}
+
+func (s *Service) GetSubscribeStatus(ctx context.Context, userID int64, templateID string) (*SubscribeStatus, error) {
+	if userID == 0 {
+		return nil, fmt.Errorf("user id is required")
+	}
+	return s.repo.GetSubscribeStatus(ctx, userID, templateID)
+}

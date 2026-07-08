@@ -5,16 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	"backend/internal/platform/database"
 )
 
 type Repository interface {
 	CreateNotification(ctx context.Context, n *Notification) error
+	GetNotificationByID(ctx context.Context, id int64) (*Notification, error)
 	GetUserNotifications(ctx context.Context, userID int64, page, pageSize int) ([]*Notification, int, error)
 	MarkAsRead(ctx context.Context, userID, notificationID int64) error
 	MarkAllAsRead(ctx context.Context, userID int64) error
 	GetUnreadCount(ctx context.Context, userID int64) (int, error)
+	ListAdminNotifications(ctx context.Context, page, pageSize int) ([]*Notification, int, error)
+	DeleteNotification(ctx context.Context, id int64) error
+	GetNotificationStats(ctx context.Context) (*NotificationStats, error)
 	ListInboxNotifications(ctx context.Context, userID int64, page, pageSize int, notificationType string, unreadOnly *bool) (*NotificationInboxList, error)
 	MarkInboxAsRead(ctx context.Context, userID, inboxID int64) error
 	MarkAllInboxAsRead(ctx context.Context, userID int64, notificationType string) error
@@ -22,6 +27,11 @@ type Repository interface {
 	GetTodos(ctx context.Context, completed *bool) ([]*SystemTodo, error)
 	ToggleTodo(ctx context.Context, id int64, completed bool, operator string) error
 	DeleteTodos(ctx context.Context, ids []int64) error
+
+	// Subscribe message
+	GetSubscribeTemplates(ctx context.Context) ([]*SubscribeTemplate, error)
+	RecordSubscribe(ctx context.Context, userID int64, templateID string) error
+	GetSubscribeStatus(ctx context.Context, userID int64, templateID string) (*SubscribeStatus, error)
 }
 
 type repository struct {
@@ -248,4 +258,107 @@ func (r *repository) DeleteTodos(ctx context.Context, ids []int64) error {
 		return fmt.Errorf("delete todos: %w", err)
 	}
 	return nil
+}
+
+func (r *repository) GetNotificationByID(ctx context.Context, id int64) (*Notification, error) {
+	var n Notification
+	var extraDataJSON []byte
+	err := r.dbtx.QueryRowContext(ctx,
+		`SELECT id, user_id, title, content, type, sub_type, target_type, target_id, related_id, related_type, extra_data, priority, is_read, expire_time, read_time, created_at, updated_at
+		 FROM notifications WHERE id = $1`,
+		id,
+	).Scan(&n.ID, &n.UserID, &n.Title, &n.Content, &n.Type, &n.SubType, &n.TargetType, &n.TargetID, &n.RelatedID, &n.RelatedType, &extraDataJSON, &n.Priority, &n.IsRead, &n.ExpireTime, &n.ReadTime, &n.CreatedAt, &n.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("get notification by id: %w", err)
+	}
+	if len(extraDataJSON) > 0 {
+		json.Unmarshal(extraDataJSON, &n.ExtraData)
+	}
+	return &n, nil
+}
+
+func (r *repository) ListAdminNotifications(ctx context.Context, page, pageSize int) ([]*Notification, int, error) {
+	var total int
+	if err := r.dbtx.QueryRowContext(ctx, `SELECT COUNT(*) FROM notifications`).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count admin notifications: %w", err)
+	}
+
+	rows, err := r.dbtx.QueryContext(ctx,
+		`SELECT id, user_id, title, content, type, sub_type, target_type, target_id, related_id, related_type, extra_data, priority, is_read, expire_time, read_time, created_at, updated_at
+		 FROM notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+		pageSize, (page-1)*pageSize,
+	)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list admin notifications: %w", err)
+	}
+	defer rows.Close()
+
+	notifications := make([]*Notification, 0)
+	for rows.Next() {
+		var n Notification
+		var extraDataJSON []byte
+		err := rows.Scan(&n.ID, &n.UserID, &n.Title, &n.Content, &n.Type, &n.SubType, &n.TargetType, &n.TargetID, &n.RelatedID, &n.RelatedType, &extraDataJSON, &n.Priority, &n.IsRead, &n.ExpireTime, &n.ReadTime, &n.CreatedAt, &n.UpdatedAt)
+		if err != nil {
+			return nil, 0, fmt.Errorf("scan notification: %w", err)
+		}
+		if len(extraDataJSON) > 0 {
+			json.Unmarshal(extraDataJSON, &n.ExtraData)
+		}
+		notifications = append(notifications, &n)
+	}
+	return notifications, total, nil
+}
+
+func (r *repository) DeleteNotification(ctx context.Context, id int64) error {
+	_, err := r.dbtx.ExecContext(ctx, `DELETE FROM notifications WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("delete notification: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) GetNotificationStats(ctx context.Context) (*NotificationStats, error) {
+	stats := &NotificationStats{}
+	if err := r.dbtx.QueryRowContext(ctx, `SELECT COUNT(*) FROM notifications`).Scan(&stats.TotalNotifications); err != nil {
+		return nil, fmt.Errorf("get total notifications: %w", err)
+	}
+	if err := r.dbtx.QueryRowContext(ctx, `SELECT COUNT(*) FROM notifications WHERE is_read = FALSE`).Scan(&stats.UnreadCount); err != nil {
+		return nil, fmt.Errorf("get unread count: %w", err)
+	}
+	if err := r.dbtx.QueryRowContext(ctx, `SELECT COUNT(*) FROM notifications WHERE created_at >= CURRENT_DATE`).Scan(&stats.TodayCount); err != nil {
+		return nil, fmt.Errorf("get today count: %w", err)
+	}
+	return stats, nil
+}
+
+func (r *repository) GetSubscribeTemplates(ctx context.Context) ([]*SubscribeTemplate, error) {
+	return []*SubscribeTemplate{
+		{ID: 1, TemplateID: "order_complete", Name: "订单完成通知", Enabled: true},
+		{ID: 2, TemplateID: "withdrawal_approved", Name: "提现审批通知", Enabled: true},
+		{ID: 3, TemplateID: "new_message", Name: "新消息通知", Enabled: true},
+	}, nil
+}
+
+func (r *repository) RecordSubscribe(ctx context.Context, userID int64, templateID string) error {
+	_, err := r.dbtx.ExecContext(ctx,
+		`INSERT INTO subscribe_records (user_id, template_id, subscribed_at) VALUES ($1, $2, NOW())
+		 ON CONFLICT (user_id, template_id) DO UPDATE SET subscribed_at = NOW()`,
+		userID, templateID,
+	)
+	if err != nil {
+		return fmt.Errorf("record subscribe: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) GetSubscribeStatus(ctx context.Context, userID int64, templateID string) (*SubscribeStatus, error) {
+	var subscribedAt *time.Time
+	err := r.dbtx.QueryRowContext(ctx,
+		`SELECT subscribed_at FROM subscribe_records WHERE user_id = $1 AND template_id = $2`,
+		userID, templateID,
+	).Scan(&subscribedAt)
+	if err != nil {
+		return &SubscribeStatus{TemplateID: templateID, Subscribed: false}, nil
+	}
+	return &SubscribeStatus{TemplateID: templateID, Subscribed: true, SubscribedAt: subscribedAt}, nil
 }
