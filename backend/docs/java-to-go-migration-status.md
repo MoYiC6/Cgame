@@ -27,7 +27,7 @@
 | 18 | withdrawal | 选手提现申请、审批、打款、税务计算 | ✅ 已完成 |
 | 19 | invite | 用户邀请、选手邀请码、邀请记录 | ✅ 已完成 |
 | 20 | feedback | 用户反馈提交、回复、管理 | ✅ 已完成 |
-| 21 | partner | 运营合作伙伴管理、分成配置 | ⚠️ 部分（基础配置） |
+| 21 | partner | 运营合作伙伴管理、分成配置 | ✅ 已完成 |
 | 22 | customer_service | 客服配置、客服接入 | ⚠️ 部分（基础配置） |
 
 ## 二、功能迁移明细
@@ -548,15 +548,15 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 配置列表 | `GET /api/admin/partner-config` | ⚠️ |
-| 创建配置 | `POST /api/admin/partner-config` | ❌ |
-| 更新配置 | `PUT /api/admin/partner-config` | ⚠️ |
-| 删除配置 | `DELETE /api/admin/partner-config/{id}` | ❌ |
-| 合作伙伴列表 | `GET /api/admin/teacher/partners` | ❌ |
-| 更新合作 | `PUT /api/admin/teacher/partners/{id}` | ❌ |
-| 删除合作 | `DELETE /api/admin/teacher/partners/{id}` | ❌ |
-| 选手合作记录 | `GET /api/admin/teacher/partners/teacher/{teacherId}` | ❌ |
-| 已合作选手 | `GET /api/admin/teacher/partners/partnered-teachers` | ❌ |
+| 配置列表 | `GET /api/admin/partner-config` | ✅ |
+| 创建配置 | `POST /api/admin/partner-config` | ✅ |
+| 更新配置 | `PUT /api/admin/partner-config` | ✅ |
+| 删除配置 | `DELETE /api/admin/partner-config/{id}` | ✅ |
+| 合作伙伴列表 | `GET /api/admin/teacher/partners` | ✅ |
+| 更新合作 | `PUT /api/admin/teacher/partners/{id}` | ✅ |
+| 删除合作 | `DELETE /api/admin/teacher/partners/{id}` | ✅ |
+| 选手合作记录 | `GET /api/admin/teacher/partners/teacher/{teacherId}` | ✅ |
+| 已合作选手 | `GET /api/admin/teacher/partners/partnered-teachers` | ✅ |
 
 ### 22. customer_service（客服系统）
 

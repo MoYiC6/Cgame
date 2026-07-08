@@ -22,6 +22,7 @@ import (
 	"backend/internal/modules/invite"
 	"backend/internal/modules/notification"
 	"backend/internal/modules/order"
+	"backend/internal/modules/partner"
 	"backend/internal/modules/payment"
 	"backend/internal/modules/refund"
 	"backend/internal/modules/recharge"
@@ -127,6 +128,7 @@ func main() {
 		refund.NewHandler(refund.NewService(refund.NewRepository(sqlDB), txManager), authMiddleware),
 		recharge.NewHandler(recharge.NewService(recharge.NewRepository(sqlDB), txManager), authMiddleware),
 		withdrawal.NewHandler(withdrawal.NewService(withdrawal.NewRepository(sqlDB)), authMiddleware),
+		partner.NewHandler(partner.NewService(partner.NewRepository(sqlDB)), authMiddleware),
 	)
 
 	gameHandler.RegisterWebSocket(engine, authMiddleware)
