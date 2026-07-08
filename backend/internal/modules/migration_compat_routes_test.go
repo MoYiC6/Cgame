@@ -28,7 +28,7 @@ func TestJavaCompatibleRoutesAreRegisteredForMigratedSlices(t *testing.T) {
 
 	auth.NewHandler(nil, auth.HandlerConfig{}).RegisterRoutes(api)
 	external.NewHandler(nil, nil).RegisterRoutes(api)
-	order.NewHandler(nil).RegisterRoutes(api)
+	order.NewHandler(nil, nil).RegisterRoutes(api)
 	payment.NewHandler(nil).RegisterRoutes(api)
 	inventory.NewHandler(nil, nil).RegisterRoutes(api)
 	file.NewHandler(nil, nil).RegisterRoutes(api)

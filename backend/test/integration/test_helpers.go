@@ -113,7 +113,7 @@ func newIntegrationEngine(db database.DB) *gin.Engine {
 	return bootstrap.NewAPIEngine(
 		deps,
 		authHandler,
-		order.NewHandler(order.NewService(order.NewRepository(repoDB), database.NoopTxManager{})),
+		order.NewHandler(order.NewService(order.NewRepository(repoDB), database.NoopTxManager{}), nil),
 		payment.NewHandler(payment.NewService(payment.NewRepository(repoDB), database.NoopTxManager{})),
 		inventory.NewHandler(inventory.NewService(inventory.NewRepository(repoDB), database.NoopTxManager{}), nil),
 		notification.NewHandler(notification.NewService(notification.NewRepository(repoDB), database.NoopTxManager{}), nil),

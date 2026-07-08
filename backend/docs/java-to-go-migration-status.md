@@ -11,7 +11,7 @@
 | 2 | user | 用户中心、余额、充值、等级、消费排名 | ⚠️ 部分（基础信息/余额查询） |
 | 3 | teacher | 选手生态、审核、等级、动态、收入分成、排名 | ⚠️ 部分（核心接口/申请审核/等级管理已完成，动态/评价/视频待迁移） |
 | 4 | goods/inventory | 商品管理、SKU、分类、限购、Banner、印象标签 | ⚠️ 部分（核心 CRUD / SKU / 分类 / 限购已完成，Banner / 印象标签待迁移） |
-| 5 | order | 订单生命周期、状态流转、结单、退单、转移、评价 | ⚠️ 部分（基础 CRUD + 状态机） |
+| 5 | order | 订单生命周期、状态流转、结单、退单、转移、评价 | ✅ 已完成 |
 | 6 | payment | 微信支付、支付宝、收银台、支付记录、回调 | ⚠️ 部分（基础 CRUD） |
 | 7 | finance | 财务统计、运营商佣金、提现管理、结算 | ⚠️ 部分（仅统计接口） |
 | 8 | notification | 系统通知、订阅消息、待办事项、实时推送 | ⚠️ 部分（基础通知/待办，管理端收件箱缺失） |
@@ -202,33 +202,33 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 创建订单 | `POST /api/client/orders` | ⚠️ |
-| 订单列表 | `GET /api/client/orders` | ⚠️ |
-| 订单详情 | `GET /api/client/orders/{id}` | ⚠️ |
-| 取消订单 | `POST /api/client/orders/{id}/cancel` | ⚠️ |
-| 确认订单 | `POST /api/client/orders/{id}/confirm` | ⚠️ |
-| 投诉订单 | `POST /api/client/orders/{id}/complaint` | ❌ |
-| 确认选手 | `POST /api/client/orders/{id}/confirm-teacher` | ❌ |
-| 订单统计 | `GET /api/client/orders/statistics` | ❌ |
-| 评价列表 | `GET /api/client/reviews/orders` | ❌ |
-| 订单评价详情 | `GET /api/client/reviews/orders/{orderId}` | ❌ |
-| 订单列表（管理端） | `GET /api/admin/orders` | ❌ |
-| 订单详情（管理端） | `GET /api/admin/orders/{id}` | ❌ |
-| 更新订单状态 | `PUT /api/admin/orders/{id}/status` | ❌ |
-| 退款 | `POST /api/admin/orders/{id}/refund` | ❌ |
-| 手动结单 | `POST /api/admin/orders/{id}/manual-complete` | ❌ |
-| 更新备注 | `PUT /api/admin/orders/{id}/remark` | ❌ |
-| 更新关联选手 | `PUT /api/admin/orders/{id}/teachers` | ❌ |
-| 手动下单 | `POST /api/admin/orders/manual` | ❌ |
-| 订单统计（管理端） | `GET /api/admin/orders/stats` | ❌ |
-| 评价列表（管理端） | `GET /api/admin/reviews` | ❌ |
-| 更新评价状态 | `PUT /api/admin/reviews/{id}/status` | ❌ |
-| 回复评价 | `POST /api/admin/reviews/{id}/reply` | ❌ |
-| 最终审核列表 | `GET /api/admin/orders/final-review` | ❌ |
-| 终审通过 | `POST /api/admin/orders/final-review/{id}/approve` | ❌ |
-| 终审拒绝 | `POST /api/admin/orders/final-review/{id}/reject` | ❌ |
-| 订单转移配置 | `GET /api/order-transfer` | ❌ |
-| 执行订单转移 | `POST /api/order-transfer/transfer` | ❌ |
+| 创建订单 | `POST /api/client/orders` | ✅ |
+| 订单列表 | `GET /api/client/orders` | ✅ |
+| 订单详情 | `GET /api/client/orders/{id}` | ✅ |
+| 取消订单 | `POST /api/client/orders/{id}/cancel` | ✅ |
+| 确认订单 | `POST /api/client/orders/{id}/confirm` | ✅ |
+| 投诉订单 | `POST /api/client/orders/{id}/complaint` | ✅ |
+| 确认选手 | `POST /api/client/orders/{id}/confirm-teacher` | ✅ |
+| 订单统计 | `GET /api/client/orders/statistics` | ✅ |
+| 评价列表 | `GET /api/client/reviews/orders` | ✅ |
+| 订单评价详情 | `GET /api/client/reviews/orders/{orderId}` | ✅ |
+| 订单列表（管理端） | `GET /api/admin/orders` | ✅ |
+| 订单详情（管理端） | `GET /api/admin/orders/{id}` | ✅ |
+| 更新订单状态 | `PUT /api/admin/orders/{id}/status` | ✅ |
+| 退款 | `POST /api/admin/orders/{id}/refund` | ✅ |
+| 手动结单 | `POST /api/admin/orders/{id}/manual-complete` | ✅ |
+| 更新备注 | `PUT /api/admin/orders/{id}/remark` | ✅ |
+| 更新关联选手 | `PUT /api/admin/orders/{id}/teachers` | ✅ |
+| 手动下单 | `POST /api/admin/orders/manual` | ✅ |
+| 订单统计（管理端） | `GET /api/admin/orders/stats` | ✅ |
+| 评价列表（管理端） | `GET /api/admin/reviews` | ✅ |
+| 更新评价状态 | `PUT /api/admin/reviews/{id}/status` | ✅ |
+| 回复评价 | `POST /api/admin/reviews/{id}/reply` | ✅ |
+| 最终审核列表 | `GET /api/admin/orders/final-review` | ✅ |
+| 终审通过 | `POST /api/admin/orders/final-review/{id}/approve` | ✅ |
+| 终审拒绝 | `POST /api/admin/orders/final-review/{id}/reject` | ✅ |
+| 订单转移配置 | `GET /api/order-transfer` | ✅ |
+| 执行订单转移 | `POST /api/order-transfer/transfer` | ✅ |
 
 ### 6. payment（支付收银）
 

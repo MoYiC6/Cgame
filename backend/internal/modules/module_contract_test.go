@@ -39,7 +39,7 @@ func TestModulePingHandlersReturnTopLevelTraceIDWithoutPayloadTrace(t *testing.T
 			module:        "order",
 			newRepository: func() any { return order.NewRepository(nil) },
 			newService:    func(repo any) any { return order.NewService(repo.(order.Repository), database.NoopTxManager{}) },
-			newHandler:    func(service any) routeRegistrar { return order.NewHandler(service.(order.Service)) },
+			newHandler:    func(service any) routeRegistrar { return order.NewHandler(service.(order.Service), nil) },
 		},
 		{
 			name:          "payment",
