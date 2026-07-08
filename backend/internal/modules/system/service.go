@@ -99,6 +99,33 @@ func (s *Service) DeleteFaceIdConfig(ctx context.Context, id int64) error {
 	return s.repo.DeleteFaceIdConfig(ctx, id)
 }
 
+// Customer Service Config
+func (s *Service) GetCustomerServiceConfig(ctx context.Context) (map[string]any, error) {
+	configType, _ := s.GetSetting(ctx, "customer_service.type")
+	if configType == "" {
+		configType = "fallback"
+	}
+	enabledStr, _ := s.GetSetting(ctx, "customer_service.enabled")
+	enabled := enabledStr != "false"
+	phone, _ := s.GetSetting(ctx, "customer_service.phone")
+	wechat, _ := s.GetSetting(ctx, "customer_service.wechat")
+	qq, _ := s.GetSetting(ctx, "customer_service.qq")
+	email, _ := s.GetSetting(ctx, "customer_service.email")
+	workHours, _ := s.GetSetting(ctx, "customer_service.work_hours")
+	if workHours == "" {
+		workHours = "9:00-22:00"
+	}
+	return map[string]any{
+		"type":       configType,
+		"enabled":    enabled,
+		"phone":      phone,
+		"wechat":     wechat,
+		"qq":         qq,
+		"email":      email,
+		"workHours":  workHours,
+	}, nil
+}
+
 // RealName Verify Log
 func (s *Service) CreateRealNameVerifyLog(ctx context.Context, log *RealNameVerifyLog) error {
 	return s.repo.CreateRealNameVerifyLog(ctx, log)

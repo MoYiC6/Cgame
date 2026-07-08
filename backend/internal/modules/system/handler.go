@@ -42,6 +42,20 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		client.GET("/notice", h.GetNotice)
 		client.GET("/system-name", h.GetSystemName)
 	}
+
+	partner := group.Group("/admin/partner-config")
+	if h.authMiddleware != nil {
+		partner.Use(h.authMiddleware)
+	}
+	{
+		partner.GET("", h.GetPartnerConfig)
+		partner.PUT("", h.SetPartnerConfig)
+	}
+
+	common := group.Group("/common/customer-service")
+	{
+		common.GET("/config", h.GetCustomerServiceConfig)
+	}
 }
 
 func (h *Handler) ListSettings(c *gin.Context) {
@@ -147,6 +161,15 @@ func (h *Handler) GetSystemName(c *gin.Context) {
 		name = "FeYo电竞"
 	}
 	response.Success(c, gin.H{"name": name})
+}
+
+func (h *Handler) GetCustomerServiceConfig(c *gin.Context) {
+	config, err := h.service.GetCustomerServiceConfig(c.Request.Context())
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, config)
 }
 
 func (h *Handler) GetFaceIdConfig(c *gin.Context) {

@@ -28,7 +28,7 @@
 | 19 | invite | 用户邀请、选手邀请码、邀请记录 | ✅ 已完成 |
 | 20 | feedback | 用户反馈提交、回复、管理 | ✅ 已完成 |
 | 21 | partner | 运营合作伙伴管理、分成配置 | ✅ 已完成 |
-| 22 | customer_service | 客服配置、客服接入 | ⚠️ 部分（基础配置） |
+| 22 | customer_service | 客服配置、客服接入 | ✅ 已完成 |
 
 ## 二、功能迁移明细
 
@@ -562,8 +562,7 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 客服配置 | `GET /api/common/customer-service/config` | ⚠️ |
-| 会话列表 | `GET /api/admin/chat/sessions` | ✅ |
+| 客服配置 | `GET /api/common/customer-service/config` | ✅ |
 | 消息列表 | `GET /api/admin/chat/sessions/{sessionId}/messages` | ✅ |
 | 发送消息 | `POST /api/admin/chat/sessions/{sessionId}/messages` | ✅ |
 
