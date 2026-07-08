@@ -67,17 +67,17 @@
 | 查询我的余额日志 | `GET /api/balance/my-logs` | ✅ |
 | 查询用户余额日志 | `GET /api/balance/user-logs/{userId}` | ✅ |
 | 查询最近余额日志 | `GET /api/balance/recent-logs/{userId}` | ✅ |
-| 手动充值 | `POST /api/recharge/manual` | ❌ |
-| 创建充值订单 | `POST /api/recharge/create` | ❌ |
-| 充值回调 | `POST /api/recharge/callback` | ❌ |
-| 充值记录列表 | `GET /api/recharge/list` | ❌ |
-| 我的充值记录 | `GET /api/recharge/my-records` | ❌ |
-| 充值记录详情 | `GET /api/recharge/detail/{id}` | ❌ |
-| 充值统计 | `GET /api/recharge/statistics` | ❌ |
-| 最近充值记录 | `GET /api/recharge/recent/{userId}` | ❌ |
-| 取消充值 | `POST /api/recharge/cancel/{rechargeNo}` | ❌ |
-| 继续支付 | `POST /api/recharge/continue-pay/{rechargeNo}` | ❌ |
-| 验证支付 | `POST /api/recharge/verify-payment/{rechargeNo}` | ❌ |
+| 手动充值 | `POST /api/recharge/manual` | ✅ |
+| 创建充值订单 | `POST /api/recharge/create` | ✅ |
+| 充值回调 | `POST /api/recharge/callback` | ✅ |
+| 充值记录列表 | `GET /api/recharge/list` | ✅ |
+| 我的充值记录 | `GET /api/recharge/my-records` | ✅ |
+| 充值记录详情 | `GET /api/recharge/detail/{id}` | ✅ |
+| 充值统计 | `GET /api/recharge/statistics` | ✅ |
+| 最近充值记录 | `GET /api/recharge/recent/{userId}` | ✅ |
+| 取消充值 | `POST /api/recharge/cancel/{rechargeNo}` | ✅ |
+| 继续支付 | `POST /api/recharge/continue-pay/{rechargeNo}` | ✅ |
+| 验证支付 | `POST /api/recharge/verify-payment/{rechargeNo}` | ✅ |
 | 获取用户信息（客户端） | `GET /api/client/user/info` | ✅ |
 | 更新用户信息（客户端） | `PUT /api/client/user/info` | ✅ |
 | 完善资料 | `POST /api/client/user/complete-profile` | ✅ |
@@ -148,15 +148,15 @@
 | 更新考核视频 | `PUT /api/admin/teachers/{teacherId}/assessment-videos/{videoId}` | ❌ |
 | 启用/禁用视频 | `PUT /api/admin/teachers/{teacherId}/assessment-videos/{videoId}/enabled` | ❌ |
 | 删除考核视频 | `DELETE /api/admin/teachers/{teacherId}/assessment-videos/{videoId}` | ❌ |
-| 合作伙伴列表 | `GET /api/admin/teacher/partners` | ❌ |
-| 更新合作伙伴 | `PUT /api/admin/teacher/partners/{id}` | ❌ |
-| 删除合作伙伴 | `DELETE /api/admin/teacher/partners/{id}` | ❌ |
-| 选手合作记录 | `GET /api/admin/teacher/partners/teacher/{teacherId}` | ❌ |
-| 已合作选手 | `GET /api/admin/teacher/partners/partnered-teachers` | ❌ |
-| 邀请码列表 | `GET /api/admin/teacher/invite-code` | ❌ |
-| 创建邀请码 | `POST /api/admin/teacher/invite-code` | ❌ |
-| 更新邀请码 | `PUT /api/admin/teacher/invite-code/{id}` | ❌ |
-| 删除邀请码 | `DELETE /api/admin/teacher/invite-code/{id}` | ❌ |
+| 合作伙伴列表 | `GET /api/admin/teacher/partners` | ✅ |
+| 更新合作伙伴 | `PUT /api/admin/teacher/partners/{id}` | ✅ |
+| 删除合作伙伴 | `DELETE /api/admin/teacher/partners/{id}` | ✅ |
+| 选手合作记录 | `GET /api/admin/teacher/partners/teacher/{teacherId}` | ✅ |
+| 已合作选手 | `GET /api/admin/teacher/partners/partnered-teachers` | ✅ |
+| 邀请码列表 | `GET /api/admin/teacher/invite-code` | ✅ |
+| 创建邀请码 | `POST /api/admin/teacher/invite-code` | ✅ |
+| 更新邀请码 | `PUT /api/admin/teacher/invite-code/{id}` | ✅ |
+| 删除邀请码 | `DELETE /api/admin/teacher/invite-code/{id}` | ✅ |
 
 ### 4. goods/inventory（商品中心）
 
