@@ -165,3 +165,30 @@ func (s *Service) GetSubscribeStatus(ctx context.Context, userID int64, template
 	}
 	return s.repo.GetSubscribeStatus(ctx, userID, templateID)
 }
+
+func (s *Service) UpdateNotification(ctx context.Context, n *Notification) error {
+	if n.ID == 0 {
+		return fmt.Errorf("notification id is required")
+	}
+	if n.Title == "" || n.Type == "" {
+		return fmt.Errorf("title and type are required")
+	}
+	return s.repo.UpdateNotification(ctx, n)
+}
+
+func (s *Service) MarkAdminNotificationAsRead(ctx context.Context, userID, notificationID int64) error {
+	if userID == 0 {
+		return fmt.Errorf("user id is required")
+	}
+	if notificationID == 0 {
+		return fmt.Errorf("notification id is required")
+	}
+	return s.repo.MarkAdminNotificationAsRead(ctx, userID, notificationID)
+}
+
+func (s *Service) MarkAllAdminNotificationsAsRead(ctx context.Context, userID int64) error {
+	if userID == 0 {
+		return fmt.Errorf("user id is required")
+	}
+	return s.repo.MarkAllAdminNotificationsAsRead(ctx, userID)
+}

@@ -32,6 +32,11 @@ type Repository interface {
 	GetSubscribeTemplates(ctx context.Context) ([]*SubscribeTemplate, error)
 	RecordSubscribe(ctx context.Context, userID int64, templateID string) error
 	GetSubscribeStatus(ctx context.Context, userID int64, templateID string) (*SubscribeStatus, error)
+
+	// Admin notification management
+	UpdateNotification(ctx context.Context, n *Notification) error
+	MarkAdminNotificationAsRead(ctx context.Context, userID, notificationID int64) error
+	MarkAllAdminNotificationsAsRead(ctx context.Context, userID int64) error
 }
 
 type repository struct {
@@ -361,4 +366,42 @@ func (r *repository) GetSubscribeStatus(ctx context.Context, userID int64, templ
 		return &SubscribeStatus{TemplateID: templateID, Subscribed: false}, nil
 	}
 	return &SubscribeStatus{TemplateID: templateID, Subscribed: true, SubscribedAt: subscribedAt}, nil
+}
+
+func (r *repository) UpdateNotification(ctx context.Context, n *Notification) error {
+	extraDataJSON, _ := json.Marshal(n.ExtraData)
+	_, err := r.dbtx.ExecContext(ctx,
+		`UPDATE notifications SET title = $1, content = $2, type = $3, sub_type = $4, target_type = $5, target_id = $6, related_id = $7, related_type = $8, extra_data = $9, priority = $10, expire_time = $11, updated_at = NOW() WHERE id = $12`,
+		n.Title, n.Content, n.Type, n.SubType, n.TargetType, n.TargetID, n.RelatedID, n.RelatedType, string(extraDataJSON), n.Priority, n.ExpireTime, n.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("update notification: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) MarkAdminNotificationAsRead(ctx context.Context, userID, notificationID int64) error {
+	_, err := r.dbtx.ExecContext(ctx,
+		`INSERT INTO notification_reads (user_id, notification_id, read_at) VALUES ($1, $2, NOW())
+		 ON CONFLICT (user_id, notification_id) DO NOTHING`,
+		userID, notificationID,
+	)
+	if err != nil {
+		return fmt.Errorf("mark admin notification as read: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) MarkAllAdminNotificationsAsRead(ctx context.Context, userID int64) error {
+	_, err := r.dbtx.ExecContext(ctx,
+		`INSERT INTO notification_reads (user_id, notification_id, read_at)
+		 SELECT $1, id, NOW() FROM notifications
+		 WHERE id NOT IN (SELECT notification_id FROM notification_reads WHERE user_id = $1)
+		 ON CONFLICT (user_id, notification_id) DO NOTHING`,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("mark all admin notifications as read: %w", err)
+	}
+	return nil
 }

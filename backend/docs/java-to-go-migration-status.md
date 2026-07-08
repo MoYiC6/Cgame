@@ -298,15 +298,15 @@
 | 订阅状态 | `GET /api/client/subscribe-message/status` | ✅ |
 | 通知列表（管理端） | `GET /api/admin/notifications` | ✅ |
 | 创建通知 | `POST /api/admin/notifications` | ✅ |
-| 更新通知 | `PUT /api/admin/notifications/{id}` | ❌ |
+| 更新通知 | `PUT /api/admin/notifications/{id}` | ✅ |
 | 删除通知 | `DELETE /api/admin/notifications/{id}` | ✅ |
-| 标记已读 | `PUT /api/admin/notifications/{id}/read` | ❌ |
-| 全部已读 | `PUT /api/admin/notifications/read-all` | ❌ |
+| 标记已读 | `PUT /api/admin/notifications/{id}/read` | ✅ |
+| 全部已读 | `PUT /api/admin/notifications/read-all` | ✅ |
 | 通知统计 | `GET /api/admin/notifications/stats` | ✅ |
-| 通知收件箱 | `GET /api/admin/notification-inbox` | ⚠️ |
-| 标记收件箱已读 | `PUT /api/admin/notification-inbox/{id}/read` | ⚠️ |
-| 收件箱全部已读 | `PUT /api/admin/notification-inbox/read-all` | ⚠️ |
-| 切换待办状态 | `PUT /api/admin/system-todos/{id}/toggle` | ⚠️ |
+| 通知收件箱 | `GET /api/admin/notification-inbox` | ✅ |
+| 标记收件箱已读 | `PUT /api/admin/notification-inbox/{id}/read` | ✅ |
+| 收件箱全部已读 | `PUT /api/admin/notification-inbox/read-all` | ✅ |
+| 切换待办状态 | `PUT /api/admin/system-todos/{id}/toggle` | ✅ |
 
 ### 9. chat（聊天客服）
 

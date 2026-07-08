@@ -44,6 +44,9 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		admin.POST("", h.AdminCreate)
 		admin.GET("", h.AdminList)
 		admin.GET("/stats", h.AdminStats)
+		admin.PUT("/:id", h.AdminUpdate)
+		admin.PUT("/:id/read", h.AdminMarkRead)
+		admin.PUT("/read-all", h.AdminMarkAllRead)
 		admin.DELETE("/:id", h.AdminDelete)
 	}
 
@@ -193,6 +196,56 @@ func (h *Handler) AdminDelete(c *gin.Context) {
 		return
 	}
 	if err := h.service.DeleteNotification(c.Request.Context(), id); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) AdminUpdate(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	if id == 0 {
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid notification id", http.StatusBadRequest, nil))
+		return
+	}
+	var n Notification
+	if err := c.ShouldBindJSON(&n); err != nil {
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid input", http.StatusBadRequest, err))
+		return
+	}
+	n.ID = id
+	if err := h.service.UpdateNotification(c.Request.Context(), &n); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) AdminMarkRead(c *gin.Context) {
+	userID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	if id == 0 {
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid notification id", http.StatusBadRequest, nil))
+		return
+	}
+	if err := h.service.MarkAdminNotificationAsRead(c.Request.Context(), userID, id); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) AdminMarkAllRead(c *gin.Context) {
+	userID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	if err := h.service.MarkAllAdminNotificationsAsRead(c.Request.Context(), userID); err != nil {
 		response.Fail(c, err)
 		return
 	}
