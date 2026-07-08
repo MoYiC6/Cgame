@@ -49,14 +49,16 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 	authGroup.POST("/logout", h.Logout)
 	if h.authz != nil {
 		authGroup.GET("/me", h.authz, h.Me)
+		authGroup.GET("/info", h.authz, h.Me)
 		return
 	}
 	authGroup.GET("/me", h.Me)
+	authGroup.GET("/info", h.Me)
 }
 
 func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil || req.Identifier == "" || req.Password == "" {
+	if err := c.ShouldBindJSON(&req); err != nil || req.Username == "" || req.Password == "" {
 		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid input", http.StatusBadRequest, err))
 		return
 	}

@@ -38,15 +38,15 @@ func TestServiceLoginSuccess(t *testing.T) {
 	})
 
 	svc := NewService(userRepo, authRepo, database.NoopTxManager{}, hasher, tokenManager, security.CryptoRandomTokenGenerator{}, ServiceConfig{RefreshTokenTTL: 24 * time.Hour, RefreshCookieName: "refresh_token"})
-	resp, cookie, err := svc.Login(ctx, &LoginRequest{Identifier: "admin@example.com", Password: "secret-password"})
+	resp, cookie, err := svc.Login(ctx, &LoginRequest{Username: "admin@example.com", Password: "secret-password"})
 	if err != nil {
 		t.Fatalf("Login() error = %v", err)
 	}
 	if resp.AccessToken == "" || cookie == nil || cookie.Value == "" {
 		t.Fatalf("expected access token and refresh cookie, got resp=%+v cookie=%+v", resp, cookie)
 	}
-	if len(resp.User.Permissions) != 1 || resp.User.Permissions[0] != "order:read" {
-		t.Fatalf("expected deduped permissions, got %#v", resp.User.Permissions)
+	if len(resp.Permissions) != 1 || resp.Permissions[0] != "order:read" {
+		t.Fatalf("expected deduped permissions, got %#v", resp.Permissions)
 	}
 }
 
@@ -59,7 +59,7 @@ func TestServiceLoginInvalidCredentialsWritesAttemptAndAudit(t *testing.T) {
 	authRepo := &stubAuthRepository{}
 	svc := NewService(userRepo, authRepo, database.NoopTxManager{}, hasher, tokenManager, security.CryptoRandomTokenGenerator{}, ServiceConfig{RefreshTokenTTL: 24 * time.Hour, RefreshCookieName: "refresh_token"})
 
-	_, _, err := svc.Login(ctx, &LoginRequest{Identifier: "missing@example.com", Password: "secret-password"})
+	_, _, err := svc.Login(ctx, &LoginRequest{Username: "missing@example.com", Password: "secret-password"})
 	if !errors.Is(err, ErrInvalidCredentials) {
 		t.Fatalf("expected ErrInvalidCredentials, got %v", err)
 	}
@@ -84,7 +84,7 @@ func TestServiceLoginDisabledUserReturnsForbiddenAndWritesAudit(t *testing.T) {
 	tokenManager := security.NewHMACTokenManager(security.HMACTokenConfig{Issuer: "backend", Audience: "admin-api", KeyID: "test-key", Secret: []byte("01234567890123456789012345678901"), AccessTokenTTL: 15 * time.Minute, ClockSkew: 30 * time.Second})
 
 	svc := NewService(userRepo, authRepo, database.NoopTxManager{}, hasher, tokenManager, security.CryptoRandomTokenGenerator{}, ServiceConfig{RefreshTokenTTL: 24 * time.Hour, RefreshCookieName: "refresh_token"})
-	_, _, err = svc.Login(ctx, &LoginRequest{Identifier: "admin@example.com", Password: "secret-password"})
+	_, _, err = svc.Login(ctx, &LoginRequest{Username: "admin@example.com", Password: "secret-password"})
 	if !errors.Is(err, ErrAccountDisabled) {
 		t.Fatalf("expected ErrAccountDisabled, got %v", err)
 	}
@@ -109,7 +109,7 @@ func TestServiceLoginLockedUserReturnsLockedAndWritesAudit(t *testing.T) {
 	tokenManager := security.NewHMACTokenManager(security.HMACTokenConfig{Issuer: "backend", Audience: "admin-api", KeyID: "test-key", Secret: []byte("01234567890123456789012345678901"), AccessTokenTTL: 15 * time.Minute, ClockSkew: 30 * time.Second})
 
 	svc := NewService(userRepo, authRepo, database.NoopTxManager{}, hasher, tokenManager, security.CryptoRandomTokenGenerator{}, ServiceConfig{RefreshTokenTTL: 24 * time.Hour, RefreshCookieName: "refresh_token"})
-	_, _, err = svc.Login(ctx, &LoginRequest{Identifier: "admin@example.com", Password: "secret-password"})
+	_, _, err = svc.Login(ctx, &LoginRequest{Username: "admin@example.com", Password: "secret-password"})
 	if !errors.Is(err, ErrAccountLocked) {
 		t.Fatalf("expected ErrAccountLocked, got %v", err)
 	}
@@ -147,7 +147,7 @@ func TestServiceLoginAppliesFailureWindowLockoutByIdentifierAndIP(t *testing.T) 
 		LockDuration:      30 * time.Minute,
 	})
 
-	_, _, err := svc.Login(ctx, &LoginRequest{Identifier: "missing@example.com", Password: "secret-password"})
+	_, _, err := svc.Login(ctx, &LoginRequest{Username: "missing@example.com", Password: "secret-password"})
 	if !errors.Is(err, ErrAccountLocked) {
 		t.Fatalf("expected ErrAccountLocked, got %v", err)
 	}
@@ -189,7 +189,7 @@ func TestServiceLoginAppliesFailureWindowLockoutByUserID(t *testing.T) {
 		LockDuration:      30 * time.Minute,
 	})
 
-	_, _, err = svc.Login(ctx, &LoginRequest{Identifier: "admin@example.com", Password: "secret-password"})
+	_, _, err = svc.Login(ctx, &LoginRequest{Username: "admin@example.com", Password: "secret-password"})
 	if !errors.Is(err, ErrAccountLocked) {
 		t.Fatalf("expected ErrAccountLocked, got %v", err)
 	}
@@ -421,14 +421,17 @@ func TestServiceLogoutWithSessionMismatchRevokesBoth(t *testing.T) {
 }
 
 func TestServiceMeReturnsSnapshot(t *testing.T) {
-	p := &security.Principal{PublicID: "usr_123", SessionID: "ses_123", Roles: []string{"admin"}, Permissions: []string{"order:read"}}
+	p := &security.Principal{UserID: "123", PublicID: "usr_123", SessionID: "ses_123", Roles: []string{"admin"}, Permissions: []string{"order:read"}}
 	ctx := security.WithPrincipal(context.Background(), p)
-	svc := NewService(nil, &stubAuthRepository{}, database.NoopTxManager{}, nil, nil, nil, ServiceConfig{})
+	userRepo := &stubUserReader{userByID: map[int64]*user.User{
+		123: {ID: 123, PublicID: "usr_123", Username: "usr_123", Email: "test@example.com", Status: user.StatusActive},
+	}}
+	svc := NewService(userRepo, &stubAuthRepository{}, database.NoopTxManager{}, nil, nil, nil, ServiceConfig{})
 	resp, err := svc.Me(ctx)
 	if err != nil {
 		t.Fatalf("Me() error = %v", err)
 	}
-	if resp.User.ID != "usr_123" || resp.SessionID != "ses_123" {
+	if resp.Username != "usr_123" || resp.SessionID != "ses_123" {
 		t.Fatalf("unexpected me response: %+v", resp)
 	}
 }
@@ -446,7 +449,7 @@ func TestServiceLoginSuccessStoresClientHashes(t *testing.T) {
 	tokenManager := security.NewHMACTokenManager(security.HMACTokenConfig{Issuer: "backend", Audience: "admin-api", KeyID: "test-key", Secret: []byte("01234567890123456789012345678901"), AccessTokenTTL: 15 * time.Minute, ClockSkew: 30 * time.Second})
 
 	svc := NewService(userRepo, authRepo, database.NoopTxManager{}, hasher, tokenManager, security.CryptoRandomTokenGenerator{}, ServiceConfig{RefreshTokenTTL: 24 * time.Hour, RefreshCookieName: "refresh_token"})
-	_, _, err = svc.Login(ctx, &LoginRequest{Identifier: "admin@example.com", Password: "secret-password"})
+	_, _, err = svc.Login(ctx, &LoginRequest{Username: "admin@example.com", Password: "secret-password"})
 	if err != nil {
 		t.Fatalf("Login() error = %v", err)
 	}
@@ -501,6 +504,9 @@ func (s *stubUserReader) GetByID(ctx context.Context, userID int64) (*user.User,
 		return nil, nil
 	}
 	return s.userByID[userID], nil
+}
+func (s *stubUserReader) GetByIdentifier(ctx context.Context, identifier string) (*user.User, error) {
+	return s.user, s.err
 }
 
 type stubAuthRepository struct {

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 type UserReader interface {
 	GetByEmail(ctx context.Context, email string) (*user.User, error)
 	GetByID(ctx context.Context, userID int64) (*user.User, error)
+	GetByIdentifier(ctx context.Context, identifier string) (*user.User, error)
 }
 
 type Service interface {
@@ -56,18 +58,18 @@ func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 	if req == nil {
 		return nil, nil, ErrInvalidCredentials
 	}
-	email := user.NormalizeEmail(req.Identifier)
+	identifier := strings.TrimSpace(req.Username)
 	clientIPHash, userAgentHash := requestHashes(ctx)
-	if s.isLockedOut(ctx, FailedLoginAttemptFilter{IdentifierHash: sha256Hex(email), IPHash: clientIPHash, Since: time.Now().UTC().Add(-s.config.FailedWindow)}) {
-		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(email), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "too_many_attempts")
+	if s.isLockedOut(ctx, FailedLoginAttemptFilter{IdentifierHash: sha256Hex(identifier), IPHash: clientIPHash, Since: time.Now().UTC().Add(-s.config.FailedWindow)}) {
+		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(identifier), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "too_many_attempts")
 		s.writeAuditLog(ctx, &AuditLog{EventType: "login_failed", Result: "failure", IPHash: clientIPHash, UserAgentHash: userAgentHash, MetadataJSON: map[string]any{"reason": "too_many_attempts"}, OccurredAt: time.Now().UTC()})
 		return nil, nil, ErrAccountLocked
 	}
-	u, err := s.userRepo.GetByEmail(ctx, email)
+	u, err := s.userRepo.GetByIdentifier(ctx, req.Username)
 	if err != nil {
 		if errors.Is(err, ErrUserNotFound) && s.passwordHasher != nil && s.dummyHash != "" {
 			_, _ = s.passwordHasher.Verify(req.Password, s.dummyHash)
-			s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(email), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "invalid_credentials")
+			s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(identifier), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "invalid_credentials")
 			s.writeAuditLog(ctx, &AuditLog{EventType: "login_failed", Result: "failure", IPHash: clientIPHash, UserAgentHash: userAgentHash, MetadataJSON: map[string]any{"reason": "invalid_credentials"}, OccurredAt: time.Now().UTC()})
 			return nil, nil, ErrInvalidCredentials
 		}
@@ -77,31 +79,34 @@ func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 		if s.passwordHasher != nil && s.dummyHash != "" {
 			_, _ = s.passwordHasher.Verify(req.Password, s.dummyHash)
 		}
-		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(email), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "invalid_credentials")
+		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(identifier), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "invalid_credentials")
 		s.writeAuditLog(ctx, &AuditLog{EventType: "login_failed", Result: "failure", IPHash: clientIPHash, UserAgentHash: userAgentHash, MetadataJSON: map[string]any{"reason": "invalid_credentials"}, OccurredAt: time.Now().UTC()})
 		return nil, nil, ErrInvalidCredentials
 	}
-	if s.isLockedOut(ctx, FailedLoginAttemptFilter{UserID: ptrInt64(u.ID), IdentifierHash: sha256Hex(email), IPHash: clientIPHash, Since: time.Now().UTC().Add(-s.config.FailedWindow)}) {
-		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(email), UserID: ptrInt64(u.ID), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "too_many_attempts")
+	if s.isLockedOut(ctx, FailedLoginAttemptFilter{UserID: ptrInt64(u.ID), IdentifierHash: sha256Hex(identifier), IPHash: clientIPHash, Since: time.Now().UTC().Add(-s.config.FailedWindow)}) {
+		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(identifier), UserID: ptrInt64(u.ID), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "too_many_attempts")
 		s.writeAuditLog(ctx, &AuditLog{EventType: "login_failed", Result: "failure", UserPublicID: u.PublicID, IPHash: clientIPHash, UserAgentHash: userAgentHash, MetadataJSON: map[string]any{"reason": "too_many_attempts"}, OccurredAt: time.Now().UTC()})
 		return nil, nil, ErrAccountLocked
 	}
 	ok, err := s.passwordHasher.Verify(req.Password, u.PasswordHash)
+	if errors.Is(err, security.ErrNoMatchingHasher) {
+		return nil, nil, ErrInvalidCredentials
+	}
 	if err != nil {
 		return nil, nil, err
 	}
 	if !ok {
-		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(email), UserID: ptrInt64(u.ID), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "invalid_credentials")
+		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(identifier), UserID: ptrInt64(u.ID), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "invalid_credentials")
 		s.writeAuditLog(ctx, &AuditLog{EventType: "login_failed", Result: "failure", UserPublicID: u.PublicID, IPHash: clientIPHash, UserAgentHash: userAgentHash, MetadataJSON: map[string]any{"reason": "invalid_credentials"}, OccurredAt: time.Now().UTC()})
 		return nil, nil, ErrInvalidCredentials
 	}
 	switch u.Status {
 	case user.StatusDisabled:
-		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(email), UserID: ptrInt64(u.ID), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "account_disabled")
+		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(identifier), UserID: ptrInt64(u.ID), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "account_disabled")
 		s.writeAuditLog(ctx, &AuditLog{EventType: "login_failed", Result: "failure", UserPublicID: u.PublicID, IPHash: clientIPHash, UserAgentHash: userAgentHash, MetadataJSON: map[string]any{"reason": "account_disabled"}, OccurredAt: time.Now().UTC()})
 		return nil, nil, ErrAccountDisabled
 	case user.StatusLocked:
-		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(email), UserID: ptrInt64(u.ID), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "account_locked")
+		s.writeLoginAttempt(ctx, loginAttemptTarget{IdentifierHash: sha256Hex(identifier), UserID: ptrInt64(u.ID), IPHash: clientIPHash, UserAgentHash: userAgentHash}, false, "account_locked")
 		s.writeAuditLog(ctx, &AuditLog{EventType: "login_failed", Result: "failure", UserPublicID: u.PublicID, IPHash: clientIPHash, UserAgentHash: userAgentHash, MetadataJSON: map[string]any{"reason": "account_locked"}, OccurredAt: time.Now().UTC()})
 		return nil, nil, ErrAccountLocked
 	}
@@ -145,9 +150,22 @@ func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 		if err := s.repo.UpdateLastLoginAt(txCtx, u.ID, now); err != nil {
 			return err
 		}
-		s.writeLoginAttempt(txCtx, loginAttemptTarget{IdentifierHash: sha256Hex(email), UserID: ptrInt64(u.ID), IPHash: clientIPHash, UserAgentHash: userAgentHash}, true, "success")
+		s.writeLoginAttempt(txCtx, loginAttemptTarget{IdentifierHash: sha256Hex(identifier), UserID: ptrInt64(u.ID), IPHash: clientIPHash, UserAgentHash: userAgentHash}, true, "success")
 		s.writeAuditLog(txCtx, &AuditLog{EventType: "login_success", Result: "success", UserPublicID: u.PublicID, SessionID: sessionID, IPHash: clientIPHash, UserAgentHash: userAgentHash, OccurredAt: now})
-		response = &AuthResponse{AccessToken: accessToken.Token, TokenType: accessToken.TokenType, ExpiresIn: accessToken.ExpiresIn, User: &AuthUser{ID: u.PublicID, Roles: principal.Roles, Permissions: principal.Permissions}}
+		rolesStr := joinRoles(roles)
+		response = &AuthResponse{
+			AccessToken:     accessToken.Token,
+			RefreshToken:    refreshValue,
+			TokenType:       accessToken.TokenType,
+			ExpiresIn:       accessToken.ExpiresIn,
+			RefreshExpiresIn: int64(s.config.RefreshTokenTTL.Seconds()),
+			UserID:          u.ID,
+			Username:        u.Username,
+			Nickname:        u.Nickname,
+			Avatar:          u.Avatar,
+			Roles:           rolesStr,
+			Permissions:     security.NormalizeStrings(permissions),
+		}
 		cookie = &RefreshCookie{Value: refreshValue, ExpiresAt: expiresAt}
 		return nil
 	})
@@ -256,10 +274,23 @@ func (s *service) Refresh(ctx context.Context, req *RefreshRequest) (*AuthRespon
 		if err != nil {
 			return err
 		}
-		s.writeAuditLog(txCtx, &AuditLog{EventType: "refresh_success", Result: "success", UserPublicID: u.PublicID, SessionID: stored.SessionID, IPHash: ClientIPHashFromContext(txCtx), UserAgentHash: UserAgentHashFromContext(txCtx), OccurredAt: now})
-		response = &AuthResponse{AccessToken: accessToken.Token, TokenType: accessToken.TokenType, ExpiresIn: accessToken.ExpiresIn, User: &AuthUser{ID: u.PublicID, Roles: principal.Roles, Permissions: principal.Permissions}}
-		cookie = &RefreshCookie{Value: refreshValue, ExpiresAt: expiresAt}
-		return nil
+	s.writeAuditLog(txCtx, &AuditLog{EventType: "refresh_success", Result: "success", UserPublicID: u.PublicID, SessionID: stored.SessionID, IPHash: ClientIPHashFromContext(txCtx), UserAgentHash: UserAgentHashFromContext(txCtx), OccurredAt: now})
+	rolesStr := joinRoles(roles)
+	response = &AuthResponse{
+		AccessToken:      accessToken.Token,
+		RefreshToken:     refreshValue,
+		TokenType:        accessToken.TokenType,
+		ExpiresIn:        accessToken.ExpiresIn,
+		RefreshExpiresIn: int64(s.config.RefreshTokenTTL.Seconds()),
+		UserID:           u.ID,
+		Username:         u.Username,
+		Nickname:         u.Nickname,
+		Avatar:           u.Avatar,
+		Roles:            rolesStr,
+		Permissions:      security.NormalizeStrings(permissions),
+	}
+	cookie = &RefreshCookie{Value: refreshValue, ExpiresAt: expiresAt}
+	return nil
 	})
 	if compromiseEvent != nil {
 		if revokeErr := s.persistRefreshCompromise(ctx, *compromiseEvent); revokeErr != nil {
@@ -328,7 +359,34 @@ func (s *service) Me(ctx context.Context) (*MeResponse, error) {
 	if !ok {
 		return nil, ErrUnauthorized
 	}
-	return &MeResponse{User: AuthUser{ID: p.PublicID, Roles: append([]string(nil), p.Roles...), Permissions: append([]string(nil), p.Permissions...)}, SessionID: p.SessionID}, nil
+	if s.userRepo == nil {
+		return nil, ErrUserNotFound
+	}
+	userID, _ := strconv.ParseInt(p.UserID, 10, 64)
+	u, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if u == nil {
+		return nil, ErrUserNotFound
+	}
+	return &MeResponse{
+		UserID:      u.ID,
+		Username:    u.Username,
+		Nickname:    u.Nickname,
+		Email:       u.Email,
+		Avatar:      u.Avatar,
+		Gender:      u.Gender,
+		Mobile:      u.Mobile,
+		IsTeacher:   u.IsTeacher,
+		TeacherID:   nil,
+		Status:      u.Status,
+		Roles:       p.Roles,
+		Permissions: p.Permissions,
+		Menus:       []any{},
+		Buttons:     []string{},
+		SessionID:   p.SessionID,
+	}, nil
 }
 
 func sha256Hex(value string) string {
@@ -485,6 +543,13 @@ func hashClientMetadata(value string) string {
 
 func ptrInt64(value int64) *int64 {
 	return &value
+}
+
+func joinRoles(roles []string) string {
+	if len(roles) == 0 {
+		return ""
+	}
+	return strings.Join(roles, ",")
 }
 
 func (s *service) revokeSessionIfNeeded(ctx context.Context, seen map[string]struct{}, sessionID string) error {

@@ -18,7 +18,7 @@ func TestHandlerLoginValidation(t *testing.T) {
 	h := NewHandler(&stubHandlerService{}, HandlerConfig{Cookie: testCookieConfig()})
 	engine := newHandlerEngine(h)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(`{"identifier":""}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(`{"username":""}`))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	engine.ServeHTTP(resp, req)
@@ -29,12 +29,12 @@ func TestHandlerLoginValidation(t *testing.T) {
 func TestHandlerLoginSuccessWritesCookie(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHandler(&stubHandlerService{
-		loginResponse: &AuthResponse{AccessToken: "access", TokenType: "Bearer", ExpiresIn: 900, User: &AuthUser{ID: "usr_1", Roles: []string{"admin"}}},
+		loginResponse: &AuthResponse{AccessToken: "access", TokenType: "Bearer", ExpiresIn: 900, Username: "admin", Nickname: "管理员"},
 		loginCookie:   &RefreshCookie{Value: "refresh", ExpiresAt: time.Now().UTC().Add(time.Hour)},
 	}, HandlerConfig{Cookie: testCookieConfig()})
 	engine := newHandlerEngine(h)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(`{"identifier":"admin@example.com","password":"secret-password"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(`{"username":"admin@example.com","password":"secret-password"}`))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	engine.ServeHTTP(resp, req)
@@ -59,7 +59,7 @@ func TestHandlerLoginFailureReturnsInvalidCredentials(t *testing.T) {
 	h := NewHandler(&stubHandlerService{loginErr: ErrInvalidCredentials}, HandlerConfig{Cookie: testCookieConfig()})
 	engine := newHandlerEngine(h)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(`{"identifier":"admin@example.com","password":"bad"}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(`{"username":"admin@example.com","password":"bad"}`))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 	engine.ServeHTTP(resp, req)
@@ -72,7 +72,7 @@ func TestHandlerRefreshWithoutCookieReturnsUnauthorizedAndClearsCookie(t *testin
 	h := NewHandler(&stubHandlerService{refreshErr: ErrRefreshInvalid}, HandlerConfig{Cookie: testCookieConfig()})
 	engine := newHandlerEngine(h)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/refresh", nil)
 	resp := httptest.NewRecorder()
 	engine.ServeHTTP(resp, req)
 
@@ -83,12 +83,12 @@ func TestHandlerRefreshWithoutCookieReturnsUnauthorizedAndClearsCookie(t *testin
 func TestHandlerRefreshSuccessRotatesCookie(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHandler(&stubHandlerService{
-		refreshResponse: &AuthResponse{AccessToken: "new-access", TokenType: "Bearer", ExpiresIn: 900, User: &AuthUser{ID: "usr_1", Roles: []string{"admin"}}},
+		refreshResponse: &AuthResponse{AccessToken: "new-access", TokenType: "Bearer", ExpiresIn: 900, Username: "admin", Nickname: "管理员"},
 		refreshCookie:   &RefreshCookie{Value: "new-refresh", ExpiresAt: time.Now().UTC().Add(time.Hour)},
 	}, HandlerConfig{Cookie: testCookieConfig()})
 	engine := newHandlerEngine(h)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/refresh", nil)
 	req.AddCookie(&http.Cookie{Name: "refresh_token", Value: "old-refresh"})
 	resp := httptest.NewRecorder()
 	engine.ServeHTTP(resp, req)
@@ -106,7 +106,7 @@ func TestHandlerLogoutWithStaleCookieStillClearsCookie(t *testing.T) {
 	h := NewHandler(&stubHandlerService{}, HandlerConfig{Cookie: testCookieConfig()})
 	engine := newHandlerEngine(h)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/logout", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/logout", nil)
 	req.AddCookie(&http.Cookie{Name: "refresh_token", Value: "stale-refresh"})
 	resp := httptest.NewRecorder()
 	engine.ServeHTTP(resp, req)
@@ -122,7 +122,7 @@ func TestHandlerMeUnauthorized(t *testing.T) {
 	h := NewHandler(&stubHandlerService{meErr: ErrUnauthorized}, HandlerConfig{Cookie: testCookieConfig()})
 	engine := newHandlerEngine(h)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
 	resp := httptest.NewRecorder()
 	engine.ServeHTTP(resp, req)
 
@@ -131,10 +131,10 @@ func TestHandlerMeUnauthorized(t *testing.T) {
 
 func TestHandlerMeAuthorized(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHandler(&stubHandlerService{meResponse: &MeResponse{User: AuthUser{ID: "usr_1", Roles: []string{"admin"}}, SessionID: "ses_1"}}, HandlerConfig{Cookie: testCookieConfig()})
+	h := NewHandler(&stubHandlerService{meResponse: &MeResponse{Username: "admin", Nickname: "管理员", Roles: []string{"admin"}, Permissions: []string{}, SessionID: "ses_1"}}, HandlerConfig{Cookie: testCookieConfig()})
 	engine := newHandlerEngine(h)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
 	resp := httptest.NewRecorder()
 	engine.ServeHTTP(resp, req)
 
@@ -180,7 +180,7 @@ func (s *stubHandlerService) Me(ctx context.Context) (*MeResponse, error) {
 func newHandlerEngine(h *Handler) *gin.Engine {
 	engine := gin.New()
 	engine.Use(withObservability("req-handler", "trace-handler"))
-	api := engine.Group("/api/v1")
+	api := engine.Group("/api")
 	h.RegisterRoutes(api)
 	return engine
 }
@@ -200,5 +200,5 @@ func assertClearedRefreshCookie(t *testing.T, recorder *httptest.ResponseRecorde
 }
 
 func testCookieConfig() CookieConfig {
-	return CookieConfig{Name: "refresh_token", Path: "/api/v1/auth", HTTPOnly: true, SameSite: "lax"}
+	return CookieConfig{Name: "refresh_token", Path: "/api/auth", HTTPOnly: true, SameSite: "lax"}
 }

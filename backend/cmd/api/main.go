@@ -123,7 +123,7 @@ func main() {
 		external.NewHandler(external.NewService(external.NewRepository(sqlDB)), authMiddleware),
 		feedback.NewHandler(feedback.NewService(feedback.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 		coupon.NewHandler(coupon.NewService(coupon.NewRepository(sqlDB), txManager), authMiddleware),
-		finance.NewHandler(finance.NewService(finance.NewRepository(sqlDB))),
+		finance.NewHandler(finance.NewService(finance.NewRepository(sqlDB)), authMiddleware),
 		invite.NewHandler(invite.NewService(invite.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 		refund.NewHandler(refund.NewService(refund.NewRepository(sqlDB), txManager), authMiddleware),
 		recharge.NewHandler(recharge.NewService(recharge.NewRepository(sqlDB), txManager), authMiddleware),

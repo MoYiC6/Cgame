@@ -18,6 +18,7 @@ func NewHandler(service Service) *Handler {
 
 func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/order/ping", h.Ping)
+
 	client := group.Group("/client/order")
 	{
 		client.POST("/create", h.CreateOrder)
@@ -26,6 +27,15 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		client.POST("/:orderId/pay", h.PayOrder)
 		client.POST("/:orderId/complete", h.CompleteOrder)
 		client.POST("/:orderId/cancel", h.CancelOrder)
+	}
+
+	compatibleClient := group.Group("/client/orders")
+	{
+		compatibleClient.POST("", h.CreateOrder)
+		compatibleClient.GET("", h.ListOrders)
+		compatibleClient.GET("/:orderId", h.GetOrder)
+		compatibleClient.POST("/:orderId/cancel", h.CancelOrder)
+		compatibleClient.POST("/:orderId/confirm", h.CompleteOrder)
 	}
 }
 
@@ -36,9 +46,9 @@ func (h *Handler) Ping(c *gin.Context) {
 func (h *Handler) CreateOrder(c *gin.Context) {
 	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
 	var req struct {
-		SKUName string  `json:"skuName"`
-		Quantity int    `json:"quantity"`
-		Remark  *string `json:"remark"`
+		SKUName  string  `json:"skuName"`
+		Quantity int     `json:"quantity"`
+		Remark   *string `json:"remark"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, err)

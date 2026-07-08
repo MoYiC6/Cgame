@@ -9,7 +9,7 @@ import (
 )
 
 type Handler struct {
-	service  *Service
+	service        *Service
 	authMiddleware gin.HandlerFunc
 }
 
@@ -26,6 +26,15 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		user.GET("/balance", h.GetBalance)
 		user.GET("/balance/logs", h.GetBalanceLogs)
 		user.GET("/level", h.GetLevel)
+	}
+
+	balance := group.Group("/balance")
+	if h.authMiddleware != nil {
+		balance.Use(h.authMiddleware)
+	}
+	{
+		balance.GET("/my-balance", h.GetBalance)
+		balance.GET("/my-logs", h.GetBalanceLogs)
 	}
 }
 

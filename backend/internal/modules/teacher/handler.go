@@ -27,12 +27,25 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		client.GET("/levels", h.GetLevels)
 	}
 
+	public := group.Group("/client")
+	{
+		public.GET("/teachers", h.ListTeachers)
+	}
+
 	admin := group.Group("/admin/teachers")
 	if h.authMiddleware != nil {
 		admin.Use(h.authMiddleware)
 	}
 	{
 		admin.GET("", h.ListTeachers)
+	}
+
+	adminLevels := group.Group("/admin/teacher/levels")
+	if h.authMiddleware != nil {
+		adminLevels.Use(h.authMiddleware)
+	}
+	{
+		adminLevels.GET("", h.GetLevels)
 	}
 }
 

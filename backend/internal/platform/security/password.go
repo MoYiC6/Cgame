@@ -51,10 +51,14 @@ func (h *Argon2idHasher) Hash(password string) (string, error) {
 func (h *Argon2idHasher) Verify(password string, encodedHash string) (bool, error) {
 	memoryKiB, iterations, parallelism, salt, want, err := parseArgon2idHash(encodedHash)
 	if err != nil {
-		return false, err
+		return false, nil
 	}
 	got := argon2.IDKey([]byte(password+h.pepper), salt, iterations, memoryKiB, parallelism, uint32(len(want)))
 	return subtle.ConstantTimeCompare(got, want) == 1, nil
+}
+
+func (h *Argon2idHasher) Supports(encodedHash string) bool {
+	return strings.HasPrefix(encodedHash, "argon2id$")
 }
 
 func parseArgon2idHash(encodedHash string) (uint32, uint32, uint8, []byte, []byte, error) {

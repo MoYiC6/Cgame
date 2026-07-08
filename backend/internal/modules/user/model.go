@@ -8,13 +8,50 @@ import (
 type User struct {
 	ID                int64
 	PublicID          string
+	Username          string
 	Email             string
 	PasswordHash      string
+	Nickname          string
+	RealName          string
+	Mobile            string
+	MobileVerified    int16
+	EmailVerified     int16
+	Avatar            string
+	Gender            int16
+	Birthday          *time.Time
+	Intro             string
+	Province          string
+	City              string
+	District          string
+	Wechat            string
+	WechatUnionID     string
+	WechatMPOpenID    string
+	WechatH5OpenID    string
+	AlipayOpenID      string
 	Status            string
-	Balance           float64
-	LevelID           *int64
+	IsTeacher         int16
+	IDCard            string
+	IDCardFront       string
+	IDCardBack        string
+	RealNameStatus    int16
+	RealNameVerifyType string
+	RealNameSubmitTime *time.Time
+	RealNameVerifyTime *time.Time
+	RealNameRejectReason string
+	LoginFailedCount  int
+	LastLoginTime     *time.Time
+	LastLoginIP       string
+	LastLoginPlatform string
+	PasswordUpdatedAt *time.Time
 	PasswordChangedAt *time.Time
-	LastLoginAt       *time.Time
+	RegisterIP        string
+	RegisterPlatform  string
+	RegisterSource    string
+	Balance           float64
+	FrozenBalance     float64
+	TotalRecharge     float64
+	TotalConsumption  float64
+	LevelID           *int64
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }

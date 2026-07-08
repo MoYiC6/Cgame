@@ -36,9 +36,9 @@ func TestRepositoryGetByEmailReturnsNormalizedUser(t *testing.T) {
 
 	now := time.Now().UTC().Truncate(time.Second)
 	_, err = h.db.ExecContext(ctx, `
-		INSERT INTO users (public_id, email, password_hash, status, created_at, updated_at)
+		INSERT INTO sys_user (username, email, password, status, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
-	`, "usr_test_email", "admin@example.com", "hash", StatusActive, now, now)
+	`, "usr_test_email", "admin@example.com", "hash", 1, now, now)
 	if err != nil {
 		t.Fatalf("insert user error = %v", err)
 	}
@@ -57,8 +57,8 @@ func TestRepositoryGetByEmailReturnsNormalizedUser(t *testing.T) {
 	if user.Email != "admin@example.com" {
 		t.Fatalf("expected normalized email, got %q", user.Email)
 	}
-	if user.Status != StatusActive {
-		t.Fatalf("expected status %q, got %q", StatusActive, user.Status)
+	if user.Status != "active" {
+		t.Fatalf("expected status %q, got %q", "active", user.Status)
 	}
 }
 
@@ -81,10 +81,10 @@ func TestRepositoryGetByIDReturnsUser(t *testing.T) {
 	now := time.Now().UTC().Truncate(time.Second)
 	var userID int64
 	err = h.db.QueryRowContext(ctx, `
-		INSERT INTO users (public_id, email, password_hash, status, created_at, updated_at)
+		INSERT INTO sys_user (username, email, password, status, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id
-	`, "usr_test_id", "member@example.com", "hash", StatusDisabled, now, now).Scan(&userID)
+	`, "usr_test_id", "member@example.com", "hash", 0, now, now).Scan(&userID)
 	if err != nil {
 		t.Fatalf("insert user returning id error = %v", err)
 	}
@@ -103,8 +103,8 @@ func TestRepositoryGetByIDReturnsUser(t *testing.T) {
 	if user.PublicID != "usr_test_id" {
 		t.Fatalf("expected public_id usr_test_id, got %q", user.PublicID)
 	}
-	if user.Status != StatusDisabled {
-		t.Fatalf("expected status %q, got %q", StatusDisabled, user.Status)
+	if user.Status != "disabled" {
+		t.Fatalf("expected status %q, got %q", "disabled", user.Status)
 	}
 }
 

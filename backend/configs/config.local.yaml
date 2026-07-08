@@ -3,14 +3,14 @@ app:
   env: local
 
 server:
-  addr: ":8080"
+  addr: ":8081"
 
 log:
   level: info
 
 db:
   driver: postgres
-  dsn: "postgres://backend:backend@localhost:25432/Cgame?sslmode=disable"
+  dsn: "postgres://djclub:djclub_local_pass@localhost:15432/cgame?sslmode=disable"
   max_open_conns: 16
   max_idle_conns: 8
   conn_max_lifetime_secs: 300

@@ -13,7 +13,7 @@ import (
 
 func TestAuthLoginValidationError(t *testing.T) {
 	engine := newIntegrationEngine(database.DummyDB{})
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBufferString(`{"identifier":""}`))
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", bytes.NewBufferString(`{"identifier":""}`))
 	req.Header.Set("Content-Type", "application/json")
 	resp := httptest.NewRecorder()
 

@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	GetByID(ctx context.Context, userID int64) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetByIdentifier(ctx context.Context, identifier string) (*User, error)
 	CreateBalanceLog(ctx context.Context, log *UserBalanceLog) error
 	GetUserBalanceLogs(ctx context.Context, userID int64, page, pageSize int) ([]*UserBalanceLog, int, error)
 	GetUserLevel(ctx context.Context, userID int64) (*UserLevel, error)
@@ -29,19 +30,29 @@ func NewRepository(dbtx database.DBTX) Repository {
 
 func (r *repository) GetByID(ctx context.Context, userID int64) (*User, error) {
 	row := r.executor(ctx).QueryRowContext(ctx, `
-		SELECT id, public_id, email, password_hash, status, password_changed_at, last_login_at, created_at, updated_at
-		FROM users
-		WHERE id = $1
+		SELECT id, username, email, password, nickname, real_name, mobile, email_verified, avatar, gender, birthday, intro, province, city, district, wechat, status, is_teacher, level_id, last_login_time, create_time, update_time
+		FROM sys_user
+		WHERE id = $1 AND deleted = 0
 	`, userID)
 	return scanUser(row)
 }
 
 func (r *repository) GetByEmail(ctx context.Context, email string) (*User, error) {
 	row := r.executor(ctx).QueryRowContext(ctx, `
-		SELECT id, public_id, email, password_hash, status, password_changed_at, last_login_at, created_at, updated_at
-		FROM users
-		WHERE email = $1
+		SELECT id, username, email, password, nickname, real_name, mobile, email_verified, avatar, gender, birthday, intro, province, city, district, wechat, status, is_teacher, level_id, last_login_time, create_time, update_time
+		FROM sys_user
+		WHERE email = $1 AND deleted = 0
 	`, NormalizeEmail(email))
+	return scanUser(row)
+}
+
+func (r *repository) GetByIdentifier(ctx context.Context, identifier string) (*User, error) {
+	row := r.executor(ctx).QueryRowContext(ctx, `
+		SELECT id, username, email, password, nickname, real_name, mobile, email_verified, avatar, gender, birthday, intro, province, city, district, wechat, status, is_teacher, level_id, last_login_time, create_time, update_time
+		FROM sys_user
+		WHERE (username = $1 OR mobile = $1) AND deleted = 0
+		LIMIT 1
+	`, identifier)
 	return scanUser(row)
 }
 
@@ -54,14 +65,41 @@ func scanUser(row rowScanner) (*User, error) {
 		return nil, nil
 	}
 	var user User
+	var birthday sql.NullTime
+	var lastLoginTime sql.NullTime
+	var levelID sql.NullInt64
+	var statusInt sql.NullInt16
+	var realName sql.NullString
+	var mobile sql.NullString
+	var email sql.NullString
+	var passwordHash sql.NullString
+	var avatar sql.NullString
+	var intro sql.NullString
+	var province sql.NullString
+	var city sql.NullString
+	var district sql.NullString
+	var wechat sql.NullString
 	err := row.Scan(
 		&user.ID,
-		&user.PublicID,
-		&user.Email,
-		&user.PasswordHash,
-		&user.Status,
-		&user.PasswordChangedAt,
-		&user.LastLoginAt,
+		&user.Username,
+		&email,
+		&passwordHash,
+		&user.Nickname,
+		&realName,
+		&mobile,
+		&user.EmailVerified,
+		&avatar,
+		&user.Gender,
+		&birthday,
+		&intro,
+		&province,
+		&city,
+		&district,
+		&wechat,
+		&statusInt,
+		&user.IsTeacher,
+		&levelID,
+		&lastLoginTime,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -71,7 +109,42 @@ func scanUser(row rowScanner) (*User, error) {
 		}
 		return nil, err
 	}
+	user.Email = email.String
+	user.PasswordHash = passwordHash.String
+	user.RealName = realName.String
+	user.Mobile = mobile.String
+	user.Avatar = avatar.String
+	user.Intro = intro.String
+	user.Province = province.String
+	user.City = city.String
+	user.District = district.String
+	user.Wechat = wechat.String
+	if birthday.Valid {
+		user.Birthday = &birthday.Time
+	}
+	if lastLoginTime.Valid {
+		user.LastLoginTime = &lastLoginTime.Time
+	}
+	if levelID.Valid {
+		user.LevelID = &levelID.Int64
+	}
+	user.Status = mapStatus(statusInt)
+	user.PublicID = user.Username
 	return &user, nil
+}
+
+func mapStatus(v sql.NullInt16) string {
+	if !v.Valid {
+		return "disabled"
+	}
+	switch v.Int16 {
+	case 1:
+		return "active"
+	case 2:
+		return "locked"
+	default:
+		return "disabled"
+	}
 }
 
 type rowScanner interface {

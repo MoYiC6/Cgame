@@ -41,6 +41,15 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		client.GET("/maps/goods/:goodsId", h.GetGoodsMaps)
 	}
 
+	clientMaps := group.Group("/client/game-map")
+	if h.authMiddleware != nil {
+		clientMaps.Use(h.authMiddleware)
+	}
+	{
+		clientMaps.GET("/list", h.GetEnabledMaps)
+		clientMaps.GET("/goods/:goodsId", h.GetGoodsMaps)
+	}
+
 	admin := group.Group("/admin/game")
 	if h.authMiddleware != nil {
 		admin.Use(h.authMiddleware)
@@ -55,6 +64,21 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		admin.GET("/bomb-ranking", h.GetBombRankingList)
 		admin.PUT("/bomb-ranking", h.UpdateBombRanking)
 	}
+
+	adminMaps := group.Group("/admin/game-map")
+	if h.authMiddleware != nil {
+		adminMaps.Use(h.authMiddleware)
+	}
+	{
+		adminMaps.GET("", h.ListMaps)
+		adminMaps.GET("/enabled", h.GetEnabledMaps)
+		adminMaps.GET("/:id", h.GetMap)
+		adminMaps.POST("", h.CreateMap)
+		adminMaps.PUT("/:id", h.UpdateMap)
+		adminMaps.DELETE("/:id", h.DeleteMap)
+	}
+
+	group.GET("/admin/bomb-ranking", h.GetBombRankingList)
 }
 
 func (h *Handler) RegisterWebSocket(engine *gin.Engine, authMiddleware gin.HandlerFunc) {
@@ -67,7 +91,7 @@ func (h *Handler) RegisterWebSocket(engine *gin.Engine, authMiddleware gin.Handl
 func (h *Handler) CreateRoom(c *gin.Context) {
 	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
 	maxPlayers, _ := strconv.Atoi(c.DefaultQuery("maxPlayers", "4"))
-	
+
 	var req struct {
 		Nickname string `json:"nickname"`
 		Avatar   string `json:"avatar"`
@@ -87,7 +111,7 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 
 func (h *Handler) JoinRoom(c *gin.Context) {
 	userID, _ := strconv.ParseInt(c.GetString("userID"), 10, 64)
-	
+
 	var req struct {
 		RoomCode string `json:"roomCode"`
 		Nickname string `json:"nickname"`
@@ -163,7 +187,7 @@ func (h *Handler) ListMaps(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
 	keyword := c.Query("keyword")
-	
+
 	var statusPtr *int
 	if s := c.Query("status"); s != "" {
 		sVal, _ := strconv.Atoi(s)
@@ -205,8 +229,8 @@ func (h *Handler) CreateMap(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		Icon:        req.Icon,
-		Sort:       req.Sort,
-		Status:     req.Status,
+		Sort:        req.Sort,
+		Status:      req.Status,
 	}
 	id, err := h.service.CreateMap(c.Request.Context(), m)
 	if err != nil {
@@ -218,7 +242,7 @@ func (h *Handler) CreateMap(c *gin.Context) {
 
 func (h *Handler) UpdateMap(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
-	
+
 	var req struct {
 		Name        *string `json:"name"`
 		Description *string `json:"description"`
@@ -292,7 +316,7 @@ func (h *Handler) UpdateBombRanking(c *gin.Context) {
 func (h *Handler) HandleGameWebSocket(c *gin.Context) {
 	userIDStr := c.Query("user_id")
 	roomCode := c.Query("room_code")
-	
+
 	if userIDStr == "" || roomCode == "" {
 		c.String(http.StatusBadRequest, "missing user_id or room_code")
 		return

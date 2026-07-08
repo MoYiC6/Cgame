@@ -12,7 +12,7 @@ import (
 
 func TestAuthRefreshWithoutCookieReturnsUnauthorized(t *testing.T) {
 	engine := newIntegrationEngine(database.DummyDB{})
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/refresh", nil)
 	resp := httptest.NewRecorder()
 
 	engine.ServeHTTP(resp, req)

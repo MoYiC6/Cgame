@@ -3,7 +3,7 @@ app:
   env: dev
 
 server:
-  addr: ":8080"
+  addr: ":8081"
 
 log:
   level: info

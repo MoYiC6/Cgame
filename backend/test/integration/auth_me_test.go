@@ -12,7 +12,7 @@ import (
 
 func TestAuthMeRouteIsRegistered(t *testing.T) {
 	engine := newIntegrationEngine(database.DummyDB{})
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
 	resp := httptest.NewRecorder()
 
 	engine.ServeHTTP(resp, req)
@@ -24,7 +24,7 @@ func TestAuthMeRouteIsRegistered(t *testing.T) {
 
 func TestAuthMeWithoutBearerReturnsUnauthorized(t *testing.T) {
 	engine := newIntegrationEngine(database.DummyDB{})
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/me", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
 	resp := httptest.NewRecorder()
 
 	engine.ServeHTTP(resp, req)

@@ -17,10 +17,10 @@ func TestBootstrapRegistersAllPingRoutes(t *testing.T) {
 		path   string
 		module string
 	}{
-		{name: "order", path: "/api/v1/order/ping", module: "order"},
-		{name: "payment", path: "/api/v1/payment/ping", module: "payment"},
-		{name: "inventory", path: "/api/v1/inventory/ping", module: "inventory"},
-		{name: "notification", path: "/api/v1/notification/ping", module: "notification"},
+		{name: "order", path: "/api/order/ping", module: "order"},
+		{name: "payment", path: "/api/payment/ping", module: "payment"},
+		{name: "inventory", path: "/api/inventory/ping", module: "inventory"},
+		{name: "notification", path: "/api/notification/ping", module: "notification"},
 	}
 
 	for _, tt := range tests {

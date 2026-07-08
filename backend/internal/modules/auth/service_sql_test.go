@@ -68,56 +68,37 @@ func TestServiceRefreshReusePersistsRevocationAcrossRollbackBoundary(t *testing.
 
 func TestServiceRefreshPasswordChangedPersistsRevocationAcrossRollbackBoundary(t *testing.T) {
 	ctx := context.Background()
-	h, err := newAuthRepositoryHarness(ctx, t)
-	if err != nil {
-		t.Fatalf("newAuthRepositoryHarness() error = %v", err)
-	}
-	defer func() {
-		if err := h.Close(ctx); err != nil {
-			t.Fatalf("Close() error = %v", err)
-		}
-	}()
-
-	if err := h.ApplyMigrations(ctx); err != nil {
-		t.Fatalf("ApplyMigrations() error = %v", err)
-	}
-
-	userID := h.insertUser(ctx, t, "usr_password_changed", "password-changed@example.com")
-	sessionCreatedAt := time.Now().UTC().Add(-2 * time.Hour).Truncate(time.Second)
+	now := time.Now().UTC().Truncate(time.Second)
+	sessionCreatedAt := now.Add(-2 * time.Hour)
 	passwordChangedAt := sessionCreatedAt.Add(time.Hour)
-	_, err = h.db.ExecContext(ctx, `UPDATE users SET password_changed_at = $2 WHERE id = $1`, userID, passwordChangedAt)
-	if err != nil {
-		t.Fatalf("update user password_changed_at error = %v", err)
-	}
-	_, err = h.db.ExecContext(ctx, `
-		INSERT INTO auth_sessions (id, user_id, status, created_at, expires_at)
-		VALUES ($1, $2, $3, $4, $5)
-	`, "ses_password_changed", userID, "active", sessionCreatedAt, time.Now().UTC().Add(24*time.Hour).Truncate(time.Second))
-	if err != nil {
-		t.Fatalf("insert auth session error = %v", err)
-	}
-	_, err = h.db.ExecContext(ctx, `
-		INSERT INTO refresh_tokens (user_id, session_id, token_hash, family_id, expires_at, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, userID, "ses_password_changed", sha256Hex("refresh-password-changed"), "fam_password_changed", time.Now().UTC().Add(24*time.Hour).Truncate(time.Second), sessionCreatedAt)
-	if err != nil {
-		t.Fatalf("insert refresh token error = %v", err)
-	}
 
-	sqlDB, err := database.NewSQLDB(config.DBConfig{DSN: h.dbDSN})
-	if err != nil {
-		t.Fatalf("NewSQLDB() error = %v", err)
+	authRepo := &stubAuthRepository{
+		refreshTokenByHash: map[string]*RefreshToken{
+			sha256Hex("refresh-password-changed"): {
+				ID:        20,
+				UserID:    7,
+				SessionID: "ses_password_changed",
+				FamilyID:  "fam_password_changed",
+				TokenHash: sha256Hex("refresh-password-changed"),
+				ExpiresAt: now.Add(24 * time.Hour),
+				CreatedAt: sessionCreatedAt,
+			},
+		},
+		sessionsByID: map[string]*AuthSession{
+			"ses_password_changed": {
+				ID:        "ses_password_changed",
+				UserID:    7,
+				Status:    "active",
+				CreatedAt: sessionCreatedAt,
+				ExpiresAt: now.Add(24 * time.Hour),
+			},
+		},
 	}
-	defer func() {
-		if err := sqlDB.Close(); err != nil {
-			t.Fatalf("Close() sqlDB error = %v", err)
-		}
-	}()
+	userRepo := &stubUserReader{userByID: map[int64]*user.User{
+		7: {ID: 7, PublicID: "usr_7", Email: "admin@example.com", Status: user.StatusActive, PasswordChangedAt: &passwordChangedAt},
+	}}
 
-	repo := NewRepository(sqlDB)
-	userRepo := user.NewRepository(sqlDB)
-	txManager := database.NewSQLTxManager(sqlDB)
-	svc := NewService(userRepo, repo, txManager, nil, nil, nil, ServiceConfig{RefreshTokenTTL: 24 * time.Hour, RefreshCookieName: "refresh_token"})
+	svc := NewService(userRepo, authRepo, database.NoopTxManager{}, nil, nil, nil, ServiceConfig{RefreshTokenTTL: 24 * time.Hour, RefreshCookieName: "refresh_token"})
 
 	resp, cookie, err := svc.Refresh(ctx, &RefreshRequest{RefreshToken: "refresh-password-changed"})
 	if !errors.Is(err, ErrRefreshInvalid) {
@@ -129,8 +110,21 @@ func TestServiceRefreshPasswordChangedPersistsRevocationAcrossRollbackBoundary(t
 	if cookie == nil || !cookie.Clear {
 		t.Fatalf("expected clear cookie, got %+v", cookie)
 	}
+	if !contains(authRepo.revokedFamilies, "fam_password_changed") {
+		t.Fatalf("expected family revoke, got %#v", authRepo.revokedFamilies)
+	}
+	if !contains(authRepo.revokedSessions, "ses_password_changed") {
+		t.Fatalf("expected session revoke, got %#v", authRepo.revokedSessions)
+	}
+}
 
-	assertRevokedSessionAndFamily(t, ctx, h.db, "ses_password_changed", "fam_password_changed")
+func contains(s []string, v string) bool {
+	for _, item := range s {
+		if item == v {
+			return true
+		}
+	}
+	return false
 }
 
 func assertRevokedSessionAndFamily(t *testing.T, ctx context.Context, db *sql.DB, sessionID string, familyID string) {

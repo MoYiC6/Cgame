@@ -18,7 +18,7 @@ import (
 func setupTestDB(t *testing.T) *database.SQLDB {
 	t.Helper()
 	ctx := context.Background()
-	db, err := database.NewPgxPool(ctx, config.DBConfig{DSN: "postgres://backend:backend@localhost:25432/Cgame?sslmode=disable"})
+	db, err := database.NewPgxPool(ctx, config.DBConfig{DSN: "postgres://djclub:djclub_local_pass@localhost:15432/cgame?sslmode=disable"})
 	require.NoError(t, err)
 	sqlDB, err := db.SQLDB()
 	require.NoError(t, err)

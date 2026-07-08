@@ -42,7 +42,7 @@ func NewAPIEngine(deps Dependencies, registrars ...HTTPRouteRegistrar) *gin.Engi
 		engine.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	}
 
-	api := engine.Group("/api/v1")
+	api := engine.Group("/api")
 	for _, registrar := range registrars {
 		registrar.RegisterRoutes(api)
 	}

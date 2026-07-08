@@ -35,8 +35,16 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 
 	client := group.Group("/client/goods")
 	{
-		client.GET("/:id", h.GetGoodsPublic)
+		client.GET("", h.ListGoods)
 		client.GET("/categories", h.ListCategories)
+		client.GET("/detail/:goodsId", h.GetGoodsDetailWithSKUs)
+		client.POST("/sku/check", h.CheckSKUStock)
+		client.GET("/:id", h.GetGoodsPublic)
+	}
+
+	categories := group.Group("/client/categories")
+	{
+		categories.GET("", h.ListCategories)
 	}
 }
 
@@ -79,6 +87,21 @@ func (h *Handler) GetGoodsPublic(c *gin.Context) {
 	response.Success(c, goods)
 }
 
+func (h *Handler) GetGoodsDetailWithSKUs(c *gin.Context) {
+	goodsID, _ := strconv.ParseInt(c.Param("goodsId"), 10, 64)
+	goods, err := h.service.GetGoods(c.Request.Context(), goodsID)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	skus, err := h.service.GetSKUsByGoodsID(c.Request.Context(), goodsID)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, gin.H{"goods": goods, "skus": skus})
+}
+
 func (h *Handler) CreateGoods(c *gin.Context) {
 	response.Success(c, gin.H{"message": "create goods endpoint"})
 }
@@ -104,4 +127,16 @@ func (h *Handler) GetSKUs(c *gin.Context) {
 		return
 	}
 	response.Success(c, skus)
+}
+
+func (h *Handler) CheckSKUStock(c *gin.Context) {
+	var req struct {
+		SKUID    int64 `json:"skuId"`
+		Quantity int   `json:"quantity"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, req.SKUID > 0 && req.Quantity > 0)
 }

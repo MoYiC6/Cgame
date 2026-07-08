@@ -35,7 +35,7 @@ func TestModulePingHandlersReturnTopLevelTraceIDWithoutPayloadTrace(t *testing.T
 	}{
 		{
 			name:          "order",
-			path:          "/api/v1/order/ping",
+			path:          "/api/order/ping",
 			module:        "order",
 			newRepository: func() any { return order.NewRepository(nil) },
 			newService:    func(repo any) any { return order.NewService(repo.(order.Repository), database.NoopTxManager{}) },
@@ -43,7 +43,7 @@ func TestModulePingHandlersReturnTopLevelTraceIDWithoutPayloadTrace(t *testing.T
 		},
 		{
 			name:          "payment",
-			path:          "/api/v1/payment/ping",
+			path:          "/api/payment/ping",
 			module:        "payment",
 			newRepository: func() any { return payment.NewRepository(nil) },
 			newService:    func(repo any) any { return payment.NewService(repo.(payment.Repository), database.NoopTxManager{}) },
@@ -51,7 +51,7 @@ func TestModulePingHandlersReturnTopLevelTraceIDWithoutPayloadTrace(t *testing.T
 		},
 		{
 			name:          "inventory",
-			path:          "/api/v1/inventory/ping",
+			path:          "/api/inventory/ping",
 			module:        "inventory",
 			newRepository: func() any { return inventory.NewRepository(nil) },
 			newService:    func(repo any) any { return inventory.NewService(repo.(inventory.Repository), database.NoopTxManager{}) },
@@ -59,7 +59,7 @@ func TestModulePingHandlersReturnTopLevelTraceIDWithoutPayloadTrace(t *testing.T
 		},
 		{
 			name:          "notification",
-			path:          "/api/v1/notification/ping",
+			path:          "/api/notification/ping",
 			module:        "notification",
 			newRepository: func() any { return notification.NewRepository(nil) },
 			newService: func(repo any) any {
@@ -76,7 +76,7 @@ func TestModulePingHandlersReturnTopLevelTraceIDWithoutPayloadTrace(t *testing.T
 			handler := tt.newHandler(service)
 
 			engine := gin.New()
-			api := engine.Group("/api/v1")
+			api := engine.Group("/api")
 			handler.RegisterRoutes(api)
 
 			request := httptest.NewRequest(http.MethodGet, tt.path, nil)

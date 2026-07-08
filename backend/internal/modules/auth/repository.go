@@ -214,8 +214,8 @@ func (r *repository) ListRecentFailedAttemptTimes(ctx context.Context, filter Fa
 
 func (r *repository) UpdateLastLoginAt(ctx context.Context, userID int64, at time.Time) error {
 	_, err := r.executor(ctx).ExecContext(ctx, `
-		UPDATE users
-		SET last_login_at = $2, updated_at = $2
+		UPDATE sys_user
+		SET last_login_time = $2, update_time = $2
 		WHERE id = $1
 	`, userID, at)
 	return err

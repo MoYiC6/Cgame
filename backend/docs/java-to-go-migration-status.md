@@ -257,16 +257,16 @@
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
 | 财务统计数据 | `GET /api/admin/finance/stats` | ✅ |
-| 我的佣金 | `GET /api/admin/finance/operator-commissions/me` | ❌ |
-| 我的佣金余额 | `GET /api/admin/finance/operator-commissions/me/balance` | ❌ |
-| 提现记录 | `GET /api/admin/finance/operator-commissions/withdrawals` | ❌ |
-| 我的提现记录 | `GET /api/admin/finance/operator-commissions/withdrawals/me` | ❌ |
-| 申请提现 | `POST /api/admin/finance/operator-commissions/withdrawals` | ❌ |
-| 审批通过 | `PUT /api/admin/finance/operator-commissions/withdrawals/{id}/approve` | ❌ |
-| 审批拒绝 | `PUT /api/admin/finance/operator-commissions/withdrawals/{id}/reject` | ❌ |
-| 打款 | `PUT /api/admin/finance/operator-commissions/withdrawals/{id}/pay` | ❌ |
-| 取消 | `PUT /api/admin/finance/operator-commissions/withdrawals/{id}/cancel` | ❌ |
-| 余额明细 | `GET /api/admin/balance/details` | ❌ |
+| 我的佣金 | `GET /api/admin/finance/operator-commissions/me` | ✅ |
+| 我的佣金余额 | `GET /api/admin/finance/operator-commissions/me/balance` | ✅ |
+| 提现记录 | `GET /api/admin/finance/operator-commissions/withdrawals` | ✅ |
+| 我的提现记录 | `GET /api/admin/finance/operator-commissions/withdrawals/me` | ✅ |
+| 申请提现 | `POST /api/admin/finance/operator-commissions/withdrawals` | ✅ |
+| 审批通过 | `PUT /api/admin/finance/operator-commissions/withdrawals/{id}/approve` | ✅ |
+| 审批拒绝 | `PUT /api/admin/finance/operator-commissions/withdrawals/{id}/reject` | ✅ |
+| 打款 | `PUT /api/admin/finance/operator-commissions/withdrawals/{id}/pay` | ✅ |
+| 取消 | `PUT /api/admin/finance/operator-commissions/withdrawals/{id}/cancel` | ✅ |
+| 余额明细 | `GET /api/admin/balance/details` | ✅ |
 | 提现列表 | `GET /api/admin/withdrawal/list` | ❌ |
 | 提现详情 | `GET /api/admin/withdrawal/{id}` | ❌ |
 | 审批通过 | `PUT /api/admin/withdrawal/{id}/approve` | ❌ |
@@ -274,13 +274,13 @@
 | 拒绝订单结算 | `PUT /api/admin/withdrawal/{withdrawalId}/orders/{orderId}/reject` | ❌ |
 | 打款 | `PUT /api/admin/withdrawal/{id}/pay` | ❌ |
 | 提现统计 | `GET /api/admin/withdrawal/stats` | ❌ |
-| 月度报表 | `GET /api/admin/withdrawal/monthly-report` | ❌ |
+| 月度报表 | `GET /api/admin/withdrawal/monthly-report` | ✅ |
 | 导出提现记录 | `GET /api/admin/withdrawal/export` | ❌ |
 | 导出月度报表 | `GET /api/admin/withdrawal/monthly-report/export` | ❌ |
 | 可结算订单 | `GET /api/admin/withdrawal/settleable-orders` | ❌ |
 | 代结算预览 | `POST /api/admin/withdrawal/settle-on-behalf/preview` | ❌ |
 | 代结算执行 | `POST /api/admin/withdrawal/settle-on-behalf` | ❌ |
-| 用户月度报告 | `GET /api/admin/finance/user-monthly-report` | ❌ |
+| 用户月度报告 | `GET /api/admin/finance/user-monthly-report` | ✅ |
 | 导出用户月度报告 | `GET /api/admin/finance/user-monthly-report/export` | ❌ |
 
 ### 8. notification（通知消息）

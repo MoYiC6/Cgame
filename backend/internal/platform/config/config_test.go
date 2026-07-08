@@ -292,7 +292,7 @@ auth:
     lock_duration: 30m
   cookie:
     name: refresh_token
-    path: /api/v1/auth
+    path: /api/auth
   jwt:
     algorithm: HS256
     key_id: local-dev-key
@@ -406,7 +406,7 @@ auth:
     argon2_parallelism: 2
   cookie:
     name: refresh_token
-    path: /api/v1/auth
+    path: /api/auth
     same_site: Lax
   jwt:
     algorithm: EdDSA
@@ -471,7 +471,7 @@ func TestLocalConfigTargetsDockerDatastores(t *testing.T) {
 		t.Fatalf("Load returned error: %v", err)
 	}
 
-	const expectedDSN = "postgres://backend:backend@localhost:25432/Cgame?sslmode=disable"
+	const expectedDSN = "postgres://djclub:djclub_local_pass@localhost:15432/cgame?sslmode=disable"
 	if cfg.DB.DSN != expectedDSN {
 		t.Fatalf("expected local db dsn %q, got %q", expectedDSN, cfg.DB.DSN)
 	}

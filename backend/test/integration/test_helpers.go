@@ -59,7 +59,7 @@ func newIntegrationEngine(db database.DB) *gin.Engine {
 				},
 				Cookie: config.AuthCookieConfig{
 					Name:     "refresh_token",
-					Path:     "/api/v1/auth",
+					Path:     "/api/auth",
 					HTTPOnly: true,
 					SameSite: "lax",
 				},
