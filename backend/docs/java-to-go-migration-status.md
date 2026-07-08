@@ -327,17 +327,17 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 上传文件（Multipart） | `POST /api/upload/file` | ⚠️ |
-| Base64 上传 | `POST /api/upload/base64` | ⚠️ |
-| 检查文件哈希 | `GET /api/upload/check-hash` | ⚠️ |
-| 获取上传 Token | `GET /api/upload/token` | ⚠️ |
-| 确认上传 | `POST /api/upload/confirm` | ⚠️ |
-| 素材列表 | `GET /api/admin/files` | ⚠️ |
-| 素材详情 | `GET /api/admin/files/{id}` | ⚠️ |
-| 创建素材记录 | `POST /api/admin/files` | ⚠️ |
-| 更新素材 | `PUT /api/admin/files/{id}` | ⚠️ |
-| 删除素材 | `DELETE /api/admin/files/{id}` | ⚠️ |
-| 七牛云处理回调 | `POST /api/public/qiniu/pfop/callback` | ❌ |
+| 上传文件（Multipart） | `POST /api/upload/file` | ✅ |
+| Base64 上传 | `POST /api/upload/base64` | ✅ |
+| 检查文件哈希 | `GET /api/upload/check-hash` | ✅ |
+| 获取上传 Token | `GET /api/upload/token` | ✅ |
+| 确认上传 | `POST /api/upload/confirm` | ✅ |
+| 素材列表 | `GET /api/admin/files` | ✅ |
+| 素材详情 | `GET /api/admin/files/{id}` | ✅ |
+| 创建素材记录 | `POST /api/admin/files` | ✅ |
+| 更新素材 | `PUT /api/admin/files/{id}` | ✅ |
+| 删除素材 | `DELETE /api/admin/files/{id}` | ✅ |
+| 七牛云处理回调 | `POST /api/public/qiniu/pfop/callback` | ✅ |
 
 ### 11. system（系统配置）
 

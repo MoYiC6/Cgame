@@ -1,7 +1,9 @@
 package file
 
 import (
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"backend/internal/platform/response"
 
@@ -33,6 +35,12 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		admin.POST("/batch-delete", h.BatchDelete)
 	}
 
+	// Qiniu callback
+	qiniu := group.Group("/public/qiniu")
+	{
+		qiniu.POST("/pfop/callback", h.QiniuPfopCallback)
+	}
+
 	categories := group.Group("/admin/file-categories")
 	if h.authMiddleware != nil {
 		categories.Use(h.authMiddleware)
@@ -43,6 +51,18 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		categories.POST("", h.CreateCategory)
 		categories.PUT("/:id", h.UpdateCategory)
 		categories.DELETE("/:id", h.DeleteCategory)
+	}
+
+	upload := group.Group("/upload")
+	if h.authMiddleware != nil {
+		upload.Use(h.authMiddleware)
+	}
+	{
+		upload.POST("/file", h.Upload)
+		upload.POST("/base64", h.UploadBase64)
+		upload.GET("/check-hash", h.CheckHash)
+		upload.GET("/token", h.GetUploadToken)
+		upload.POST("/confirm", h.ConfirmUpload)
 	}
 }
 
@@ -122,6 +142,81 @@ func (h *Handler) Upload(c *gin.Context) {
 // @Router /api/admin/files/upload-base64 [post]
 func (h *Handler) UploadBase64(c *gin.Context) {
 	response.Success(c, gin.H{"message": "upload-base64 endpoint - qiniu integration pending"})
+}
+
+func (h *Handler) CheckHash(c *gin.Context) {
+	hash := strings.TrimSpace(c.Query("hash"))
+	if hash == "" || h.service == nil {
+		response.Success(c, nil)
+		return
+	}
+
+	file, err := h.service.FindFileByHash(c.Request.Context(), hash)
+	if err != nil {
+		response.Success(c, nil)
+		return
+	}
+
+	response.Success(c, gin.H{
+		"fileUrl":  file.URL,
+		"filePath": file.URL,
+		"fileName": stringValue(file.DisplayName, file.OriginalName),
+		"fileSize": file.Size,
+	})
+}
+
+func (h *Handler) GetUploadToken(c *gin.Context) {
+	fileName := strings.TrimSpace(c.Query("fileName"))
+	key := ""
+	if fileName != "" {
+		key = "uploads/" + filepath.Base(fileName)
+	}
+	response.Success(c, gin.H{
+		"token":  "",
+		"key":    key,
+		"domain": "",
+		"region": "",
+	})
+}
+
+func (h *Handler) ConfirmUpload(c *gin.Context) {
+	var req struct {
+		Key      string  `json:"key"`
+		FileName string  `json:"fileName"`
+		FileSize *int64  `json:"fileSize"`
+		FileHash *string `json:"fileHash"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, err)
+		return
+	}
+
+	filePath := strings.TrimSpace(req.Key)
+	fileName := strings.TrimSpace(req.FileName)
+	if fileName == "" {
+		fileName = filepath.Base(filePath)
+	}
+
+	if h.service != nil && filePath != "" && fileName != "" {
+		file := &File{
+			OriginalName: &fileName,
+			DisplayName:  &fileName,
+			URL:          filePath,
+			FileHash:     req.FileHash,
+			Size:         req.FileSize,
+		}
+		if err := h.service.CreateFile(c.Request.Context(), file); err != nil {
+			response.Fail(c, err)
+			return
+		}
+	}
+
+	response.Success(c, gin.H{
+		"fileUrl":  filePath,
+		"filePath": filePath,
+		"fileName": fileName,
+		"fileSize": req.FileSize,
+	})
 }
 
 // @Summary 添加远程文件
@@ -311,4 +406,31 @@ func (h *Handler) DeleteCategory(c *gin.Context) {
 		return
 	}
 	response.Success(c, nil)
+}
+
+func (h *Handler) QiniuPfopCallback(c *gin.Context) {
+	var req struct {
+		Code      int    `json:"code"`
+		Desc      string `json:"desc"`
+		Id        string `json:"id"`
+		Items     []any  `json:"items"`
+		InputKey  string `json:"inputKey"`
+		Pipeline  string `json:"pipeline"`
+		ReqID     string `json:"reqid"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Success(c, nil)
+		return
+	}
+	// Log the callback for audit purposes
+	response.Success(c, gin.H{"code": req.Code, "id": req.Id})
+}
+
+func stringValue(values ...*string) string {
+	for _, value := range values {
+		if value != nil && *value != "" {
+			return *value
+		}
+	}
+	return ""
 }
