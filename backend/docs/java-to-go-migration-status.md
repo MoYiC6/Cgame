@@ -23,7 +23,7 @@
 | 14 | external | KOOK 机器人、微信集成、外部系统对接 | ⚠️ 部分（OAuth/绑定） |
 | 15 | refund | 退款申请、审批、退款状态机 | ✅ 已完成 |
 | 16 | coupon | 优惠券发放、领取、使用、统计 | ✅ 已完成 |
-| 17 | recharge | 充值订单、返利规则、返利统计 | ❌ 未迁移 |
+| 17 | recharge | 充值订单、返利规则、返利统计 | ✅ 已完成 |
 | 18 | withdrawal | 选手提现申请、审批、打款、税务计算 | ❌ 未迁移 |
 | 19 | invite | 用户邀请、选手邀请码、邀请记录 | ✅ 已完成 |
 | 20 | feedback | 用户反馈提交、回复、管理 | ✅ 已完成 |
@@ -485,23 +485,23 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 手动充值 | `POST /api/recharge/manual` | ❌ |
-| 创建充值订单 | `POST /api/recharge/create` | ❌ |
-| 充值回调 | `POST /api/recharge/callback` | ❌ |
-| 充值记录列表 | `GET /api/recharge/list` | ❌ |
-| 我的充值记录 | `GET /api/recharge/my-records` | ❌ |
-| 充值记录详情 | `GET /api/recharge/detail/{id}` | ❌ |
-| 充值统计 | `GET /api/recharge/statistics` | ❌ |
-| 最近充值记录 | `GET /api/recharge/recent/{userId}` | ❌ |
-| 取消充值 | `POST /api/recharge/cancel/{rechargeNo}` | ❌ |
-| 继续支付 | `POST /api/recharge/continue-pay/{rechargeNo}` | ❌ |
-| 验证支付 | `POST /api/recharge/verify-payment/{rechargeNo}` | ❌ |
-| 可用返利规则 | `GET /api/client/recharge-rebate/available-rules` | ❌ |
-| 返利预览 | `GET /api/client/recharge-rebate/preview` | ❌ |
-| 返利规则列表 | `GET /api/admin/recharge-rebate` | ❌ |
-| 创建返利规则 | `POST /api/admin/recharge-rebate` | ❌ |
-| 更新返利规则 | `PUT /api/admin/recharge-rebate/{id}` | ❌ |
-| 删除返利规则 | `DELETE /api/admin/recharge-rebate/{id}` | ❌ |
+| 手动充值 | `POST /api/recharge/manual` | ✅ |
+| 创建充值订单 | `POST /api/recharge/create` | ✅ |
+| 充值回调 | `POST /api/recharge/callback` | ✅ |
+| 充值记录列表 | `GET /api/recharge/list` | ✅ |
+| 我的充值记录 | `GET /api/recharge/my-records` | ✅ |
+| 充值记录详情 | `GET /api/recharge/detail/{id}` | ✅ |
+| 充值统计 | `GET /api/recharge/statistics` | ✅ |
+| 最近充值记录 | `GET /api/recharge/recent/{userId}` | ✅ |
+| 取消充值 | `POST /api/recharge/cancel/{rechargeNo}` | ✅ |
+| 继续支付 | `POST /api/recharge/continue-pay/{rechargeNo}` | ✅ |
+| 验证支付 | `POST /api/recharge/verify-payment/{rechargeNo}` | ✅ |
+| 可用返利规则 | `GET /api/client/recharge-rebate/available-rules` | ✅ |
+| 返利预览 | `GET /api/client/recharge-rebate/preview` | ✅ |
+| 返利规则列表 | `GET /api/admin/recharge-rebate` | ✅ |
+| 创建返利规则 | `POST /api/admin/recharge-rebate` | ✅ |
+| 更新返利规则 | `PUT /api/admin/recharge-rebate/{id}` | ✅ |
+| 删除返利规则 | `DELETE /api/admin/recharge-rebate/{id}` | ✅ |
 
 ### 18. withdrawal（提现）
 
