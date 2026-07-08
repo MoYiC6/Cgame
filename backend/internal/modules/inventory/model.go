@@ -107,3 +107,35 @@ type PurchaseLimitRule struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
+
+type Banner struct {
+	ID        int64
+	Title     string
+	ImageURL  string
+	LinkURL   string
+	Sort      int
+	Status    int
+	Position  string
+	StartTime *time.Time
+	EndTime   *time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type ImpressionTag struct {
+	ID        int64
+	Name      string
+	Icon      string
+	Color     string
+	Sort      int
+	Status    int
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type GoodsImpressionTag struct {
+	ID        int64
+	GoodsID   int64
+	TagID     int64
+	CreatedAt time.Time
+}

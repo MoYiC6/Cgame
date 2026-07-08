@@ -46,6 +46,28 @@ type Repository interface {
 	UpdatePurchaseLimitRule(ctx context.Context, rule *PurchaseLimitRule) error
 	DeletePurchaseLimitRule(ctx context.Context, id int64) error
 	ListPurchaseLimitRules(ctx context.Context, page, pageSize int) ([]*PurchaseLimitRule, int, error)
+
+	// Banners
+	CreateBanner(ctx context.Context, b *Banner) error
+	GetBannerByID(ctx context.Context, id int64) (*Banner, error)
+	UpdateBanner(ctx context.Context, b *Banner) error
+	DeleteBanner(ctx context.Context, id int64) error
+	ListBanners(ctx context.Context, position string, page, pageSize int) ([]*Banner, int, error)
+	ListActiveBanners(ctx context.Context, position string) ([]*Banner, error)
+
+	// Impression Tags
+	CreateImpressionTag(ctx context.Context, t *ImpressionTag) error
+	GetImpressionTagByID(ctx context.Context, id int64) (*ImpressionTag, error)
+	UpdateImpressionTag(ctx context.Context, t *ImpressionTag) error
+	DeleteImpressionTag(ctx context.Context, id int64) error
+	ListImpressionTags(ctx context.Context, page, pageSize int) ([]*ImpressionTag, int, error)
+	ListActiveImpressionTags(ctx context.Context) ([]*ImpressionTag, error)
+
+	// Goods Tags
+	GetGoodsTags(ctx context.Context, goodsID int64) ([]*ImpressionTag, error)
+	AddGoodsTag(ctx context.Context, goodsID, tagID int64) error
+	RemoveGoodsTag(ctx context.Context, goodsID, tagID int64) error
+	SetGoodsTags(ctx context.Context, goodsID int64, tagIDs []int64) error
 }
 
 type repository struct {
@@ -457,4 +479,237 @@ func (r *repository) ListPurchaseLimitRules(ctx context.Context, page, pageSize 
 		rules = append(rules, &rule)
 	}
 	return rules, total, nil
+}
+
+// Banner methods
+func (r *repository) CreateBanner(ctx context.Context, b *Banner) error {
+	return r.dbtx.QueryRowContext(ctx,
+		`INSERT INTO banners (title, image_url, link_url, sort, status, position, start_time, end_time)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+		b.Title, b.ImageURL, b.LinkURL, b.Sort, b.Status, b.Position, b.StartTime, b.EndTime,
+	).Scan(&b.ID)
+}
+
+func (r *repository) GetBannerByID(ctx context.Context, id int64) (*Banner, error) {
+	row := r.dbtx.QueryRowContext(ctx,
+		`SELECT id, title, image_url, link_url, sort, status, position, start_time, end_time, created_at, updated_at FROM banners WHERE id = $1`,
+		id,
+	)
+	var b Banner
+	err := row.Scan(&b.ID, &b.Title, &b.ImageURL, &b.LinkURL, &b.Sort, &b.Status, &b.Position, &b.StartTime, &b.EndTime, &b.CreatedAt, &b.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &b, nil
+}
+
+func (r *repository) UpdateBanner(ctx context.Context, b *Banner) error {
+	_, err := r.dbtx.ExecContext(ctx,
+		`UPDATE banners SET title = $1, image_url = $2, link_url = $3, sort = $4, status = $5, position = $6, start_time = $7, end_time = $8, updated_at = NOW() WHERE id = $9`,
+		b.Title, b.ImageURL, b.LinkURL, b.Sort, b.Status, b.Position, b.StartTime, b.EndTime, b.ID,
+	)
+	return err
+}
+
+func (r *repository) DeleteBanner(ctx context.Context, id int64) error {
+	_, err := r.dbtx.ExecContext(ctx, "DELETE FROM banners WHERE id = $1", id)
+	return err
+}
+
+func (r *repository) ListBanners(ctx context.Context, position string, page, pageSize int) ([]*Banner, int, error) {
+	where := "WHERE 1=1"
+	var args []any
+	argIdx := 1
+	if position != "" {
+		where += fmt.Sprintf(" AND position = $%d", argIdx)
+		args = append(args, position)
+		argIdx++
+	}
+
+	countQuery := "SELECT COUNT(*) FROM banners " + where
+	var total int
+	if err := r.dbtx.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	querySQL := fmt.Sprintf(`SELECT id, title, image_url, link_url, sort, status, position, start_time, end_time, created_at, updated_at
+		 FROM banners %s ORDER BY sort ASC, id DESC LIMIT $%d OFFSET $%d`, where, argIdx, argIdx+1)
+	args = append(args, pageSize, (page-1)*pageSize)
+
+	rows, err := r.dbtx.QueryContext(ctx, querySQL, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var banners []*Banner
+	for rows.Next() {
+		var b Banner
+		if err := rows.Scan(&b.ID, &b.Title, &b.ImageURL, &b.LinkURL, &b.Sort, &b.Status, &b.Position, &b.StartTime, &b.EndTime, &b.CreatedAt, &b.UpdatedAt); err != nil {
+			return nil, 0, err
+		}
+		banners = append(banners, &b)
+	}
+	return banners, total, nil
+}
+
+func (r *repository) ListActiveBanners(ctx context.Context, position string) ([]*Banner, error) {
+	where := "WHERE status = 1"
+	var args []any
+	if position != "" {
+		where += " AND position = $1"
+		args = append(args, position)
+	}
+	querySQL := fmt.Sprintf(`SELECT id, title, image_url, link_url, sort, status, position, start_time, end_time, created_at, updated_at
+		 FROM banners %s ORDER BY sort ASC, id DESC`, where)
+
+	rows, err := r.dbtx.QueryContext(ctx, querySQL, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var banners []*Banner
+	for rows.Next() {
+		var b Banner
+		if err := rows.Scan(&b.ID, &b.Title, &b.ImageURL, &b.LinkURL, &b.Sort, &b.Status, &b.Position, &b.StartTime, &b.EndTime, &b.CreatedAt, &b.UpdatedAt); err != nil {
+			return nil, err
+		}
+		banners = append(banners, &b)
+	}
+	return banners, nil
+}
+
+// Impression Tag methods
+func (r *repository) CreateImpressionTag(ctx context.Context, t *ImpressionTag) error {
+	return r.dbtx.QueryRowContext(ctx,
+		`INSERT INTO impression_tags (name, icon, color, sort, status) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+		t.Name, t.Icon, t.Color, t.Sort, t.Status,
+	).Scan(&t.ID)
+}
+
+func (r *repository) GetImpressionTagByID(ctx context.Context, id int64) (*ImpressionTag, error) {
+	row := r.dbtx.QueryRowContext(ctx,
+		`SELECT id, name, icon, color, sort, status, created_at, updated_at FROM impression_tags WHERE id = $1`,
+		id,
+	)
+	var t ImpressionTag
+	err := row.Scan(&t.ID, &t.Name, &t.Icon, &t.Color, &t.Sort, &t.Status, &t.CreatedAt, &t.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
+
+func (r *repository) UpdateImpressionTag(ctx context.Context, t *ImpressionTag) error {
+	_, err := r.dbtx.ExecContext(ctx,
+		`UPDATE impression_tags SET name = $1, icon = $2, color = $3, sort = $4, status = $5, updated_at = NOW() WHERE id = $6`,
+		t.Name, t.Icon, t.Color, t.Sort, t.Status, t.ID,
+	)
+	return err
+}
+
+func (r *repository) DeleteImpressionTag(ctx context.Context, id int64) error {
+	_, err := r.dbtx.ExecContext(ctx, "DELETE FROM impression_tags WHERE id = $1", id)
+	return err
+}
+
+func (r *repository) ListImpressionTags(ctx context.Context, page, pageSize int) ([]*ImpressionTag, int, error) {
+	var total int
+	if err := r.dbtx.QueryRowContext(ctx, "SELECT COUNT(*) FROM impression_tags").Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := r.dbtx.QueryContext(ctx,
+		`SELECT id, name, icon, color, sort, status, created_at, updated_at FROM impression_tags ORDER BY sort ASC, id DESC LIMIT $1 OFFSET $2`,
+		pageSize, (page-1)*pageSize,
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var tags []*ImpressionTag
+	for rows.Next() {
+		var t ImpressionTag
+		if err := rows.Scan(&t.ID, &t.Name, &t.Icon, &t.Color, &t.Sort, &t.Status, &t.CreatedAt, &t.UpdatedAt); err != nil {
+			return nil, 0, err
+		}
+		tags = append(tags, &t)
+	}
+	return tags, total, nil
+}
+
+func (r *repository) ListActiveImpressionTags(ctx context.Context) ([]*ImpressionTag, error) {
+	rows, err := r.dbtx.QueryContext(ctx,
+		`SELECT id, name, icon, color, sort, status, created_at, updated_at FROM impression_tags WHERE status = 1 ORDER BY sort ASC, id DESC`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tags []*ImpressionTag
+	for rows.Next() {
+		var t ImpressionTag
+		if err := rows.Scan(&t.ID, &t.Name, &t.Icon, &t.Color, &t.Sort, &t.Status, &t.CreatedAt, &t.UpdatedAt); err != nil {
+			return nil, err
+		}
+		tags = append(tags, &t)
+	}
+	return tags, nil
+}
+
+// Goods Tag methods
+func (r *repository) GetGoodsTags(ctx context.Context, goodsID int64) ([]*ImpressionTag, error) {
+	rows, err := r.dbtx.QueryContext(ctx,
+		`SELECT t.id, t.name, t.icon, t.color, t.sort, t.status, t.created_at, t.updated_at
+		 FROM impression_tags t
+		 JOIN goods_impression_tags git ON git.tag_id = t.id
+		 WHERE git.goods_id = $1 AND t.status = 1 ORDER BY t.sort ASC`,
+		goodsID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tags []*ImpressionTag
+	for rows.Next() {
+		var t ImpressionTag
+		if err := rows.Scan(&t.ID, &t.Name, &t.Icon, &t.Color, &t.Sort, &t.Status, &t.CreatedAt, &t.UpdatedAt); err != nil {
+			return nil, err
+		}
+		tags = append(tags, &t)
+	}
+	return tags, nil
+}
+
+func (r *repository) AddGoodsTag(ctx context.Context, goodsID, tagID int64) error {
+	_, err := r.dbtx.ExecContext(ctx,
+		`INSERT INTO goods_impression_tags (goods_id, tag_id) VALUES ($1, $2) ON CONFLICT (goods_id, tag_id) DO NOTHING`,
+		goodsID, tagID,
+	)
+	return err
+}
+
+func (r *repository) RemoveGoodsTag(ctx context.Context, goodsID, tagID int64) error {
+	_, err := r.dbtx.ExecContext(ctx,
+		`DELETE FROM goods_impression_tags WHERE goods_id = $1 AND tag_id = $2`,
+		goodsID, tagID,
+	)
+	return err
+}
+
+func (r *repository) SetGoodsTags(ctx context.Context, goodsID int64, tagIDs []int64) error {
+	_, err := r.dbtx.ExecContext(ctx, `DELETE FROM goods_impression_tags WHERE goods_id = $1`, goodsID)
+	if err != nil {
+		return err
+	}
+	for _, tagID := range tagIDs {
+		if err := r.AddGoodsTag(ctx, goodsID, tagID); err != nil {
+			return err
+		}
+	}
+	return nil
 }

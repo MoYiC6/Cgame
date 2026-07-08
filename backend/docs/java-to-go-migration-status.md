@@ -10,7 +10,7 @@
 | 1 | auth | JWT 认证、登录/注册/登出、短信验证码、微信 OAuth | ✅ 已完成 |
 | 2 | user | 用户中心、余额、充值、等级、消费排名 | ⚠️ 部分（用户中心/资料管理/等级/消费排名/管理端已完成，密码/手机/微信绑定待迁移） |
 | 3 | teacher | 选手生态、审核、等级、动态、收入分成、排名 | ⚠️ 部分（核心接口/申请审核/等级管理/排名/仪表盘已完成，动态/评价/视频/收款待迁移） |
-| 4 | goods/inventory | 商品管理、SKU、分类、限购、Banner、印象标签 | ⚠️ 部分（核心CRUD/SKU/分类/限购已完成，Banner/印象标签待迁移） |
+| 4 | goods/inventory | 商品管理、SKU、分类、限购、Banner、印象标签 | ✅ 已完成 |
 | 5 | order | 订单生命周期、状态流转、结单、退单、转移、评价 | ✅ 已完成 |
 | 6 | payment | 微信支付、支付宝、收银台、支付记录、回调 | ✅ 已完成 |
 | 7 | finance | 财务统计、运营商佣金、提现管理、结算 | ⚠️ 部分（统计/佣金/提现/余额/报表已完成，选手提现管理待迁移） |
@@ -168,8 +168,8 @@
 | SKU 库存检查 | `POST /api/client/goods/sku/check` | ✅ |
 | 分类列表 | `GET /api/client/categories` | ✅ |
 | 分类详情 | `GET /api/client/categories/{id}` | ✅ |
-| Banner 列表 | `GET /api/client/banners` | ❌ |
-| 印象标签列表 | `GET /api/client/impression-tags` | ❌ |
+| Banner 列表 | `GET /api/client/banners` | ✅ |
+| 印象标签列表 | `GET /api/client/impression-tags` | ✅ |
 | 商品列表（管理端） | `GET /api/admin/goods` | ✅ |
 | 创建商品 | `POST /api/admin/goods` | ✅ |
 | 更新商品 | `PUT /api/admin/goods/{id}` | ✅ |
@@ -185,14 +185,14 @@
 | 分类详情 | `GET /api/admin/categories/{id}` | ✅ |
 | 更新分类 | `PUT /api/admin/categories/{id}` | ✅ |
 | 删除分类 | `DELETE /api/admin/categories/{id}` | ✅ |
-| Banner 列表（管理端） | `GET /api/admin/banners` | ❌ |
-| 创建 Banner | `POST /api/admin/banners` | ❌ |
-| 更新 Banner | `PUT /api/admin/banners/{id}` | ❌ |
-| 删除 Banner | `DELETE /api/admin/banners/{id}` | ❌ |
-| 标签列表 | `GET /api/admin/impression-tags` | ❌ |
-| 创建标签 | `POST /api/admin/impression-tags` | ❌ |
-| 更新标签 | `PUT /api/admin/impression-tags/{id}` | ❌ |
-| 删除标签 | `DELETE /api/admin/impression-tags/{id}` | ❌ |
+| Banner 列表（管理端） | `GET /api/admin/banners` | ✅ |
+| 创建 Banner | `POST /api/admin/banners` | ✅ |
+| 更新 Banner | `PUT /api/admin/banners/{id}` | ✅ |
+| 删除 Banner | `DELETE /api/admin/banners/{id}` | ✅ |
+| 标签列表 | `GET /api/admin/impression-tags` | ✅ |
+| 创建标签 | `POST /api/admin/impression-tags` | ✅ |
+| 更新标签 | `PUT /api/admin/impression-tags/{id}` | ✅ |
+| 删除标签 | `DELETE /api/admin/impression-tags/{id}` | ✅ |
 | 限购规则列表 | `GET /api/admin/purchase-limit` | ✅ |
 | 创建限购规则 | `POST /api/admin/purchase-limit` | ✅ |
 | 更新限购规则 | `PUT /api/admin/purchase-limit/{id}` | ✅ |

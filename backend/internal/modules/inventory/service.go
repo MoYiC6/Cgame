@@ -203,3 +203,92 @@ func (s *Service) DeletePurchaseLimitRule(ctx context.Context, id int64) error {
 func (s *Service) ListPurchaseLimitRules(ctx context.Context, page, pageSize int) ([]*PurchaseLimitRule, int, error) {
 	return s.repo.ListPurchaseLimitRules(ctx, page, pageSize)
 }
+
+// Banner service methods
+func (s *Service) CreateBanner(ctx context.Context, b *Banner) (int64, error) {
+	if b.Title == "" || b.ImageURL == "" {
+		return 0, apperrors.New(apperrors.CodeInvalidArgument, "title and image_url are required", http.StatusBadRequest, nil)
+	}
+	if b.Status == 0 {
+		b.Status = 1
+	}
+	if err := s.repo.CreateBanner(ctx, b); err != nil {
+		return 0, err
+	}
+	return b.ID, nil
+}
+
+func (s *Service) GetBanner(ctx context.Context, id int64) (*Banner, error) {
+	return s.repo.GetBannerByID(ctx, id)
+}
+
+func (s *Service) UpdateBanner(ctx context.Context, b *Banner) error {
+	if b.ID == 0 {
+		return apperrors.New(apperrors.CodeInvalidArgument, "banner id is required", http.StatusBadRequest, nil)
+	}
+	return s.repo.UpdateBanner(ctx, b)
+}
+
+func (s *Service) DeleteBanner(ctx context.Context, id int64) error {
+	if id == 0 {
+		return apperrors.New(apperrors.CodeInvalidArgument, "banner id is required", http.StatusBadRequest, nil)
+	}
+	return s.repo.DeleteBanner(ctx, id)
+}
+
+func (s *Service) ListBanners(ctx context.Context, position string, page, pageSize int) ([]*Banner, int, error) {
+	return s.repo.ListBanners(ctx, position, page, pageSize)
+}
+
+func (s *Service) ListActiveBanners(ctx context.Context, position string) ([]*Banner, error) {
+	return s.repo.ListActiveBanners(ctx, position)
+}
+
+// Impression Tag service methods
+func (s *Service) CreateImpressionTag(ctx context.Context, t *ImpressionTag) (int64, error) {
+	if t.Name == "" {
+		return 0, apperrors.New(apperrors.CodeInvalidArgument, "name is required", http.StatusBadRequest, nil)
+	}
+	if t.Status == 0 {
+		t.Status = 1
+	}
+	if err := s.repo.CreateImpressionTag(ctx, t); err != nil {
+		return 0, err
+	}
+	return t.ID, nil
+}
+
+func (s *Service) GetImpressionTag(ctx context.Context, id int64) (*ImpressionTag, error) {
+	return s.repo.GetImpressionTagByID(ctx, id)
+}
+
+func (s *Service) UpdateImpressionTag(ctx context.Context, t *ImpressionTag) error {
+	if t.ID == 0 {
+		return apperrors.New(apperrors.CodeInvalidArgument, "tag id is required", http.StatusBadRequest, nil)
+	}
+	return s.repo.UpdateImpressionTag(ctx, t)
+}
+
+func (s *Service) DeleteImpressionTag(ctx context.Context, id int64) error {
+	if id == 0 {
+		return apperrors.New(apperrors.CodeInvalidArgument, "tag id is required", http.StatusBadRequest, nil)
+	}
+	return s.repo.DeleteImpressionTag(ctx, id)
+}
+
+func (s *Service) ListImpressionTags(ctx context.Context, page, pageSize int) ([]*ImpressionTag, int, error) {
+	return s.repo.ListImpressionTags(ctx, page, pageSize)
+}
+
+func (s *Service) ListActiveImpressionTags(ctx context.Context) ([]*ImpressionTag, error) {
+	return s.repo.ListActiveImpressionTags(ctx)
+}
+
+// Goods Tag service methods
+func (s *Service) GetGoodsTags(ctx context.Context, goodsID int64) ([]*ImpressionTag, error) {
+	return s.repo.GetGoodsTags(ctx, goodsID)
+}
+
+func (s *Service) SetGoodsTags(ctx context.Context, goodsID int64, tagIDs []int64) error {
+	return s.repo.SetGoodsTags(ctx, goodsID, tagIDs)
+}
