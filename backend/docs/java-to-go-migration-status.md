@@ -22,11 +22,11 @@
 | 13 | game | 飞行棋房间、游戏地图、游戏订单、排行榜 | ✅ 已完成 |
 | 14 | external | KOOK 机器人、微信集成、外部系统对接 | ⚠️ 部分（OAuth/绑定） |
 | 15 | refund | 退款申请、审批、退款状态机 | ❌ 未迁移 |
-| 16 | coupon | 优惠券发放、领取、使用、统计 | ⚠️ 部分（基础领取/管理 CRUD/统计） |
+| 16 | coupon | 优惠券发放、领取、使用、统计 | ✅ 已完成 |
 | 17 | recharge | 充值订单、返利规则、返利统计 | ❌ 未迁移 |
 | 18 | withdrawal | 选手提现申请、审批、打款、税务计算 | ❌ 未迁移 |
-| 19 | invite | 用户邀请、选手邀请码、邀请记录 | ❌ 未迁移 |
-| 20 | feedback | 用户反馈提交、回复、管理 | ⚠️ 部分（基础提交/列表/回复/状态） |
+| 19 | invite | 用户邀请、选手邀请码、邀请记录 | ✅ 已完成 |
+| 20 | feedback | 用户反馈提交、回复、管理 | ✅ 已完成 |
 | 21 | partner | 运营合作伙伴管理、分成配置 | ⚠️ 部分（基础配置） |
 | 22 | customer_service | 客服配置、客服接入 | ⚠️ 部分（基础配置） |
 
@@ -520,16 +520,16 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 邀请信息 | `GET /api/client/invite/info` | ❌ |
-| 邀请记录 | `GET /api/client/invite/records` | ❌ |
-| 绑定邀请人 | `POST /api/client/invite/bindInviter` | ❌ |
-| 验证邀请码 | `GET /api/client/invite/validate` | ❌ |
-| 我的邀请码 | `GET /api/client/teacher/invite-code` | ❌ |
-| 生成邀请码 | `POST /api/client/teacher/invite-code` | ❌ |
-| 邀请码列表 | `GET /api/admin/teacher/invite-code` | ❌ |
-| 创建邀请码 | `POST /api/admin/teacher/invite-code` | ❌ |
-| 更新邀请码 | `PUT /api/admin/teacher/invite-code/{id}` | ❌ |
-| 删除邀请码 | `DELETE /api/admin/teacher/invite-code/{id}` | ❌ |
+| 邀请信息 | `GET /api/client/invite/info` | ✅ |
+| 邀请记录 | `GET /api/client/invite/records` | ✅ |
+| 绑定邀请人 | `POST /api/client/invite/bindInviter` | ✅ |
+| 验证邀请码 | `GET /api/client/invite/validate` | ✅ |
+| 我的邀请码 | `GET /api/client/teacher/invite-code` | ✅ |
+| 生成邀请码 | `POST /api/client/teacher/invite-code` | ✅ |
+| 邀请码列表 | `GET /api/admin/teacher/invite-code` | ✅ |
+| 创建邀请码 | `POST /api/admin/teacher/invite-code` | ✅ |
+| 更新邀请码 | `PUT /api/admin/teacher/invite-code/{id}` | ✅ |
+| 删除邀请码 | `DELETE /api/admin/teacher/invite-code/{id}` | ✅ |
 
 ### 20. feedback（用户反馈）
 

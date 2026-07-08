@@ -19,6 +19,7 @@ import (
 	"backend/internal/modules/finance"
 	"backend/internal/modules/game"
 	"backend/internal/modules/inventory"
+	"backend/internal/modules/invite"
 	"backend/internal/modules/notification"
 	"backend/internal/modules/order"
 	"backend/internal/modules/payment"
@@ -73,12 +74,13 @@ func main() {
 		DB:         dbPool,
 	}
 
-	passwordHasher := security.NewArgon2idHasher(
+	argon2Hasher := security.NewArgon2idHasher(
 		cfg.Auth.Password.Argon2MemoryKiB,
 		cfg.Auth.Password.Argon2Iterations,
 		cfg.Auth.Password.Argon2Parallelism,
 		os.Getenv("PASSWORD_PEPPER"),
 	)
+	passwordHasher := security.NewMultiHasher(argon2Hasher, security.NewBCryptHasher(0))
 	tokenManager, err := newTokenManager(cfg)
 	if err != nil {
 		appLogger.Error("init token manager failed", "error", err)
@@ -118,6 +120,7 @@ func main() {
 		feedback.NewHandler(feedback.NewService(feedback.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 		coupon.NewHandler(coupon.NewService(coupon.NewRepository(sqlDB), txManager), authMiddleware),
 		finance.NewHandler(finance.NewService(finance.NewRepository(sqlDB))),
+		invite.NewHandler(invite.NewService(invite.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
 	)
 
 	gameHandler.RegisterWebSocket(engine, authMiddleware)
