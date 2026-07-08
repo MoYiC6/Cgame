@@ -23,6 +23,7 @@ import (
 	"backend/internal/modules/notification"
 	"backend/internal/modules/order"
 	"backend/internal/modules/payment"
+	"backend/internal/modules/refund"
 	"backend/internal/modules/system"
 	"backend/internal/modules/teacher"
 	"backend/internal/modules/user"
@@ -121,6 +122,7 @@ func main() {
 		coupon.NewHandler(coupon.NewService(coupon.NewRepository(sqlDB), txManager), authMiddleware),
 		finance.NewHandler(finance.NewService(finance.NewRepository(sqlDB))),
 		invite.NewHandler(invite.NewService(invite.NewRepository(sqlDB), database.NoopTxManager{}), authMiddleware),
+		refund.NewHandler(refund.NewService(refund.NewRepository(sqlDB), txManager), authMiddleware),
 	)
 
 	gameHandler.RegisterWebSocket(engine, authMiddleware)

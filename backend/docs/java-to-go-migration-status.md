@@ -21,7 +21,7 @@
 | 12 | visitor | 访客追踪、页面浏览、统计报表 | ✅ 已完成 |
 | 13 | game | 飞行棋房间、游戏地图、游戏订单、排行榜 | ✅ 已完成 |
 | 14 | external | KOOK 机器人、微信集成、外部系统对接 | ⚠️ 部分（OAuth/绑定） |
-| 15 | refund | 退款申请、审批、退款状态机 | ❌ 未迁移 |
+| 15 | refund | 退款申请、审批、退款状态机 | ✅ 已完成 |
 | 16 | coupon | 优惠券发放、领取、使用、统计 | ✅ 已完成 |
 | 17 | recharge | 充值订单、返利规则、返利统计 | ❌ 未迁移 |
 | 18 | withdrawal | 选手提现申请、审批、打款、税务计算 | ❌ 未迁移 |
@@ -455,18 +455,18 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 申请退款 | `POST /api/client/refunds/apply` | ❌ |
-| 退款列表 | `GET /api/client/refunds/list` | ❌ |
-| 退款详情 | `GET /api/client/refunds/{id}` | ❌ |
-| 取消退款 | `POST /api/client/refunds/{id}/cancel` | ❌ |
-| 检查是否可申请 | `GET /api/client/refunds/can-apply/{orderId}` | ❌ |
-| 按订单查询退款 | `GET /api/client/refunds/by-order/{orderId}` | ❌ |
-| 退款列表（管理端） | `GET /api/admin/refunds` | ❌ |
-| 退款详情（管理端） | `GET /api/admin/refunds/{id}` | ❌ |
-| 审批通过 | `PUT /api/admin/refunds/{id}/approve` | ❌ |
-| 审批拒绝 | `PUT /api/admin/refunds/{id}/reject` | ❌ |
-| 处理退款 | `PUT /api/admin/refunds/{id}/process` | ❌ |
-| 退款统计 | `GET /api/admin/refunds/stats` | ❌ |
+| 申请退款 | `POST /api/client/refunds/apply` | ✅ |
+| 退款列表 | `GET /api/client/refunds/list` | ✅ |
+| 退款详情 | `GET /api/client/refunds/{id}` | ✅ |
+| 取消退款 | `POST /api/client/refunds/{id}/cancel` | ✅ |
+| 检查是否可申请 | `GET /api/client/refunds/can-apply/{orderId}` | ✅ |
+| 按订单查询退款 | `GET /api/client/refunds/by-order/{orderId}` | ✅ |
+| 退款列表（管理端） | `GET /api/admin/refunds` | ✅ |
+| 退款详情（管理端） | `GET /api/admin/refunds/{id}` | ✅ |
+| 审批通过 | `PUT /api/admin/refunds/{id}/approve` | ✅ |
+| 审批拒绝 | `PUT /api/admin/refunds/{id}/reject` | ✅ |
+| 处理退款 | `PUT /api/admin/refunds/{id}/process` | ✅ |
+| 退款统计 | `GET /api/admin/refunds/stats` | ✅ |
 
 ### 16. coupon（优惠券）
 
