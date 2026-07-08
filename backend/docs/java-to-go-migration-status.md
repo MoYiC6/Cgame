@@ -53,9 +53,9 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 获取用户中心信息 | `GET /api/user/center` | ❌ |
-| 更新用户信息 | `PUT /api/user/profile` | ⚠️ |
-| 设置头像 | `PUT /api/user/avatar` | ⚠️ |
+| 获取用户中心信息 | `GET /api/user/center` | ✅ |
+| 更新用户信息 | `PUT /api/user/profile` | ✅ |
+| 设置头像 | `PUT /api/user/avatar` | ✅ |
 | 修改密码 | `PUT /api/user/password` | ⚠️ |
 | 重置密码 | `POST /api/user/reset-password` | ❌ |
 | 发送短信验证码 | `POST /api/user/sms/send` | ❌ |
@@ -63,10 +63,10 @@
 | 更新手机号 | `PUT /api/user/mobile` | ❌ |
 | 绑定微信手机号 | `PUT /api/user/wechat-mobile` | ❌ |
 | 查询我的余额 | `GET /api/balance/my-balance` | ✅ |
-| 查询用户余额（管理端） | `GET /api/balance/user-balance/{userId}` | ❌ |
-| 查询我的余额日志 | `GET /api/balance/my-logs` | ⚠️ |
-| 查询用户余额日志 | `GET /api/balance/user-logs/{userId}` | ❌ |
-| 查询最近余额日志 | `GET /api/balance/recent-logs/{userId}` | ❌ |
+| 查询用户余额（管理端） | `GET /api/balance/user-balance/{userId}` | ✅ |
+| 查询我的余额日志 | `GET /api/balance/my-logs` | ✅ |
+| 查询用户余额日志 | `GET /api/balance/user-logs/{userId}` | ✅ |
+| 查询最近余额日志 | `GET /api/balance/recent-logs/{userId}` | ✅ |
 | 手动充值 | `POST /api/recharge/manual` | ❌ |
 | 创建充值订单 | `POST /api/recharge/create` | ❌ |
 | 充值回调 | `POST /api/recharge/callback` | ❌ |
@@ -78,20 +78,20 @@
 | 取消充值 | `POST /api/recharge/cancel/{rechargeNo}` | ❌ |
 | 继续支付 | `POST /api/recharge/continue-pay/{rechargeNo}` | ❌ |
 | 验证支付 | `POST /api/recharge/verify-payment/{rechargeNo}` | ❌ |
-| 获取用户信息（客户端） | `GET /api/client/user/info` | ⚠️ |
-| 更新用户信息（客户端） | `PUT /api/client/user/info` | ⚠️ |
-| 完善资料 | `POST /api/client/user/complete-profile` | ❌ |
-| 获取用户等级列表 | `GET /api/client/user-levels` | ⚠️ |
-| 用户列表（管理端） | `GET /api/admin/users` | ⚠️ |
-| 用户详情 | `GET /api/admin/users/{id}` | ⚠️ |
+| 获取用户信息（客户端） | `GET /api/client/user/info` | ✅ |
+| 更新用户信息（客户端） | `PUT /api/client/user/info` | ✅ |
+| 完善资料 | `POST /api/client/user/complete-profile` | ✅ |
+| 获取用户等级列表 | `GET /api/client/user-levels` | ✅ |
+| 用户列表（管理端） | `GET /api/admin/users` | ✅ |
+| 用户详情 | `GET /api/admin/users/{id}` | ✅ |
 | 创建用户 | `POST /api/admin/users` | ❌ |
-| 更新用户 | `PUT /api/admin/users/{id}` | ⚠️ |
+| 更新用户 | `PUT /api/admin/users/{id}` | ✅ |
 | 删除用户 | `DELETE /api/admin/users/{id}` | ❌ |
-| 更新用户状态 | `PUT /api/admin/users/{id}/status` | ⚠️ |
-| 用户选择器 | `GET /api/admin/select/user` | ❌ |
-| 用户登录日志列表 | `GET /api/admin/logs/user` | ❌ |
-| 批量删除日志 | `DELETE /api/admin/logs/user/batch` | ❌ |
-| 消费排名 | `GET /api/user/consumption-ranking` | ⚠️ |
+| 更新用户状态 | `PUT /api/admin/users/{id}/status` | ✅ |
+| 用户选择器 | `GET /api/admin/select/user` | ✅ |
+| 用户登录日志列表 | `GET /api/admin/logs/user` | ✅ |
+| 批量删除日志 | `DELETE /api/admin/logs/user/batch` | ✅ |
+| 消费排名 | `GET /api/user/consumption-ranking` | ✅ |
 | 用户月度财务报告 | `GET /api/admin/finance/user-monthly-report` | ❌ |
 | 导出用户月度报告 | `GET /api/admin/finance/user-monthly-report/export` | ❌ |
 

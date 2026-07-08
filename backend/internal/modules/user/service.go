@@ -49,3 +49,115 @@ func (s *Service) CreatePurchaseRecord(ctx context.Context, record *UserPurchase
 func (s *Service) GetPurchaseCount(ctx context.Context, userID, goodsID int64) (int, error) {
 	return s.repo.GetUserPurchaseCount(ctx, userID, goodsID)
 }
+
+func (s *Service) GetUserCenterInfo(ctx context.Context, userID int64) (*UserCenterInfo, error) {
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+	info := &UserCenterInfo{
+		ID:               user.ID,
+		Username:         user.Username,
+		Nickname:         user.Nickname,
+		Avatar:           user.Avatar,
+		Mobile:           user.Mobile,
+		Email:            user.Email,
+		Gender:           user.Gender,
+		Birthday:         user.Birthday,
+		Province:         user.Province,
+		City:             user.City,
+		District:         user.District,
+		Intro:            user.Intro,
+		Balance:          user.Balance,
+		FrozenBalance:    user.FrozenBalance,
+		TotalRecharge:    user.TotalRecharge,
+		TotalConsumption: user.TotalConsumption,
+		LevelID:          user.LevelID,
+		IsTeacher:        user.IsTeacher,
+		RealNameStatus:   user.RealNameStatus,
+		Status:           user.Status,
+	}
+	if user.LevelID != nil {
+		level, err := s.repo.GetUserLevelByID(ctx, *user.LevelID)
+		if err == nil && level != nil {
+			info.LevelName = level.Name
+		}
+	}
+	return info, nil
+}
+
+func (s *Service) UpdateProfile(ctx context.Context, userID int64, req *UpdateProfileRequest) error {
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+	user.Nickname = req.Nickname
+	user.Avatar = req.Avatar
+	user.Gender = req.Gender
+	user.Birthday = req.Birthday
+	user.Province = req.Province
+	user.City = req.City
+	user.District = req.District
+	user.Intro = req.Intro
+	return s.repo.UpdateUser(ctx, user)
+}
+
+func (s *Service) UpdateUserStatus(ctx context.Context, userID int64, status int16) error {
+	return s.repo.UpdateUserStatus(ctx, userID, status)
+}
+
+func (s *Service) ListUsers(ctx context.Context, query UserQuery) ([]*User, int, error) {
+	if query.PageNum <= 0 {
+		query.PageNum = 1
+	}
+	if query.PageSize <= 0 {
+		query.PageSize = 20
+	}
+	return s.repo.ListUsers(ctx, query)
+}
+
+func (s *Service) GetUserByID(ctx context.Context, userID int64) (*User, error) {
+	return s.repo.GetByID(ctx, userID)
+}
+
+func (s *Service) GetUserLevels(ctx context.Context) ([]*UserLevel, error) {
+	return s.repo.GetUserLevels(ctx)
+}
+
+func (s *Service) GetRecentBalanceLogs(ctx context.Context, userID int64, limit int) ([]*UserBalanceLog, error) {
+	return s.repo.GetRecentBalanceLogs(ctx, userID, limit)
+}
+
+func (s *Service) GetConsumptionRanking(ctx context.Context, limit int) ([]*ConsumptionRankingItem, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	return s.repo.GetConsumptionRanking(ctx, limit)
+}
+
+func (s *Service) ListUserSelectors(ctx context.Context, keyword string, limit int) ([]*UserSelectorItem, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	return s.repo.ListUserSelectors(ctx, keyword, limit)
+}
+
+func (s *Service) ListUserLoginLogs(ctx context.Context, userID *int64, page, pageSize int) ([]*UserLoginLog, int, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	return s.repo.ListUserLoginLogs(ctx, userID, page, pageSize)
+}
+
+func (s *Service) DeleteUserLoginLogs(ctx context.Context, ids []int64) error {
+	return s.repo.DeleteUserLoginLogs(ctx, ids)
+}

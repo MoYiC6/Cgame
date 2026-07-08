@@ -100,3 +100,84 @@ type UserPurchaseRecord struct {
 	Quantity     int
 	PurchaseTime time.Time
 }
+
+type UserLoginLog struct {
+	ID          int64
+	UserID      *int64
+	LoginType   string
+	IPAddress   string
+	UserAgent   string
+	LoginStatus string
+	FailReason  string
+	CreatedAt   time.Time
+}
+
+type UserQuery struct {
+	PageNum    int
+	PageSize   int
+	Username   string
+	Nickname   string
+	Mobile     string
+	Email      string
+	Status     *int16
+	IsTeacher  *int16
+	LevelID    *int64
+	StartTime  *time.Time
+	EndTime    *time.Time
+}
+
+type UserCenterInfo struct {
+	ID               int64      `json:"id"`
+	Username         string     `json:"username"`
+	Nickname         string     `json:"nickname"`
+	Avatar           string     `json:"avatar"`
+	Mobile           string     `json:"mobile"`
+	Email            string     `json:"email"`
+	Gender           int16      `json:"gender"`
+	Birthday         *time.Time `json:"birthday,omitempty"`
+	Province         string     `json:"province"`
+	City             string     `json:"city"`
+	District         string     `json:"district"`
+	Intro            string     `json:"intro"`
+	Balance          float64    `json:"balance"`
+	FrozenBalance    float64    `json:"frozenBalance"`
+	TotalRecharge    float64    `json:"totalRecharge"`
+	TotalConsumption float64    `json:"totalConsumption"`
+	LevelID          *int64     `json:"levelId,omitempty"`
+	LevelName        string     `json:"levelName"`
+	IsTeacher        int16      `json:"isTeacher"`
+	RealNameStatus   int16      `json:"realNameStatus"`
+	Status           string     `json:"status"`
+}
+
+type UpdateProfileRequest struct {
+	Nickname string     `json:"nickname"`
+	Avatar   string     `json:"avatar"`
+	Gender   int16      `json:"gender"`
+	Birthday *time.Time `json:"birthday,omitempty"`
+	Province string     `json:"province"`
+	City     string     `json:"city"`
+	District string     `json:"district"`
+	Intro    string     `json:"intro"`
+}
+
+type UpdateUserStatusRequest struct {
+	Status int16 `json:"status"`
+}
+
+type ConsumptionRankingItem struct {
+	UserID       int64   `json:"userId"`
+	Username     string  `json:"username"`
+	Nickname     string  `json:"nickname"`
+	Avatar       string  `json:"avatar"`
+	Consumption  float64 `json:"consumption"`
+	Rank         int     `json:"rank"`
+}
+
+type UserSelectorItem struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	Nickname string `json:"nickname"`
+	Mobile   string `json:"mobile"`
+	Avatar   string `json:"avatar"`
+}
