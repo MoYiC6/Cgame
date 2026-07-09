@@ -321,6 +321,68 @@ func (s *Service) RejectApplication(ctx context.Context, appID int64, reason str
 	return s.repo.UpdateApplicationStatus(ctx, appID, 2, &reason, &operatorID)
 }
 
+// GetTeacherPaymentInfo returns a teacher's payment information
+func (s *Service) GetTeacherPaymentInfo(ctx context.Context, userID int64) (*TeacherPaymentInfo, error) {
+	if userID == 0 {
+		return nil, apperrors.New(apperrors.CodeInvalidArgument, "user_id is required", http.StatusBadRequest, nil)
+	}
+	teacher, err := s.repo.GetTeacherByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if teacher == nil {
+		return nil, apperrors.New(apperrors.CodeNotFound, "teacher not found", http.StatusNotFound, nil)
+	}
+	return s.repo.GetTeacherPaymentInfo(ctx, teacher.ID)
+}
+
+// UpdateTeacherPaymentInfo updates a teacher's payment information
+func (s *Service) UpdateTeacherPaymentInfo(ctx context.Context, userID int64, info *TeacherPaymentInfo) error {
+	if userID == 0 {
+		return apperrors.New(apperrors.CodeInvalidArgument, "user_id is required", http.StatusBadRequest, nil)
+	}
+	teacher, err := s.repo.GetTeacherByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if teacher == nil {
+		return apperrors.New(apperrors.CodeNotFound, "teacher not found", http.StatusNotFound, nil)
+	}
+	info.TeacherID = teacher.ID
+	return s.repo.UpdateTeacherPaymentInfo(ctx, info)
+}
+
+// GetTeacherIntro returns a teacher's introduction
+func (s *Service) GetTeacherIntro(ctx context.Context, userID int64) (*TeacherIntro, error) {
+	if userID == 0 {
+		return nil, apperrors.New(apperrors.CodeInvalidArgument, "user_id is required", http.StatusBadRequest, nil)
+	}
+	teacher, err := s.repo.GetTeacherByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if teacher == nil {
+		return nil, apperrors.New(apperrors.CodeNotFound, "teacher not found", http.StatusNotFound, nil)
+	}
+	return s.repo.GetTeacherIntro(ctx, teacher.ID)
+}
+
+// UpdateTeacherIntro updates a teacher's introduction
+func (s *Service) UpdateTeacherIntro(ctx context.Context, userID int64, intro *TeacherIntro) error {
+	if userID == 0 {
+		return apperrors.New(apperrors.CodeInvalidArgument, "user_id is required", http.StatusBadRequest, nil)
+	}
+	teacher, err := s.repo.GetTeacherByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if teacher == nil {
+		return apperrors.New(apperrors.CodeNotFound, "teacher not found", http.StatusNotFound, nil)
+	}
+	intro.TeacherID = teacher.ID
+	return s.repo.UpdateTeacherIntro(ctx, intro)
+}
+
 // UpdateTeacherLevel updates a teacher level
 func (s *Service) UpdateTeacherLevel(ctx context.Context, level *TeacherLevel) error {
 	if level.ID == 0 {

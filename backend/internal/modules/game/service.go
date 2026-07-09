@@ -302,6 +302,24 @@ func (s *Service) GetMapByID(ctx context.Context, id int64) (*GameMap, error) {
 	return m, nil
 }
 
+func (s *Service) StartGame(ctx context.Context, roomID int64) error {
+	if roomID == 0 {
+		return fmt.Errorf("room id is required")
+	}
+	room, err := s.repo.GetRoomByID(ctx, roomID)
+	if err != nil {
+		return fmt.Errorf("get room: %w", err)
+	}
+	if room == nil {
+		return fmt.Errorf("room not found")
+	}
+	if room.Status != RoomStatusWaiting {
+		return fmt.Errorf("room is not waiting")
+	}
+	room.Status = RoomStatusPlaying
+	return s.repo.UpdateRoom(ctx, room)
+}
+
 func (s *Service) ListMaps(ctx context.Context, page, pageSize int, keyword string, status *int) ([]*GameMap, int, error) {
 	maps, total, err := s.repo.ListGameMapsPaged(ctx, page, pageSize, keyword, status)
 	if err != nil {

@@ -398,6 +398,70 @@ func (r *Repository) GetTeacherDashboardStats(ctx context.Context, teacherID int
 	return &stats, nil
 }
 
+// TeacherPaymentInfo
+
+func (r *Repository) GetTeacherPaymentInfo(ctx context.Context, teacherID int64) (*TeacherPaymentInfo, error) {
+	row := r.dbtx.QueryRowContext(ctx,
+		`SELECT teacher_id, alipay_account, bank_name, bank_account, real_name FROM teacher_payment_info WHERE teacher_id = $1`,
+		teacherID,
+	)
+	var info TeacherPaymentInfo
+	err := row.Scan(&info.TeacherID, &info.AlipayAccount, &info.BankName, &info.BankAccount, &info.RealName)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get payment info: %w", err)
+	}
+	return &info, nil
+}
+
+func (r *Repository) UpdateTeacherPaymentInfo(ctx context.Context, info *TeacherPaymentInfo) error {
+	_, err := r.dbtx.ExecContext(ctx,
+		`INSERT INTO teacher_payment_info (teacher_id, alipay_account, bank_name, bank_account, real_name, updated_at)
+		 VALUES ($1, $2, $3, $4, $5, NOW())
+		 ON CONFLICT (teacher_id) DO UPDATE SET
+		 alipay_account = EXCLUDED.alipay_account, bank_name = EXCLUDED.bank_name,
+		 bank_account = EXCLUDED.bank_account, real_name = EXCLUDED.real_name, updated_at = NOW()`,
+		info.TeacherID, info.AlipayAccount, info.BankName, info.BankAccount, info.RealName,
+	)
+	return err
+}
+
+// TeacherIntro
+
+func (r *Repository) GetTeacherIntro(ctx context.Context, teacherID int64) (*TeacherIntro, error) {
+	row := r.dbtx.QueryRowContext(ctx,
+		`SELECT teacher_id, intro, tags FROM teacher_intro WHERE teacher_id = $1`,
+		teacherID,
+	)
+	var intro TeacherIntro
+	var tagsJSON []byte
+	err := row.Scan(&intro.TeacherID, &intro.Intro, &tagsJSON)
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get intro: %w", err)
+	}
+	if len(tagsJSON) > 0 {
+		json.Unmarshal(tagsJSON, &intro.Tags)
+	}
+	return &intro, nil
+}
+
+func (r *Repository) UpdateTeacherIntro(ctx context.Context, intro *TeacherIntro) error {
+	tagsJSON, _ := json.Marshal(intro.Tags)
+	_, err := r.dbtx.ExecContext(ctx,
+		`INSERT INTO teacher_intro (teacher_id, intro, tags, updated_at)
+		 VALUES ($1, $2, $3, NOW())
+		 ON CONFLICT (teacher_id) DO UPDATE SET
+		 intro = EXCLUDED.intro, tags = EXCLUDED.tags, updated_at = NOW()`,
+		intro.TeacherID, intro.Intro, string(tagsJSON),
+	)
+	return err
+}
+
 // TeacherLevelGoods
 
 func (r *Repository) GetTeacherLevelGoods(ctx context.Context, levelID int64) ([]*TeacherLevelGoods, error) {

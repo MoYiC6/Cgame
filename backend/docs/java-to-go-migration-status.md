@@ -8,19 +8,19 @@
 | 序号 | 模块名 | 核心职责 | 迁移状态 |
 |------|--------|----------|----------|
 | 1 | auth | JWT 认证、登录/注册/登出、短信验证码、微信 OAuth | ✅ 已完成 |
-| 2 | user | 用户中心、余额、充值、等级、消费排名 | ⚠️ 部分（用户中心/资料管理/等级/消费排名/管理端已完成，密码/手机/微信绑定待迁移） |
-| 3 | teacher | 选手生态、审核、等级、动态、收入分成、排名 | ⚠️ 部分（核心接口/申请审核/等级管理/排名/仪表盘已完成，动态/评价/视频/收款待迁移） |
+| 2 | user | 用户中心、余额、充值、等级、消费排名 | ✅ 已完成 |
+| 3 | teacher | 选手生态、审核、等级、动态、收入分成、排名 | ✅ 已完成 |
 | 4 | goods/inventory | 商品管理、SKU、分类、限购、Banner、印象标签 | ✅ 已完成 |
 | 5 | order | 订单生命周期、状态流转、结单、退单、转移、评价 | ✅ 已完成 |
 | 6 | payment | 微信支付、支付宝、收银台、支付记录、回调 | ✅ 已完成 |
-| 7 | finance | 财务统计、运营商佣金、提现管理、结算 | ⚠️ 部分（统计/佣金/提现/余额/报表/选手提现管理已完成，导出待迁移） |
+| 7 | finance | 财务统计、运营商佣金、提现管理、结算 | ✅ 已完成 |
 | 8 | notification | 系统通知、订阅消息、待办事项、实时推送 | ✅ 已完成 |
 | 9 | chat | 即时聊天、会话管理、客服系统 | ✅ 已完成 |
-| 10 | file | 文件上传、素材管理、七牛云存储 | ⚠️ 部分（素材管理/上传路径） |
+| 10 | file | 文件上传、素材管理、七牛云存储 | ✅ 已完成 |
 | 11 | system | RBAC 权限、系统设置、菜单、角色、日志 | ✅ 已完成 |
 | 12 | visitor | 访客追踪、页面浏览、统计报表 | ✅ 已完成 |
 | 13 | game | 飞行棋房间、游戏地图、游戏订单、排行榜 | ✅ 已完成 |
-| 14 | external | KOOK 机器人、微信集成、外部系统对接 | ⚠️ 部分（OAuth/绑定） |
+| 14 | external | KOOK 机器人、微信集成、外部系统对接 | ✅ 已完成 |
 | 15 | refund | 退款申请、审批、退款状态机 | ✅ 已完成 |
 | 16 | coupon | 优惠券发放、领取、使用、统计 | ✅ 已完成 |
 | 17 | recharge | 充值订单、返利规则、返利统计 | ✅ 已完成 |
@@ -56,12 +56,12 @@
 | 获取用户中心信息 | `GET /api/user/center` | ✅ |
 | 更新用户信息 | `PUT /api/user/profile` | ✅ |
 | 设置头像 | `PUT /api/user/avatar` | ✅ |
-| 修改密码 | `PUT /api/user/password` | ⚠️ |
-| 重置密码 | `POST /api/user/reset-password` | ❌ |
-| 发送短信验证码 | `POST /api/user/sms/send` | ❌ |
-| 更新提现账户 | `PUT /api/user/withdrawal-account` | ❌ |
-| 更新手机号 | `PUT /api/user/mobile` | ❌ |
-| 绑定微信手机号 | `PUT /api/user/wechat-mobile` | ❌ |
+| 修改密码 | `PUT /api/user/password` | ✅ |
+| 重置密码 | `POST /api/user/reset-password` | ✅ |
+| 发送短信验证码 | `POST /api/user/sms/send` | ✅ |
+| 更新提现账户 | `PUT /api/user/withdrawal-account` | ✅ |
+| 更新手机号 | `PUT /api/user/mobile` | ✅ |
+| 绑定微信手机号 | `PUT /api/user/wechat-mobile` | ✅ |
 | 查询我的余额 | `GET /api/balance/my-balance` | ✅ |
 | 查询用户余额（管理端） | `GET /api/balance/user-balance/{userId}` | ✅ |
 | 查询我的余额日志 | `GET /api/balance/my-logs` | ✅ |
@@ -84,16 +84,16 @@
 | 获取用户等级列表 | `GET /api/client/user-levels` | ✅ |
 | 用户列表（管理端） | `GET /api/admin/users` | ✅ |
 | 用户详情 | `GET /api/admin/users/{id}` | ✅ |
-| 创建用户 | `POST /api/admin/users` | ❌ |
+| 创建用户 | `POST /api/admin/users` | ✅ |
 | 更新用户 | `PUT /api/admin/users/{id}` | ✅ |
-| 删除用户 | `DELETE /api/admin/users/{id}` | ❌ |
+| 删除用户 | `DELETE /api/admin/users/{id}` | ✅ |
 | 更新用户状态 | `PUT /api/admin/users/{id}/status` | ✅ |
 | 用户选择器 | `GET /api/admin/select/user` | ✅ |
 | 用户登录日志列表 | `GET /api/admin/logs/user` | ✅ |
 | 批量删除日志 | `DELETE /api/admin/logs/user/batch` | ✅ |
 | 消费排名 | `GET /api/user/consumption-ranking` | ✅ |
-| 用户月度财务报告 | `GET /api/admin/finance/user-monthly-report` | ❌ |
-| 导出用户月度报告 | `GET /api/admin/finance/user-monthly-report/export` | ❌ |
+| 用户月度财务报告 | `GET /api/admin/finance/user-monthly-report` | ✅ |
+| 导出用户月度报告 | `GET /api/admin/finance/user-monthly-report/export` | ✅ |
 
 ### 3. teacher（选手生态）
 
@@ -104,21 +104,21 @@
 | 更新在线状态 | `PUT /api/client/teacher/online-status` | ✅ |
 | 获取当前选手状态 | `GET /api/client/teacher/status` | ✅ |
 | 获取我的选手状态 | `GET /api/client/teacher/my-status` | ✅ |
-| 实名认证状态 | `GET /api/client/teacher/realname/status` | ❌ |
-| 发起人脸验证 | `POST /api/client/teacher/realname/face/initiate` | ❌ |
-| 验证人脸 | `POST /api/client/teacher/realname/face/verify` | ❌ |
-| 获取收款信息 | `GET /api/client/teacher/payment-info` | ❌ |
-| 更新收款信息 | `PUT /api/client/teacher/payment-info` | ❌ |
-| 获取个人介绍 | `GET /api/client/teacher/intro` | ❌ |
-| 更新个人介绍 | `PUT /api/client/teacher/intro` | ❌ |
+| 实名认证状态 | `GET /api/client/teacher/realname/status` | ✅ |
+| 发起人脸验证 | `POST /api/client/teacher/realname/face/initiate` | ✅ |
+| 验证人脸 | `POST /api/client/teacher/realname/face/verify` | ✅ |
+| 获取收款信息 | `GET /api/client/teacher/payment-info` | ✅ |
+| 更新收款信息 | `PUT /api/client/teacher/payment-info` | ✅ |
+| 获取个人介绍 | `GET /api/client/teacher/intro` | ✅ |
+| 更新个人介绍 | `PUT /api/client/teacher/intro` | ✅ |
 | 选手心跳 | `POST /api/client/teacher/heartbeat` | ✅ |
 | 设置自动状态 | `PUT /api/client/teacher/auto-status` | ✅ |
 | 获取自动状态设置 | `GET /api/client/teacher/auto-status` | ✅ |
 | 申请成为选手 | `POST /api/client/teacher/application` | ✅ |
-| 获取选手动态 | `GET /api/client/teacher/dynamics/{teacherId}` | ❌ |
-| 删除动态 | `DELETE /api/client/teacher/dynamics/{id}` | ❌ |
-| 获取选手评价 | `GET /api/client/teacher/reviews/{teacherId}` | ❌ |
-| 选手订单列表 | `GET /api/client/teacher/orders` | ❌ |
+| 获取选手动态 | `GET /api/client/teacher/dynamics/{teacherId}` | ✅ |
+| 删除动态 | `DELETE /api/client/teacher/dynamics/{id}` | ✅ |
+| 获取选手评价 | `GET /api/client/teacher/reviews/{teacherId}` | ✅ |
+| 选手订单列表 | `GET /api/client/teacher/orders` | ✅ |
 | 公开等级列表 | `GET /api/client/teacher/levels` | ✅ |
 | 选手仪表盘统计 | `GET /api/teacher/dashboard/stats` | ✅ |
 | 选手排名 | `GET /api/teacher/ranking` | ✅ |
@@ -130,24 +130,24 @@
 | 申请列表 | `GET /api/admin/teacher/applications` | ✅ |
 | 审核通过 | `POST /api/admin/teacher/applications/{id}/approve` | ✅ |
 | 审核拒绝 | `POST /api/admin/teacher/applications/{id}/reject` | ✅ |
-| 手动升级 | `POST /api/admin/teacher/upgrade/manual/{teacherId}` | ❌ |
-| 检查升级条件 | `POST /api/admin/teacher/upgrade/check/{teacherId}` | ❌ |
-| 升级历史 | `GET /api/admin/teacher/upgrade/history` | ❌ |
+| 手动升级 | `POST /api/admin/teacher/upgrade/manual/{teacherId}` | ✅ |
+| 检查升级条件 | `POST /api/admin/teacher/upgrade/check/{teacherId}` | ✅ |
+| 升级历史 | `GET /api/admin/teacher/upgrade/history` | ✅ |
 | 等级列表（管理端） | `GET /api/admin/teacher/levels` | ✅ |
 | 更新等级 | `PUT /api/admin/teacher/levels/{id}` | ✅ |
 | 删除等级 | `DELETE /api/admin/teacher/levels/{id}` | ✅ |
 | 等级关联商品 | `GET /api/admin/teacher/levels/{id}/goods` | ✅ |
 | 更新等级商品 | `PUT /api/admin/teacher/levels/{id}/goods` | ✅ |
-| 导出等级 | `GET /api/admin/teacher/levels/export` | ❌ |
-| 导入等级 | `POST /api/admin/teacher/levels/import` | ❌ |
-| 导出模板 | `GET /api/admin/teacher/levels/export/template` | ❌ |
-| 选手收入明细 | `GET /api/admin/teacher-income` | ❌ |
-| 动态列表（管理端） | `GET /api/admin/teacher-dynamics` | ❌ |
-| 删除动态 | `DELETE /api/admin/teacher-dynamics/{id}` | ❌ |
-| 批量删除动态 | `DELETE /api/admin/teacher-dynamics/batch` | ❌ |
-| 更新考核视频 | `PUT /api/admin/teachers/{teacherId}/assessment-videos/{videoId}` | ❌ |
-| 启用/禁用视频 | `PUT /api/admin/teachers/{teacherId}/assessment-videos/{videoId}/enabled` | ❌ |
-| 删除考核视频 | `DELETE /api/admin/teachers/{teacherId}/assessment-videos/{videoId}` | ❌ |
+| 导出等级 | `GET /api/admin/teacher/levels/export` | ✅ |
+| 导入等级 | `POST /api/admin/teacher/levels/import` | ✅ |
+| 导出模板 | `GET /api/admin/teacher/levels/export/template` | ✅ |
+| 选手收入明细 | `GET /api/admin/teacher-income` | ✅ |
+| 动态列表（管理端） | `GET /api/admin/teacher-dynamics` | ✅ |
+| 删除动态 | `DELETE /api/admin/teacher-dynamics/{id}` | ✅ |
+| 批量删除动态 | `DELETE /api/admin/teacher-dynamics/batch` | ✅ |
+| 更新考核视频 | `PUT /api/admin/teachers/{teacherId}/assessment-videos/{videoId}` | ✅ |
+| 启用/禁用视频 | `PUT /api/admin/teachers/{teacherId}/assessment-videos/{videoId}/enabled` | ✅ |
+| 删除考核视频 | `DELETE /api/admin/teachers/{teacherId}/assessment-videos/{videoId}` | ✅ |
 | 合作伙伴列表 | `GET /api/admin/teacher/partners` | ✅ |
 | 更新合作伙伴 | `PUT /api/admin/teacher/partners/{id}` | ✅ |
 | 删除合作伙伴 | `DELETE /api/admin/teacher/partners/{id}` | ✅ |
@@ -275,13 +275,13 @@
 | 打款 | `PUT /api/admin/withdrawal/{id}/pay` | ✅ |
 | 提现统计 | `GET /api/admin/withdrawal/stats` | ✅ |
 | 月度报表 | `GET /api/admin/withdrawal/monthly-report` | ✅ |
-| 导出提现记录 | `GET /api/admin/withdrawal/export` | ❌ |
-| 导出月度报表 | `GET /api/admin/withdrawal/monthly-report/export` | ❌ |
+| 导出提现记录 | `GET /api/admin/withdrawal/export` | ✅ |
+| 导出月度报表 | `GET /api/admin/withdrawal/monthly-report/export` | ✅ |
 | 可结算订单 | `GET /api/admin/withdrawal/settleable-orders` | ✅ |
 | 代结算预览 | `POST /api/admin/withdrawal/settle-on-behalf/preview` | ✅ |
 | 代结算执行 | `POST /api/admin/withdrawal/settle-on-behalf` | ✅ |
 | 用户月度报告 | `GET /api/admin/finance/user-monthly-report` | ✅ |
-| 导出用户月度报告 | `GET /api/admin/finance/user-monthly-report/export` | ❌ |
+| 导出用户月度报告 | `GET /api/admin/finance/user-monthly-report/export` | ✅ |
 
 ### 8. notification（通知消息）
 
@@ -370,8 +370,8 @@
 | 更新角色状态 | `PUT /api/admin/roles/{id}/status` | ✅ |
 | 分配权限 | `PUT /api/admin/roles/{id}/permissions` | ✅ |
 | 分配菜单 | `PUT /api/admin/roles/{id}/menus` | ✅ |
-| 客户列表 | `GET /api/admin/customers` | ❌ |
-| 清除缓存 | `GET /api/admin/cache/clear` | ❌ |
+| 客户列表 | `GET /api/admin/customers` | ✅ |
+| 清除缓存 | `GET /api/admin/cache/clear` | ✅ |
 | 待办列表 | `GET /api/admin/system-todos` | ✅ |
 | 切换待办状态 | `PUT /api/admin/system-todos/{id}/toggle` | ✅ |
 | 管理员日志 | `GET /api/admin/logs/admin` | ✅ |
@@ -382,12 +382,12 @@
 | FaceId 配置详情 | `GET /api/admin/faceid/config/{id}` | ✅ |
 | 更新 FaceId 配置 | `PUT /api/admin/faceid/config/{id}` | ✅ |
 | 删除配置 | `DELETE /api/admin/faceid/config/{id}` | ✅ |
-| 启用/禁用 | `PUT /api/admin/faceid/config/{id}/status` | ❌ |
-| 支付宝配置分页 | `GET /api/admin/alipay/config/page` | ❌ |
-| 支付宝配置详情 | `GET /api/admin/alipay/config/{id}` | ❌ |
-| 更新支付宝配置 | `PUT /api/admin/alipay/config/{id}` | ❌ |
-| 删除配置 | `DELETE /api/admin/alipay/config/{id}` | ❌ |
-| 启用/禁用 | `PUT /api/admin/alipay/config/{id}/status` | ❌ |
+| 启用/禁用 | `PUT /api/admin/faceid/config/{id}/status` | ✅ |
+| 支付宝配置分页 | `GET /api/admin/alipay/config/page` | ✅ |
+| 支付宝配置详情 | `GET /api/admin/alipay/config/{id}` | ✅ |
+| 更新支付宝配置 | `PUT /api/admin/alipay/config/{id}` | ✅ |
+| 删除配置 | `DELETE /api/admin/alipay/config/{id}` | ✅ |
+| 启用/禁用 | `PUT /api/admin/alipay/config/{id}/status` | ✅ |
 | 微信支付配置列表 | `GET /api/admin/wxpay/config/page` | ✅ |
 | 微信支付配置详情 | `GET /api/admin/wxpay/config/{id}` | ✅ |
 | 更新微信支付配置 | `PUT /api/admin/wxpay/config/{id}` | ✅ |
@@ -424,10 +424,10 @@
 | 加入房间 | `POST /api/client/game/room/join` | ✅ |
 | 离开房间 | `POST /api/client/game/room/leave/{roomId}` | ✅ |
 | 房间信息 | `GET /api/client/game/room/{roomCode}` | ✅ |
-| 开始游戏 | `POST /api/client/game/room/start/{roomId}` | ⚠️ |
+| 开始游戏 | `POST /api/client/game/room/start/{roomId}` | ✅ |
 | 解散房间 | `POST /api/client/game/room/disband/{roomId}` | ✅ |
 | 地图列表 | `GET /api/client/game-map/list` | ✅ |
-| 地图详情 | `GET /api/client/game-map/{id}` | ⚠️ |
+| 地图详情 | `GET /api/client/game-map/{id}` | ✅ |
 | 地图列表（管理端） | `GET /api/admin/game-map` | ✅ |
 | 地图详情（管理端） | `GET /api/admin/game-map/{id}` | ✅ |
 | 更新地图 | `PUT /api/admin/game-map/{id}` | ✅ |
@@ -472,14 +472,14 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 可领取优惠券 | `GET /api/client/coupon/available` | ⚠️ |
-| 我的优惠券 | `GET /api/client/coupon/my` | ⚠️ |
-| 领取优惠券 | `POST /api/client/coupon/claim/{id}` | ⚠️ |
-| 优惠券列表（管理端） | `GET /api/admin/coupon` | ⚠️ |
-| 创建优惠券 | `POST /api/admin/coupon` | ⚠️ |
-| 更新优惠券 | `PUT /api/admin/coupon/{id}` | ⚠️ |
-| 删除优惠券 | `DELETE /api/admin/coupon/{id}` | ⚠️ |
-| 优惠券统计 | `GET /api/admin/coupon/stats` | ⚠️ |
+| 可领取优惠券 | `GET /api/client/coupon/available` | ✅ |
+| 我的优惠券 | `GET /api/client/coupon/my` | ✅ |
+| 领取优惠券 | `POST /api/client/coupon/claim/{id}` | ✅ |
+| 优惠券列表（管理端） | `GET /api/admin/coupon` | ✅ |
+| 创建优惠券 | `POST /api/admin/coupon` | ✅ |
+| 更新优惠券 | `PUT /api/admin/coupon/{id}` | ✅ |
+| 删除优惠券 | `DELETE /api/admin/coupon/{id}` | ✅ |
+| 优惠券统计 | `GET /api/admin/coupon/stats` | ✅ |
 
 ### 17. recharge（充值返利）
 
@@ -508,8 +508,8 @@
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
 | 收入统计 | `GET /api/client/teacher/withdrawal/income-stats` | ✅ |
-| 未结算订单 | `GET /api/client/teacher/withdrawal/unsettled-orders` | ⚠️ |
-| 已结算订单 | `GET /api/client/teacher/withdrawal/settled-orders` | ⚠️ |
+| 未结算订单 | `GET /api/client/teacher/withdrawal/unsettled-orders` | ✅ |
+| 已结算订单 | `GET /api/client/teacher/withdrawal/settled-orders` | ✅ |
 | 计算提现金额 | `POST /api/client/teacher/withdrawal/calculate` | ✅ |
 | 申请提现 | `POST /api/client/teacher/withdrawal/apply` | ✅ |
 | 取消提现 | `PUT /api/client/teacher/withdrawal/{id}/cancel` | ✅ |
@@ -535,14 +535,14 @@
 
 | 功能点 | 接口路径 | 迁移状态 |
 |--------|----------|----------|
-| 提交反馈 | `POST /api/client/feedback/submit` | ⚠️ |
-| 反馈列表 | `GET /api/client/feedback/list` | ⚠️ |
-| 反馈详情 | `GET /api/client/feedback/{id}` | ⚠️ |
-| 反馈列表（管理端） | `GET /api/admin/feedback` / `GET /api/admin/feedback/list` | ⚠️ |
-| 反馈详情（管理端） | `GET /api/admin/feedback/{id}` | ⚠️ |
-| 回复反馈 | `POST /api/admin/feedback/{id}/reply` / `POST /api/admin/feedback/reply` | ⚠️ |
-| 更新状态 | `PUT /api/admin/feedback/{id}/status` / `PUT /api/admin/feedback/status` | ⚠️ |
-| 删除反馈 | `DELETE /api/admin/feedback/{id}` | ⚠️ |
+| 提交反馈 | `POST /api/client/feedback/submit` | ✅ |
+| 反馈列表 | `GET /api/client/feedback/list` | ✅ |
+| 反馈详情 | `GET /api/client/feedback/{id}` | ✅ |
+| 反馈列表（管理端） | `GET /api/admin/feedback` / `GET /api/admin/feedback/list` | ✅ |
+| 反馈详情（管理端） | `GET /api/admin/feedback/{id}` | ✅ |
+| 回复反馈 | `POST /api/admin/feedback/{id}/reply` / `POST /api/admin/feedback/reply` | ✅ |
+| 更新状态 | `PUT /api/admin/feedback/{id}/status` / `PUT /api/admin/feedback/status` | ✅ |
+| 删除反馈 | `DELETE /api/admin/feedback/{id}` | ✅ |
 
 ### 21. partner（合作伙伴）
 
@@ -570,9 +570,9 @@
 
 | 状态 | 数量 | 占比 |
 |------|------|------|
-| ✅ 已完成 | ~160 | 55% |
-| ⚠️ 部分完成 | ~60 | 20% |
-| ❌ 未迁移 | ~70 | 25% |
+| ✅ 已完成 | ~417 | 98% |
+| ⚠️ 部分完成 | ~7 | 2% |
+| ❌ 未迁移 | 0 | 0% |
 
 ## 四、后续迁移建议
 

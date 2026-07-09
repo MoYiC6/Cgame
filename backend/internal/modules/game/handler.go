@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -36,6 +37,7 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		client.POST("/room/join", h.JoinRoom)
 		client.POST("/room/leave/:roomId", h.LeaveRoom)
 		client.GET("/room/:roomCode", h.GetRoom)
+		client.POST("/room/start/:roomId", h.StartGame)
 		client.POST("/room/disband/:roomId", h.DisbandRoom)
 		client.GET("/maps", h.GetEnabledMaps)
 		client.GET("/maps/goods/:goodsId", h.GetGoodsMaps)
@@ -47,6 +49,7 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 	}
 	{
 		clientMaps.GET("/list", h.GetEnabledMaps)
+		clientMaps.GET("/:id", h.GetMapDetail)
 		clientMaps.GET("/goods/:goodsId", h.GetGoodsMaps)
 	}
 
@@ -343,4 +346,35 @@ func (h *Handler) HandleGameWebSocket(c *gin.Context) {
 	_ = room
 	_ = userID
 	_ = time.Now()
+}
+
+func (h *Handler) StartGame(c *gin.Context) {
+	roomID, _ := strconv.ParseInt(c.Param("roomId"), 10, 64)
+	if roomID == 0 {
+		response.Fail(c, fmt.Errorf("invalid room id"))
+		return
+	}
+	if err := h.service.StartGame(c.Request.Context(), roomID); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) GetMapDetail(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	if id == 0 {
+		response.Fail(c, fmt.Errorf("invalid map id"))
+		return
+	}
+	m, err := h.service.GetMapByID(c.Request.Context(), id)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	if m == nil {
+		response.Fail(c, fmt.Errorf("map not found"))
+		return
+	}
+	response.Success(c, m)
 }

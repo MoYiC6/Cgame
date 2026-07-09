@@ -1,8 +1,10 @@
 package finance
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	apperrors "backend/internal/platform/errors"
@@ -39,6 +41,7 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		admin.PUT("/operator-commissions/withdrawals/:id/cancel", h.CancelWithdrawal)
 		admin.GET("/balance/details", h.ListBalanceDetails)
 		admin.GET("/user-monthly-report", h.GetMonthlyReport)
+		admin.GET("/user-monthly-report/export", h.ExportUserMonthlyReport)
 	}
 
 	withdrawal := group.Group("/admin/withdrawal")
@@ -56,6 +59,8 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		withdrawal.GET("/settleable-orders", h.ListSettleableOrders)
 		withdrawal.POST("/settle-on-behalf/preview", h.SettleOnBehalfPreview)
 		withdrawal.POST("/settle-on-behalf", h.SettleOnBehalf)
+		withdrawal.GET("/export", h.ExportWithdrawals)
+		withdrawal.GET("/monthly-report/export", h.ExportWithdrawalMonthlyReport)
 	}
 }
 
@@ -446,6 +451,67 @@ func (h *Handler) SettleOnBehalf(c *gin.Context) {
 		return
 	}
 	response.Success(c, gin.H{"id": id})
+}
+
+func (h *Handler) ExportUserMonthlyReport(c *gin.Context) {
+	month := c.Query("month")
+	if month == "" {
+		month = time.Now().Format("2006-01")
+	}
+	report, err := h.service.GetMonthlyReport(c.Request.Context(), month)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	c.Header("Content-Type", "text/csv; charset=utf-8")
+	c.Header("Content-Disposition", "attachment; filename=user-monthly-report-"+month+".csv")
+	c.String(http.StatusOK, "Month,Total Revenue,Total Orders,Commission\n%s,%.2f,%d,%.2f\n", report.Month, report.TotalRevenue, report.TotalOrders, report.Commission)
+}
+
+func (h *Handler) ExportWithdrawals(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("pageNum", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	teacherID, _ := strconv.ParseInt(c.Query("teacherId"), 10, 64)
+	status := c.Query("status")
+	startDate := c.Query("startDate")
+	endDate := c.Query("endDate")
+
+	query := &TeacherWithdrawalQuery{
+		TeacherID: teacherID,
+		Status:    status,
+		StartDate: startDate,
+		EndDate:   endDate,
+		Page:      page,
+		PageSize:  pageSize,
+	}
+	withdrawals, _, err := h.service.ListTeacherWithdrawals(c.Request.Context(), query)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	c.Header("Content-Type", "text/csv; charset=utf-8")
+	c.Header("Content-Disposition", "attachment; filename=withdrawals.csv")
+	var sb strings.Builder
+	sb.WriteString("ID,TeacherID,Amount,Status,CreatedAt\n")
+	for _, w := range withdrawals {
+		sb.WriteString(fmt.Sprintf("%d,%d,%.2f,%s,%s\n", w.ID, w.TeacherID, w.Amount, w.Status, w.CreatedAt.Format(time.RFC3339)))
+	}
+	c.String(http.StatusOK, sb.String())
+}
+
+func (h *Handler) ExportWithdrawalMonthlyReport(c *gin.Context) {
+	month := c.Query("month")
+	if month == "" {
+		month = time.Now().Format("2006-01")
+	}
+	report, err := h.service.GetMonthlyReport(c.Request.Context(), month)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	c.Header("Content-Type", "text/csv; charset=utf-8")
+	c.Header("Content-Disposition", "attachment; filename=withdrawal-monthly-report-"+month+".csv")
+	c.String(http.StatusOK, "Month,Total Revenue,Total Orders,Commission\n%s,%.2f,%d,%.2f\n", report.Month, report.TotalRevenue, report.TotalOrders, report.Commission)
 }
 
 func currentUserID(c *gin.Context) (int64, bool) {

@@ -165,6 +165,17 @@ type UpdateUserStatusRequest struct {
 	Status int16 `json:"status"`
 }
 
+type CreateUserRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Nickname string `json:"nickname"`
+	RealName string `json:"realName"`
+	Mobile   string `json:"mobile"`
+	Status   int16  `json:"status"`
+	IsTeacher int16 `json:"isTeacher"`
+}
+
 type ConsumptionRankingItem struct {
 	UserID       int64   `json:"userId"`
 	Username     string  `json:"username"`

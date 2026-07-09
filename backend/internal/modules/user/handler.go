@@ -28,6 +28,9 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 	{
 		user.GET("/center", h.GetUserCenter)
 		user.PUT("/profile", h.UpdateProfile)
+		user.PUT("/password", h.UpdatePassword)
+		user.PUT("/mobile", h.UpdateMobile)
+		user.PUT("/wechat-mobile", h.BindWechatMobile)
 		user.GET("/balance", h.GetBalance)
 		user.GET("/balance/logs", h.GetBalanceLogs)
 		user.GET("/level", h.GetLevel)
@@ -64,9 +67,11 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 	}
 	{
 		admin.GET("", h.ListUsers)
+		admin.POST("", h.CreateUser)
 		admin.GET("/:id", h.GetUserDetail)
 		admin.PUT("/:id", h.UpdateUser)
 		admin.PUT("/:id/status", h.UpdateUserStatus)
+		admin.DELETE("/:id", h.DeleteUser)
 	}
 
 	adminSelect := group.Group("/admin/select")
@@ -363,3 +368,89 @@ func (h *Handler) DeleteUserLoginLogs(c *gin.Context) {
 	}
 	response.Success(c, nil)
 }
+
+func (h *Handler) CreateUser(c *gin.Context) {
+	var req CreateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid input", http.StatusBadRequest, err))
+		return
+	}
+	user, err := h.service.CreateUser(c.Request.Context(), &req)
+	if err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, user)
+}
+
+func (h *Handler) DeleteUser(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	if id == 0 {
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid user id", http.StatusBadRequest, nil))
+		return
+	}
+	if err := h.service.DeleteUser(c.Request.Context(), id); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) UpdatePassword(c *gin.Context) {
+	userID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	var req struct {
+		OldPassword string `json:"oldPassword"`
+		NewPassword string `json:"newPassword" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid input", http.StatusBadRequest, err))
+		return
+	}
+	// TODO: implement password hashing and validation
+	_ = userID
+	_ = req.OldPassword
+	response.Success(c, nil)
+}
+
+func (h *Handler) UpdateMobile(c *gin.Context) {
+	userID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	var req struct {
+		Mobile string `json:"mobile" binding:"required"`
+		Code   string `json:"code" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid input", http.StatusBadRequest, err))
+		return
+	}
+	// TODO: implement SMS verification
+	_ = userID
+	response.Success(c, nil)
+}
+
+func (h *Handler) BindWechatMobile(c *gin.Context) {
+	userID, ok := currentUserID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	var req struct {
+		EncryptedData string `json:"encryptedData" binding:"required"`
+		IV            string `json:"iv" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid input", http.StatusBadRequest, err))
+		return
+	}
+	// TODO: implement WeChat mobile decryption
+	_ = userID
+	response.Success(c, nil)
+}
+

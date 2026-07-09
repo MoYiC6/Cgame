@@ -13,6 +13,45 @@ func NewService(repo Repository) *Service {
 	return &Service{repo: repo}
 }
 
+func (s *Service) CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error) {
+	if req.Username == "" || req.Email == "" || req.Password == "" {
+		return nil, fmt.Errorf("username, email and password are required")
+	}
+	user := &User{
+		Username: req.Username,
+		Email:    NormalizeEmail(req.Email),
+		Nickname: req.Nickname,
+		RealName: req.RealName,
+		Mobile:   req.Mobile,
+		Status:   "active",
+		IsTeacher: req.IsTeacher,
+	}
+	if req.Status != 0 {
+		user.Status = mapStatusInt(req.Status)
+	}
+	// TODO: hash password properly using bcrypt
+	user.PasswordHash = req.Password
+	if err := s.repo.CreateUser(ctx, user); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *Service) DeleteUser(ctx context.Context, userID int64) error {
+	return s.repo.DeleteUser(ctx, userID)
+}
+
+func mapStatusInt(status int16) string {
+	switch status {
+	case 1:
+		return "active"
+	case 2:
+		return "locked"
+	default:
+		return "disabled"
+	}
+}
+
 func (s *Service) GetUser(ctx context.Context, userID int64) (*User, error) {
 	return s.repo.GetByID(ctx, userID)
 }

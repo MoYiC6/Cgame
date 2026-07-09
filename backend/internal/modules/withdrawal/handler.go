@@ -33,6 +33,8 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		client.PUT("/:id/cancel", h.Cancel)
 		client.GET("/records", h.ListMine)
 		client.GET("/:id", h.GetMine)
+		client.GET("/unsettled-orders", h.ListUnsettledOrders)
+		client.GET("/settled-orders", h.ListSettledOrders)
 	}
 
 	// Admin withdrawal routes
@@ -288,4 +290,28 @@ func currentTeacherID(c *gin.Context) (int64, bool) {
 	// Teacher ID is derived from userID for now; in production this may be
 	// resolved via teacher profile lookup.
 	return currentUserID(c)
+}
+
+func (h *Handler) ListUnsettledOrders(c *gin.Context) {
+	teacherID, ok := currentTeacherID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	page, _ := strconv.Atoi(c.DefaultQuery("pageNum", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	// Placeholder: return empty list (actual data from order module)
+	response.Success(c, gin.H{"list": []any{}, "total": 0, "teacherId": teacherID, "page": page, "pageSize": pageSize})
+}
+
+func (h *Handler) ListSettledOrders(c *gin.Context) {
+	teacherID, ok := currentTeacherID(c)
+	if !ok {
+		response.Fail(c, apperrors.New(apperrors.CodeForbidden, "unauthorized", http.StatusForbidden, nil))
+		return
+	}
+	page, _ := strconv.Atoi(c.DefaultQuery("pageNum", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	// Placeholder: return empty list (actual data from order module)
+	response.Success(c, gin.H{"list": []any{}, "total": 0, "teacherId": teacherID, "page": page, "pageSize": pageSize})
 }

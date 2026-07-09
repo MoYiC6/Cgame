@@ -62,10 +62,10 @@ type SystemMenu struct {
 	Path           *string
 	Component      *string
 	Icon           *string
-	SortOrder      *int
+	Sort           *int
 	ParentID       *int64
-	IsHidden       *int
 	Status         *int
+	MenuType       *string
 	PermissionCode *string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

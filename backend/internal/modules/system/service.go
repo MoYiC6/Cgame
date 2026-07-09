@@ -266,3 +266,10 @@ func strPtr(s string) *string {
 func intPtr(i int) *int {
 	return &i
 }
+
+func (s *Service) UpdateFaceIdStatus(ctx context.Context, id int64, enabled int) error {
+	if id == 0 {
+		return fmt.Errorf("id is required")
+	}
+	return s.repo.UpdateFaceIdStatus(ctx, id, enabled)
+}

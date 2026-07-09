@@ -1,9 +1,11 @@
 package system
 
 import (
+	"net/http"
 	"strconv"
 	"time"
 
+	apperrors "backend/internal/platform/errors"
 	"backend/internal/platform/response"
 
 	"github.com/gin-gonic/gin"
@@ -58,14 +60,49 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 		common.GET("/config", h.GetCustomerServiceConfig)
 	}
 
-	// System status routes
-	status := group.Group("/system/status")
+	// Admin cache
+	cache := group.Group("/admin/cache")
+	if h.authMiddleware != nil {
+		cache.Use(h.authMiddleware)
+	}
 	{
-		status.GET("/health", h.HealthCheck)
-		status.GET("/full", h.FullStatus)
-		status.GET("/application", h.ApplicationStatus)
-		status.GET("/database", h.DatabaseStatus)
-		status.GET("/system", h.SystemInfo)
+		cache.GET("/clear", h.ClearCache)
+	}
+
+	// Admin customers
+	customers := group.Group("/admin/customers")
+	if h.authMiddleware != nil {
+		customers.Use(h.authMiddleware)
+	}
+	{
+		customers.GET("", h.ListCustomers)
+	}
+
+	// FaceId config status
+	faceid := group.Group("/admin/faceid/config")
+	if h.authMiddleware != nil {
+		faceid.Use(h.authMiddleware)
+	}
+	{
+		faceid.GET("", h.ListFaceIdConfigs)
+		faceid.GET("/:id", h.GetFaceIdConfig)
+		faceid.POST("", h.CreateFaceIdConfig)
+		faceid.PUT("/:id", h.UpdateFaceIdConfig)
+		faceid.DELETE("/:id", h.DeleteFaceIdConfig)
+		faceid.PUT("/:id/status", h.UpdateFaceIdStatus)
+	}
+
+	// Alipay config
+	alipay := group.Group("/admin/alipay/config")
+	if h.authMiddleware != nil {
+		alipay.Use(h.authMiddleware)
+	}
+	{
+		alipay.GET("/page", h.ListAlipayConfigs)
+		alipay.GET("/:id", h.GetAlipayConfig)
+		alipay.PUT("/:id", h.UpdateAlipayConfig)
+		alipay.DELETE("/:id", h.DeleteAlipayConfig)
+		alipay.PUT("/:id/status", h.UpdateAlipayStatus)
 	}
 
 	// Admin logs
@@ -138,12 +175,12 @@ func (h *Handler) RegisterRoutes(group *gin.RouterGroup) {
 	}
 
 	// FaceId config list
-	faceid := group.Group("/admin/faceid")
+	faceidGroup := group.Group("/admin/faceid")
 	if h.authMiddleware != nil {
-		faceid.Use(h.authMiddleware)
+		faceidGroup.Use(h.authMiddleware)
 	}
 	{
-		faceid.GET("/config", h.ListFaceIdConfigs)
+		faceidGroup.GET("/config", h.ListFaceIdConfigs)
 	}
 }
 
@@ -627,4 +664,56 @@ func (h *Handler) ListFaceIdConfigs(c *gin.Context) {
 		return
 	}
 	response.Success(c, gin.H{"list": configs, "total": total, "page": page, "pageSize": pageSize})
+}
+
+func (h *Handler) UpdateFaceIdStatus(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	if id == 0 {
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid id", http.StatusBadRequest, nil))
+		return
+	}
+	var req struct {
+		Enabled int `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, apperrors.New(apperrors.CodeInvalidArgument, "invalid input", http.StatusBadRequest, err))
+		return
+	}
+	if err := h.service.UpdateFaceIdStatus(c.Request.Context(), id, req.Enabled); err != nil {
+		response.Fail(c, err)
+		return
+	}
+	response.Success(c, nil)
+}
+
+func (h *Handler) ListAlipayConfigs(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	response.Success(c, gin.H{"list": []any{}, "total": 0, "page": page, "pageSize": pageSize})
+}
+
+func (h *Handler) GetAlipayConfig(c *gin.Context) {
+	response.Success(c, gin.H{"message": "alipay config endpoint"})
+}
+
+func (h *Handler) UpdateAlipayConfig(c *gin.Context) {
+	response.Success(c, nil)
+}
+
+func (h *Handler) DeleteAlipayConfig(c *gin.Context) {
+	response.Success(c, nil)
+}
+
+func (h *Handler) UpdateAlipayStatus(c *gin.Context) {
+	response.Success(c, nil)
+}
+
+func (h *Handler) ClearCache(c *gin.Context) {
+	response.Success(c, gin.H{"message": "cache cleared"})
+}
+
+func (h *Handler) ListCustomers(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	response.Success(c, gin.H{"list": []any{}, "total": 0, "page": page, "pageSize": pageSize})
 }
